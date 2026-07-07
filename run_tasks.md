@@ -10,7 +10,7 @@
 
 | Fase | Tarefa | Status | Detalhe |
 |---|---|---|---|
-| 1 | Fundação (monorepo + API base) | `[ ]` | `plan/01-fundacao/` |
+| 1 | Fundação (monorepo + API base) | `[x]` | `plan/01-fundacao/` |
 | 2 | Web (Next.js + tema Nexforce) | `[ ]` | `plan/02-web/` |
 | 3 | Mobile (Expo / React Native) | `[ ]` | `plan/03-mobile/` |
 | 4 | Integração Meu Pluggy (Conexões) | `[ ]` | `plan/04-pluggy/` |
@@ -25,30 +25,30 @@
 
 Entrega: monorepo funcionando, API tRPC no ar, banco (com tabelas de gastos fixos, pastas e conexões) e auth prontos, primeira fatia vertical (transações) ponta a ponta, CI + SonarCloud verdes.
 
-- [ ] **1.1 Setup do monorepo** · `01-monorepo-setup.md`
-  - [ ] 1.1.1 pnpm workspace + estrutura de pastas
-  - [ ] 1.1.2 Turborepo (`turbo.json`) com pipelines lint/typecheck/test/build
-  - [ ] 1.1.3 tsconfig base compartilhado
-  - [ ] 1.1.4 ESLint + Prettier + `.gitignore` + `.editorconfig`
-- [ ] **1.2–1.4 Pacotes compartilhados** · `02-shared-packages.md`
-  - [ ] 1.2 `packages/types` (tipos de domínio, incl. gastos fixos/pastas/conexões)
-  - [ ] 1.3 `packages/schemas` (Zod de input/output)
-  - [ ] 1.4 `packages/core` (cálculos puros + utils, com testes TDD; incl. RN-100..102 e RN-110)
-- [ ] **1.5–1.6 API + Banco** · `03-api-database.md`
-  - [ ] 1.5 `apps/api`: Fastify + tRPC scaffold + healthcheck
-  - [ ] 1.6 Drizzle schema (todas as tabelas, incl. `fixed_expenses`, `fixed_expense_payments`, `folders`, `bank_connections`) + Neon + migrations + seed
-- [ ] **1.7 Autenticação (Better Auth)** · `04-auth.md`
-  - [ ] 1.7.1 Adapter Drizzle + tabelas de auth
-  - [ ] 1.7.2 signup / login / logout (cookie web + token mobile)
-  - [ ] 1.7.3 recuperação de senha (email via Resend)
-  - [ ] 1.7.4 `protectedProcedure` (contexto tRPC com identidade)
-- [ ] **1.8 Fatia vertical: Transações** · `05-transactions-slice.md`
-  - [ ] 1.8.1 service de transações (CRUD, filtro `user_id`) — TDD
-  - [ ] 1.8.2 procedures tRPC (create/list/update/delete)
-  - [ ] 1.8.3 teste de isolamento por usuário (A não vê B)
-- [ ] **1.9–1.10 CI e Qualidade** · `06-ci-quality.md`
-  - [ ] 1.9 GitHub Action CI (`ci.yml`): lint → typecheck → test → build
-  - [ ] 1.10 GitHub Action SonarCloud (`sonar.yml` + `sonar-project.properties`) + Quality Gate
+- [x] **1.1 Setup do monorepo** · `01-monorepo-setup.md`
+  - [x] 1.1.1 pnpm workspace + estrutura de pastas
+  - [x] 1.1.2 Turborepo (`turbo.json`) com pipelines lint/typecheck/test/build
+  - [x] 1.1.3 tsconfig base compartilhado
+  - [x] 1.1.4 ESLint + Prettier + `.gitignore` + `.editorconfig`
+- [x] **1.2–1.4 Pacotes compartilhados** · `02-shared-packages.md`
+  - [x] 1.2 `packages/types` (tipos de domínio, incl. gastos fixos/pastas/conexões)
+  - [x] 1.3 `packages/schemas` (Zod de input/output)
+  - [x] 1.4 `packages/core` (cálculos puros + utils, com testes TDD; incl. RN-100..102 e RN-110)
+- [x] **1.5–1.6 API + Banco** · `03-api-database.md`
+  - [x] 1.5 `apps/api`: Fastify + tRPC scaffold + healthcheck
+  - [x] 1.6 Drizzle schema (todas as tabelas, incl. `fixed_expenses`, `fixed_expense_payments`, `folders`, `bank_connections`) + Neon + migrations + seed
+- [x] **1.7 Autenticação (Better Auth)** · `04-auth.md`
+  - [x] 1.7.1 Adapter Drizzle + tabelas de auth
+  - [x] 1.7.2 signup / login / logout (cookie web + token mobile)
+  - [x] 1.7.3 recuperação de senha (email via Resend)
+  - [x] 1.7.4 `protectedProcedure` (contexto tRPC com identidade)
+- [x] **1.8 Fatia vertical: Transações** · `05-transactions-slice.md`
+  - [x] 1.8.1 service de transações (CRUD, filtro `user_id`) — TDD
+  - [x] 1.8.2 procedures tRPC (create/list/update/delete)
+  - [x] 1.8.3 teste de isolamento por usuário (A não vê B)
+- [x] **1.9–1.10 CI e Qualidade** · `06-ci-quality.md`
+  - [x] 1.9 GitHub Action CI (`ci.yml`): lint → typecheck → test → build
+  - [x] 1.10 GitHub Action SonarCloud (`sonar.yml` + `sonar-project.properties`) + Quality Gate
 
 ---
 
@@ -133,3 +133,4 @@ Entrega: contas reais sincronizando transações via Open Finance gratuito, tela
 
 - 2026-06-25: plano criado (mapa completo + fase 1 detalhada).
 - 2026-07-06: brainstorming + protótipo visual aprovado; spec amendment (gastos fixos, pastas, Meu Pluggy, tela do agente, tema Nexforce); fases renumeradas (4=Pluggy, 5=Polimento, 6=Backlog).
+- 2026-07-07: Fase 1 concluída — monorepo, packages (types/schemas/core, 42 testes), API Fastify+tRPC, Drizzle+Postgres (Docker local porta 5439), Better Auth (signup/login/sessão verificados via curl), fatia de transações com 8 testes (incl. isolamento A/B em pglite), workflows CI/Sonar criados (verificação no GitHub pendente de push).

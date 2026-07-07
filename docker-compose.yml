@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: pmf-db
+    environment:
+      POSTGRES_USER: pmf
+      POSTGRES_PASSWORD: pmf
+      POSTGRES_DB: planmyfinances
+    ports:
+      # 5439 no host para não colidir com os outros Postgres da máquina
+      - '5439:5432'
+    volumes:
+      - pmf-pgdata:/var/lib/postgresql/data
+
+volumes:
+  pmf-pgdata:
