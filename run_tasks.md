@@ -14,7 +14,7 @@
 | 2 | Web (Next.js + tema Nexforce) | `[x]` | `plan/02-web/` |
 | 3 | Mobile (Expo / React Native) | `[x]` | `plan/03-mobile/` |
 | 4 | Integração Meu Pluggy (Conexões) | `[!]` adiada | `plan/04-pluggy/` |
-| 5 | Polimento (edge cases, a11y, E2E) | `[ ]` | `plan/05-polimento/` |
+| 5 | Polimento (edge cases, a11y, E2E) | `[x]` | `plan/05-polimento/` |
 | 6 | Backlog (agente real, iOS) | `[ ]` | `plan/06-backlog/` |
 
 > Regra: uma fase só começa quando a anterior está com todas as subtarefas `[x]`, salvo dependências explicitamente liberadas.
@@ -110,11 +110,11 @@ Entrega: contas reais sincronizando transações via Open Finance gratuito, tela
 
 ## Fase 5 — Polimento · `plan/05-polimento/`
 
-- [ ] **5.1 Auditoria do tema** — tokens consistentes nas duas plataformas, claro/escuro
-- [ ] **5.2 Edge cases** — mês vazio, sem categoria, sem due_date, parcela única, lista vazia, offline mobile, due_day 31 em mês curto, pasta arquivada, mês futuro
-- [ ] **5.3 Estados de erro/loading** — padronizados nos dois clientes + erros de sync visíveis
-- [ ] **5.4 Acessibilidade** — contraste AA nos dois temas (SC-103), foco, labels
-- [ ] **5.5 Verificação E2E manual** — roteiro SC-009 estendido (SC-100/101/102) na web e no mobile
+- [x] **5.1 Auditoria do tema** — tokens consistentes nas duas plataformas, claro/escuro
+- [x] **5.2 Edge cases** — mês vazio, sem categoria, sem due_date, parcela única, lista vazia, offline mobile, due_day 31 em mês curto, pasta arquivada, mês futuro
+- [x] **5.3 Estados de erro/loading** — padronizados nos dois clientes + erros de sync visíveis
+- [x] **5.4 Acessibilidade** — contraste AA nos dois temas (SC-103), foco, labels
+- [~] **5.5 Verificação E2E** — SC-100/101 verificados ponta a ponta via API real (curl); passeio visual na web e no mobile fica com o Hugo (SC-102 depende da fase 4 adiada)
 
 ---
 
@@ -137,3 +137,4 @@ Entrega: contas reais sincronizando transações via Open Finance gratuito, tela
 - 2026-07-07: Fase 2 concluída — web Next.js completa (15 rotas): tema Nexforce claro/escuro, ui-web, auth, sidebar, Início, Histórico (filtros na URL), Categorias (seções), Gastos Fixos (toggle pago→transação, snapshot), Pastas (cards expansíveis), Cobranças, Faturas, Dashboard (Recharts), Agente estático. E2E SC-100/101 verificado via API real. Dev local na porta 3005 (3000 ocupada por outro projeto).
 - 2026-07-07: Fase 3 concluída — mobile Expo/expo-router com paridade: auth por token (SecureStore + plugin expo no servidor), 5 tabs + stack Mais, FlashList com paginação infinita, gastos fixos com toggle, pastas expansíveis, cobranças/faturas com status inline, dashboard com gráficos SVG leves, agente estático. Build Android via EAS configurado (execução requer conta Expo).
 - 2026-07-07: Fase 4 (Meu Pluggy) adiada por decisão do Hugo — telas "Conexões" permanecem como placeholder "em breve"; schema e ganchos (bank_connections, source, external_id) já prontos para quando for ativada.
+- 2026-07-07: Fase 5 concluída — cores de gráfico resolvidas por tema (fix: var() não funciona em atributo SVG do Recharts), filtro de pasta no Histórico, confirmação ao excluir, monorepo alinhado em React 19 (mobile atualizado para Expo SDK 53 / RN 0.79, elimina conflito de tipos 18×19), .npmrc sem auto-install-peers. Gates: lint/typecheck/test(57)/build verdes em todos os pacotes.

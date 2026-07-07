@@ -21,6 +21,7 @@ function HistoryContent() {
     type: (params.get('tipo') as 'receita' | 'despesa') || undefined,
     categoryId: params.get('categoria') || undefined,
     subcategoryId: params.get('subcategoria') || undefined,
+    folderId: params.get('pasta') || undefined,
     dateFrom: params.get('de') || undefined,
     dateTo: params.get('ate') || undefined,
   }
@@ -111,6 +112,23 @@ function HistoryContent() {
             onChange={(e) => setFilter('ate', e.target.value)}
           />
         </div>
+        {folders && folders.length > 0 ? (
+          <div className="w-44">
+            <Select
+              aria-label="Pasta"
+              value={filters.folderId ?? ''}
+              onChange={(e) => setFilter('pasta', e.target.value)}
+            >
+              <option value="">Todas as pastas</option>
+              {folders.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.icon ? `${f.icon} ` : ''}
+                  {f.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+        ) : null}
         {params.size > 0 ? (
           <Button variant="link" size="sm" onClick={() => router.replace(pathname)}>
             Limpar filtros
@@ -165,7 +183,9 @@ function HistoryContent() {
                       <button
                         type="button"
                         aria-label="Excluir transação"
-                        onClick={() => del.mutate({ id: tx.id })}
+                        onClick={() => {
+                          if (window.confirm('Excluir esta transação?')) del.mutate({ id: tx.id })
+                        }}
                         className="text-muted hover:text-negative"
                       >
                         🗑

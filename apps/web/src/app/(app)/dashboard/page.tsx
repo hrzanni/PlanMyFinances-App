@@ -6,12 +6,14 @@ import { formatCurrency, formatDate } from '@pmf/core'
 import { Card, CardTitle, EmptyState, Kpi, LoadingState } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
 import { currentMonth, money, monthLabel } from '@/lib/format'
+import { useChartColors } from '@/lib/chart-colors'
 import { PageHeader } from '@/components/page-header'
 import { MonthSelector } from '@/components/month-selector'
 import { IncomeExpenseChart } from '@/components/income-expense-chart'
 
 export default function DashboardPage() {
   const [month, setMonth] = useState(currentMonth)
+  const colors = useChartColors()
   const summary = trpc.dashboard.month.useQuery({ month })
 
   const daily = summary.data?.daily ?? []
@@ -38,17 +40,17 @@ export default function DashboardPage() {
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={daily} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
-                  <CartesianGrid stroke="rgb(var(--line))" strokeDasharray="3 4" vertical={false} />
+                  <CartesianGrid stroke={colors.line} strokeDasharray="3 4" vertical={false} />
                   <XAxis
                     dataKey="date"
                     tickFormatter={(d: string) => d.slice(8)}
-                    tick={{ fontSize: 11, fill: 'rgb(var(--muted))' }}
+                    tick={{ fontSize: 11, fill: colors.muted }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     tickFormatter={(v: number) => `${Math.round(v / 1000)}k`}
-                    tick={{ fontSize: 11, fill: 'rgb(var(--muted))' }}
+                    tick={{ fontSize: 11, fill: colors.muted }}
                     axisLine={false}
                     tickLine={false}
                     width={36}
@@ -57,8 +59,8 @@ export default function DashboardPage() {
                     formatter={(v: number | string) => formatCurrency(Number(v))}
                     labelFormatter={(d) => formatDate(String(d))}
                     contentStyle={{
-                      background: 'rgb(var(--surface))',
-                      border: '1px solid rgb(var(--line))',
+                      background: colors.surface,
+                      border: `1px solid ${colors.line}`,
                       borderRadius: 8,
                       fontSize: 12,
                     }}
@@ -67,7 +69,7 @@ export default function DashboardPage() {
                     type="monotone"
                     dataKey="balance"
                     name="Saldo"
-                    stroke="rgb(var(--navy))"
+                    stroke={colors.navy}
                     strokeWidth={2.5}
                     dot={false}
                     activeDot={{ r: 4 }}

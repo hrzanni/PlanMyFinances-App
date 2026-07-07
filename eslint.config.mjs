@@ -8,6 +8,11 @@ export default tseslint.config(
     },
   },
   {
+    // Configs CommonJS do Metro/Tailwind no mobile exigem require()
+    files: ['**/*.config.js', '**/babel.config.js'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     ignores: [
       '**/dist/**',
       '**/.next/**',
