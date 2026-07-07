@@ -4,8 +4,8 @@
 - Create: `packages/types/package.json`, `packages/types/src/index.ts`, `packages/types/tsconfig.json`
 - Create: `packages/schemas/package.json`, `packages/schemas/src/index.ts`, `packages/schemas/tsconfig.json`
 - Create: `packages/core/package.json`, `packages/core/tsconfig.json`, `packages/core/vitest.config.ts`
-- Create: `packages/core/src/{money.ts,date.ts,balance.ts,installments.ts,index.ts}`
-- Test: `packages/core/src/{money.test.ts,date.test.ts,balance.test.ts,installments.test.ts}`
+- Create: `packages/core/src/{money.ts,date.ts,balance.ts,installments.ts,fixed-expenses.ts,folders.ts,index.ts}`
+- Test: `packages/core/src/{money.test.ts,date.test.ts,balance.test.ts,installments.test.ts,fixed-expenses.test.ts,folders.test.ts}`
 
 **Interfaces:**
 - Consumes: nada.
@@ -32,9 +32,13 @@
 
 ```ts
 export type TransactionType = 'receita' | 'despesa'
+export type TransactionSource = 'manual' | 'fixed_expense' | 'pluggy'
 export type ChargeStatus = 'pendente' | 'cobrado' | 'pago'
 export type InvoiceStatus = 'pendente' | 'pago'
-export type SubscriptionStatus = 'ativo' | 'cancelado'
+export type FixedExpenseStatus = 'active' | 'archived'
+export type FolderStatus = 'active' | 'archived'
+export type BankConnectionStatus = 'connected' | 'error' | 'expired'
+export type MonthlyExpenseStatus = 'pago' | 'pendente' | 'vencido'
 
 export interface Transaction {
   id: string
@@ -44,6 +48,9 @@ export interface Transaction {
   description: string | null
   categoryId: string | null
   subcategoryId: string | null
+  folderId: string | null
+  source: TransactionSource
+  externalId: string | null
   date: string
   createdAt: string
 }
@@ -278,6 +285,20 @@ export function installmentTotals(
 
 - [ ] **Passo 18: Rodar e ver passar** → PASS.
 
+### fixed-expenses.ts — status mensal, totais e vencimento efetivo (RN-100/101/102, spec amendment 2026-07-06)
+
+- [ ] **Passo 18a: Testes que falham** — `packages/core/src/fixed-expenses.test.ts`. Casos mínimos:
+  - `referenceMonth('2026-07-15')` → `'2026-07-01'`.
+  - `effectiveDueDate(31, '2026-02-01')` → `'2026-02-28'` (mês curto usa último dia); `effectiveDueDate(5, '2026-07-01')` → `'2026-07-05'`.
+  - `fixedExpenseStatus`: com `paidAt` → `'pago'`; sem `paidAt` e vencimento futuro no mês → `'pendente'`; sem `paidAt` e vencimento passado (mês corrente ou anterior) → `'vencido'`; mês futuro nunca é `'vencido'`.
+  - `fixedExpenseTotals`: total soma `amount` vigente dos ativos; pago soma snapshot dos payments do mês; pendente = soma dos `amount` vigentes dos NÃO pagos (não é total−pago, por causa do snapshot).
+- [ ] **Passo 18b: Implementar `packages/core/src/fixed-expenses.ts`** e ver os testes passarem.
+
+### folders.ts — total por pasta (RN-110)
+
+- [ ] **Passo 18c: Teste que falha** — `folderTotal` soma só `despesa` com `folderId` igual; ignora outras pastas e receitas; pasta sem transações → 0.
+- [ ] **Passo 18d: Implementar `packages/core/src/folders.ts`** e ver passar.
+
 - [ ] **Passo 19: Barrel `packages/core/src/index.ts`**
 
 ```ts
@@ -285,6 +306,8 @@ export * from './money'
 export * from './date'
 export * from './balance'
 export * from './installments'
+export * from './fixed-expenses'
+export * from './folders'
 ```
 
 - [ ] **Passo 20: Rodar a suíte inteira e commitar**
