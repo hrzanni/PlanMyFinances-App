@@ -4,6 +4,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "composite": false,
+    "declaration": false,
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "types": ["node"]

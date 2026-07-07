@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "PlanMyFinances",
+    "slug": "planmyfinances",
+    "scheme": "planmyfinances",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": ["android", "ios"],
+    "android": {
+      "package": "br.com.planmyfinances.app",
+      "adaptiveIcon": { "backgroundColor": "#0C0E0E" }
+    },
+    "plugins": ["expo-router", "expo-secure-store", "expo-font"],
+    "experiments": { "typedRoutes": false }
+  }
+}

@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 1 | Fundação (monorepo + API base) | `[x]` | `plan/01-fundacao/` |
 | 2 | Web (Next.js + tema Nexforce) | `[x]` | `plan/02-web/` |
-| 3 | Mobile (Expo / React Native) | `[ ]` | `plan/03-mobile/` |
+| 3 | Mobile (Expo / React Native) | `[x]` | `plan/03-mobile/` |
 | 4 | Integração Meu Pluggy (Conexões) | `[ ]` | `plan/04-pluggy/` |
 | 5 | Polimento (edge cases, a11y, E2E) | `[ ]` | `plan/05-polimento/` |
 | 6 | Backlog (agente real, iOS) | `[ ]` | `plan/06-backlog/` |
@@ -76,21 +76,21 @@ Entrega: app web completo consumindo a API, todas as telas do protótipo aprovad
 
 Entrega: app Android com paridade total, tema Nexforce e requisitos de memória atendidos.
 
-- [ ] **3.1 Scaffold mobile** — Expo + NativeWind + cliente tRPC + TanStack Query + Lato + tokens de tema
-- [ ] **3.2 Auth mobile** — login/signup/forgot/reset, token em SecureStore, refresh
-- [ ] **3.3 Componentes base mobile** — Button, Input, Card, Sheet, List, Tabs, Badge, Toggle nativos
-- [ ] **3.4 Memória (ME-001..004)** — FlashList virtualizada, paginação por mês, config de cache TanStack Query
-- [ ] **3.5 Navegação nativa** — 5 tabs (Início, Histórico, Fixos, Dash, Mais) + stack "Mais"
-- [ ] **3.6 Transações + Home** — paridade FR-001..003 + widget gastos fixos + campo Pasta
-- [ ] **3.7 Histórico** — filtros no estado de navegação, badges de origem/pasta
-- [ ] **3.8 Categorias/Subcategorias** — seções Despesas × Receitas
-- [ ] **3.9 Gastos Fixos** — lista com toggle pago, seletor de mês, cards
-- [ ] **3.10 Pastas** — cards expansíveis
-- [ ] **3.11 Cobranças**
-- [ ] **3.12 Faturas**
-- [ ] **3.13 Dashboard** — gráficos com lib RN
-- [ ] **3.14 Tela do Agente** — chat estático "Em breve"
-- [ ] **3.15 Build Android** — EAS Build, gerar APK/AAB de teste
+- [x] **3.1 Scaffold mobile** — Expo + NativeWind + cliente tRPC + TanStack Query + Lato + tokens de tema
+- [x] **3.2 Auth mobile** — login/signup/forgot/reset, token em SecureStore, refresh
+- [x] **3.3 Componentes base mobile** — Button, Input, Card, Sheet, List, Tabs, Badge, Toggle nativos
+- [x] **3.4 Memória (ME-001..004)** — FlashList virtualizada, paginação por mês, config de cache TanStack Query
+- [x] **3.5 Navegação nativa** — 5 tabs (Início, Histórico, Fixos, Dash, Mais) + stack "Mais"
+- [x] **3.6 Transações + Home** — paridade FR-001..003 + widget gastos fixos + campo Pasta
+- [x] **3.7 Histórico** — filtros no estado de navegação, badges de origem/pasta
+- [x] **3.8 Categorias/Subcategorias** — seções Despesas × Receitas
+- [x] **3.9 Gastos Fixos** — lista com toggle pago, seletor de mês, cards
+- [x] **3.10 Pastas** — cards expansíveis
+- [x] **3.11 Cobranças**
+- [x] **3.12 Faturas**
+- [x] **3.13 Dashboard** — gráficos com lib RN
+- [x] **3.14 Tela do Agente** — chat estático "Em breve"
+- [~] **3.15 Build Android** — eas.json configurado; gerar APK requer conta Expo (rodar: npx eas build -p android --profile preview)
 
 ---
 
@@ -135,3 +135,4 @@ Entrega: contas reais sincronizando transações via Open Finance gratuito, tela
 - 2026-07-06: brainstorming + protótipo visual aprovado; spec amendment (gastos fixos, pastas, Meu Pluggy, tela do agente, tema Nexforce); fases renumeradas (4=Pluggy, 5=Polimento, 6=Backlog).
 - 2026-07-07: Fase 1 concluída — monorepo, packages (types/schemas/core, 42 testes), API Fastify+tRPC, Drizzle+Postgres (Docker local porta 5439), Better Auth (signup/login/sessão verificados via curl), fatia de transações com 8 testes (incl. isolamento A/B em pglite), workflows CI/Sonar criados (verificação no GitHub pendente de push).
 - 2026-07-07: Fase 2 concluída — web Next.js completa (15 rotas): tema Nexforce claro/escuro, ui-web, auth, sidebar, Início, Histórico (filtros na URL), Categorias (seções), Gastos Fixos (toggle pago→transação, snapshot), Pastas (cards expansíveis), Cobranças, Faturas, Dashboard (Recharts), Agente estático. E2E SC-100/101 verificado via API real. Dev local na porta 3005 (3000 ocupada por outro projeto).
+- 2026-07-07: Fase 3 concluída — mobile Expo/expo-router com paridade: auth por token (SecureStore + plugin expo no servidor), 5 tabs + stack Mais, FlashList com paginação infinita, gastos fixos com toggle, pastas expansíveis, cobranças/faturas com status inline, dashboard com gráficos SVG leves, agente estático. Build Android via EAS configurado (execução requer conta Expo).
