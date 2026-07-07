@@ -13,7 +13,7 @@
 | 1 | Fundação (monorepo + API base) | `[x]` | `plan/01-fundacao/` |
 | 2 | Web (Next.js + tema Nexforce) | `[x]` | `plan/02-web/` |
 | 3 | Mobile (Expo / React Native) | `[x]` | `plan/03-mobile/` |
-| 4 | Integração Meu Pluggy (Conexões) | `[ ]` | `plan/04-pluggy/` |
+| 4 | Integração Meu Pluggy (Conexões) | `[!]` adiada | `plan/04-pluggy/` |
 | 5 | Polimento (edge cases, a11y, E2E) | `[ ]` | `plan/05-polimento/` |
 | 6 | Backlog (agente real, iOS) | `[ ]` | `plan/06-backlog/` |
 
@@ -136,3 +136,4 @@ Entrega: contas reais sincronizando transações via Open Finance gratuito, tela
 - 2026-07-07: Fase 1 concluída — monorepo, packages (types/schemas/core, 42 testes), API Fastify+tRPC, Drizzle+Postgres (Docker local porta 5439), Better Auth (signup/login/sessão verificados via curl), fatia de transações com 8 testes (incl. isolamento A/B em pglite), workflows CI/Sonar criados (verificação no GitHub pendente de push).
 - 2026-07-07: Fase 2 concluída — web Next.js completa (15 rotas): tema Nexforce claro/escuro, ui-web, auth, sidebar, Início, Histórico (filtros na URL), Categorias (seções), Gastos Fixos (toggle pago→transação, snapshot), Pastas (cards expansíveis), Cobranças, Faturas, Dashboard (Recharts), Agente estático. E2E SC-100/101 verificado via API real. Dev local na porta 3005 (3000 ocupada por outro projeto).
 - 2026-07-07: Fase 3 concluída — mobile Expo/expo-router com paridade: auth por token (SecureStore + plugin expo no servidor), 5 tabs + stack Mais, FlashList com paginação infinita, gastos fixos com toggle, pastas expansíveis, cobranças/faturas com status inline, dashboard com gráficos SVG leves, agente estático. Build Android via EAS configurado (execução requer conta Expo).
+- 2026-07-07: Fase 4 (Meu Pluggy) adiada por decisão do Hugo — telas "Conexões" permanecem como placeholder "em breve"; schema e ganchos (bank_connections, source, external_id) já prontos para quando for ativada.
