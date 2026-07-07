@@ -59,8 +59,14 @@ export const updateInvoiceInput = installmentBase
   .refine(paidWithinTotal, paidRefine)
 export type UpdateInvoiceInput = z.infer<typeof updateInvoiceInput>
 
-export const setStatusInput = z.object({
+export const setChargeStatusInput = z.object({
   id: uuid,
-  status: z.string().min(1),
+  status: z.enum(['pendente', 'cobrado', 'pago']),
 })
-export type SetStatusInput = z.infer<typeof setStatusInput>
+export type SetChargeStatusInput = z.infer<typeof setChargeStatusInput>
+
+export const setInvoiceStatusInput = z.object({
+  id: uuid,
+  status: z.enum(['pendente', 'pago']),
+})
+export type SetInvoiceStatusInput = z.infer<typeof setInvoiceStatusInput>
