@@ -7,5 +7,14 @@ export default tseslint.config(
       'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
     },
   },
-  { ignores: ['**/dist/**', '**/.next/**', '**/.expo/**', '**/coverage/**', '**/drizzle/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/.next/**',
+      '**/.expo/**',
+      '**/coverage/**',
+      '**/drizzle/**',
+      '**/next-env.d.ts',
+    ],
+  },
 )

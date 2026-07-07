@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Tema Nexforce — claro (padrão) e escuro (.dark).
+ * Interface predominantemente preto/branco/cinza; verde/vermelho só em valores.
+ * Valores em RGB cru para compor com <alpha-value> no Tailwind.
+ */
+:root {
+  --background: 245 245 245; /* #F5F5F5 */
+  --surface: 255 255 255; /* #FFFFFF */
+  --foreground: 12 14 14; /* #0C0E0E */
+  --body: 81 81 81; /* #515151 */
+  --muted: 119 119 119; /* #777777 */
+  --line: 228 228 226; /* #E4E4E2 */
+  --navy: 48 63 99; /* #303F63 */
+  --info: 33 90 159; /* #215A9F */
+  --positive: 45 110 68; /* #2D6E44 */
+  --negative: 186 25 37; /* #BA1925 */
+  --attention: 138 116 20; /* #8A7414 — amarelo escurecido p/ contraste no claro */
+  --sidebar: 12 14 14; /* #0C0E0E */
+}
+
+.dark {
+  --background: 12 14 14; /* #0C0E0E */
+  --surface: 22 25 25; /* #161919 */
+  --foreground: 255 255 255;
+  --body: 199 199 197; /* #C7C7C5 */
+  --muted: 156 155 155; /* #9C9B9B */
+  --line: 41 45 45; /* #292D2D */
+  --navy: 143 163 209; /* #8FA3D1 — clareado p/ AA sobre escuro */
+  --info: 127 176 232; /* #7FB0E8 */
+  --positive: 92 191 139; /* #5CBF8B */
+  --negative: 240 112 122; /* #F0707A */
+  --attention: 216 181 35; /* #D8B523 — amarelo só sobre escuro */
+  --sidebar: 6 7 7; /* #060707 */
+}
+
+body {
+  background-color: rgb(var(--background));
+  color: rgb(var(--body));
+}

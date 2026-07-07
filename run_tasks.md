@@ -11,7 +11,7 @@
 | Fase | Tarefa | Status | Detalhe |
 |---|---|---|---|
 | 1 | Fundação (monorepo + API base) | `[x]` | `plan/01-fundacao/` |
-| 2 | Web (Next.js + tema Nexforce) | `[ ]` | `plan/02-web/` |
+| 2 | Web (Next.js + tema Nexforce) | `[x]` | `plan/02-web/` |
 | 3 | Mobile (Expo / React Native) | `[ ]` | `plan/03-mobile/` |
 | 4 | Integração Meu Pluggy (Conexões) | `[ ]` | `plan/04-pluggy/` |
 | 5 | Polimento (edge cases, a11y, E2E) | `[ ]` | `plan/05-polimento/` |
@@ -56,19 +56,19 @@ Entrega: monorepo funcionando, API tRPC no ar, banco (com tabelas de gastos fixo
 
 Entrega: app web completo consumindo a API, todas as telas do protótipo aprovado, tema Nexforce claro/escuro.
 
-- [ ] **2.1 Scaffold web** — Next.js (App Router) + Tailwind + cliente tRPC + TanStack Query
-- [ ] **2.2 Tema Nexforce + `packages/ui-web`** — tokens claro/escuro, Lato, componentes base (Button, Input, Select, Card, Dialog, Table, Tabs, Badge, Toggle)
-- [ ] **2.3 Auth web** — telas login/signup/forgot/reset, sessão por cookie, guard de rotas
-- [ ] **2.4 Layout/Navegação** — sidebar escura em grupos (principal · Contas · Automação), item Agente "Em breve", responsividade
-- [ ] **2.5 Transações + Home** — 3 cards, barra, 5 últimas, widget gastos fixos, CRUD com campo Pasta
-- [ ] **2.6 Histórico** — filtros cumulativos na URL, badges de origem/pasta, excluir
-- [ ] **2.7 Categorias/Subcategorias** — CRUD, seções Despesas × Receitas separadas
-- [ ] **2.8 Gastos Fixos** — seletor de mês, 3 cards, toggle pago→transação automática, snapshot de valor, estados pago/pendente/vencido
-- [ ] **2.9 Pastas** — cards expansíveis com total gasto e transações dentro
-- [ ] **2.10 Cobranças** — cards + tabela + status inline + validação `amount_paid`
-- [ ] **2.11 Faturas** — cards + tabela + CRUD
-- [ ] **2.12 Dashboard** — seletor de mês, cards, barra, linha de saldo acumulado (Recharts)
-- [ ] **2.13 Tela do Agente** — chat estático "Em breve"
+- [x] **2.1 Scaffold web** — Next.js (App Router) + Tailwind + cliente tRPC + TanStack Query
+- [x] **2.2 Tema Nexforce + `packages/ui-web`** — tokens claro/escuro, Lato, componentes base (Button, Input, Select, Card, Dialog, Table, Tabs, Badge, Toggle)
+- [x] **2.3 Auth web** — telas login/signup/forgot/reset, sessão por cookie, guard de rotas
+- [x] **2.4 Layout/Navegação** — sidebar escura em grupos (principal · Contas · Automação), item Agente "Em breve", responsividade
+- [x] **2.5 Transações + Home** — 3 cards, barra, 5 últimas, widget gastos fixos, CRUD com campo Pasta
+- [x] **2.6 Histórico** — filtros cumulativos na URL, badges de origem/pasta, excluir
+- [x] **2.7 Categorias/Subcategorias** — CRUD, seções Despesas × Receitas separadas
+- [x] **2.8 Gastos Fixos** — seletor de mês, 3 cards, toggle pago→transação automática, snapshot de valor, estados pago/pendente/vencido
+- [x] **2.9 Pastas** — cards expansíveis com total gasto e transações dentro
+- [x] **2.10 Cobranças** — cards + tabela + status inline + validação `amount_paid`
+- [x] **2.11 Faturas** — cards + tabela + CRUD
+- [x] **2.12 Dashboard** — seletor de mês, cards, barra, linha de saldo acumulado (Recharts)
+- [x] **2.13 Tela do Agente** — chat estático "Em breve"
 
 ---
 
@@ -134,3 +134,4 @@ Entrega: contas reais sincronizando transações via Open Finance gratuito, tela
 - 2026-06-25: plano criado (mapa completo + fase 1 detalhada).
 - 2026-07-06: brainstorming + protótipo visual aprovado; spec amendment (gastos fixos, pastas, Meu Pluggy, tela do agente, tema Nexforce); fases renumeradas (4=Pluggy, 5=Polimento, 6=Backlog).
 - 2026-07-07: Fase 1 concluída — monorepo, packages (types/schemas/core, 42 testes), API Fastify+tRPC, Drizzle+Postgres (Docker local porta 5439), Better Auth (signup/login/sessão verificados via curl), fatia de transações com 8 testes (incl. isolamento A/B em pglite), workflows CI/Sonar criados (verificação no GitHub pendente de push).
+- 2026-07-07: Fase 2 concluída — web Next.js completa (15 rotas): tema Nexforce claro/escuro, ui-web, auth, sidebar, Início, Histórico (filtros na URL), Categorias (seções), Gastos Fixos (toggle pago→transação, snapshot), Pastas (cards expansíveis), Cobranças, Faturas, Dashboard (Recharts), Agente estático. E2E SC-100/101 verificado via API real. Dev local na porta 3005 (3000 ocupada por outro projeto).
