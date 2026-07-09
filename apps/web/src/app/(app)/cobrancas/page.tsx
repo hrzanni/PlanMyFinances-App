@@ -1,7 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { formatDate, installmentTotals, toNumber } from '@pmf/core'
+import {
+  emptyInstallmentDraft,
+  formatDate,
+  installmentTotals,
+  parseInstallmentDraft,
+  toNumber,
+  validateInstallmentDraft,
+  type InstallmentDraft,
+} from '@pmf/core'
 import {
   Button,
   Card,
@@ -18,13 +26,7 @@ import {
 import { trpc } from '@/lib/trpc'
 import { money } from '@/lib/format'
 import { PageHeader } from '@/components/page-header'
-import {
-  InstallmentFormFields,
-  emptyInstallmentDraft,
-  parseInstallmentDraft,
-  validateInstallmentDraft,
-  type InstallmentDraft,
-} from '@/components/installment-form-fields'
+import { InstallmentFormFields } from '@/components/installment-form-fields'
 
 const statuses = ['pendente', 'cobrado', 'pago'] as const
 

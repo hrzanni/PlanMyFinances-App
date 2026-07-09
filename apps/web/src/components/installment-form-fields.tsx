@@ -1,47 +1,7 @@
 'use client'
 
+import type { InstallmentDraft } from '@pmf/core'
 import { Field, Input, Label } from '@pmf/ui-web'
-
-export interface InstallmentDraft {
-  name: string
-  description: string
-  amountPerInstallment: string
-  totalInstallments: string
-  amountPaid: string
-  dueDate: string
-}
-
-export const emptyInstallmentDraft: InstallmentDraft = {
-  name: '',
-  description: '',
-  amountPerInstallment: '',
-  totalInstallments: '1',
-  amountPaid: '0',
-  dueDate: '',
-}
-
-/** Valida RN-004 no cliente: pago ≤ parcela × parcelas. Retorna erro ou null. */
-export function validateInstallmentDraft(d: InstallmentDraft): string | null {
-  const per = Number(d.amountPerInstallment.replace(',', '.'))
-  const count = Number(d.totalInstallments)
-  const paid = Number(d.amountPaid.replace(',', '.') || '0')
-  if (!per || per <= 0) return 'Informe o valor da parcela'
-  if (!count || count < 1) return 'Quantidade de parcelas deve ser ao menos 1'
-  if (paid < 0) return 'Valor pago não pode ser negativo'
-  if (Math.round(paid * 100) > Math.round(per * 100) * count)
-    return 'Valor pago não pode exceder o total'
-  return null
-}
-
-export function parseInstallmentDraft(d: InstallmentDraft) {
-  return {
-    description: d.description || undefined,
-    amountPerInstallment: Number(d.amountPerInstallment.replace(',', '.')),
-    totalInstallments: Number(d.totalInstallments),
-    amountPaid: Number(d.amountPaid.replace(',', '.') || '0'),
-    dueDate: d.dueDate || undefined,
-  }
-}
 
 /** Campos comuns de cobrança/fatura (parcela, parcelas, pago, vencimento). */
 export function InstallmentFormFields({

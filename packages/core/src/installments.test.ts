@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { installmentTotals, isValidAmountPaid } from './installments'
+import {
+  emptyInstallmentDraft,
+  installmentTotals,
+  isValidAmountPaid,
+  parseInstallmentDraft,
+  validateInstallmentDraft,
+} from './installments'
 
 describe('installmentTotals', () => {
   it('calcula total e restante', () => {
@@ -26,5 +32,60 @@ describe('isValidAmountPaid', () => {
   })
   it('rejeita negativo', () => {
     expect(isValidAmountPaid(100, 3, -1)).toBe(false)
+  })
+})
+
+function draft(patch: Partial<typeof emptyInstallmentDraft>) {
+  return { ...emptyInstallmentDraft, name: 'X', amountPerInstallment: '100', ...patch }
+}
+
+describe('validateInstallmentDraft', () => {
+  it('aceita rascunho válido', () => {
+    expect(validateInstallmentDraft(draft({}))).toBeNull()
+  })
+  it('exige valor da parcela', () => {
+    expect(validateInstallmentDraft(draft({ amountPerInstallment: '' }))).toMatch(/parcela/)
+    expect(validateInstallmentDraft(draft({ amountPerInstallment: '0' }))).toMatch(/parcela/)
+  })
+  it('exige ao menos 1 parcela', () => {
+    expect(validateInstallmentDraft(draft({ totalInstallments: '0' }))).toMatch(/ao menos 1/)
+  })
+  it('rejeita pago negativo', () => {
+    expect(validateInstallmentDraft(draft({ amountPaid: '-1' }))).toMatch(/negativo/)
+  })
+  it('rejeita pago acima do total, aceitando vírgula (RN-004)', () => {
+    expect(
+      validateInstallmentDraft(draft({ totalInstallments: '2', amountPaid: '200,01' })),
+    ).toMatch(/exceder/)
+    expect(
+      validateInstallmentDraft(draft({ totalInstallments: '2', amountPaid: '200,00' })),
+    ).toBeNull()
+  })
+  it('rejeita vencimento fora do formato AAAA-MM-DD', () => {
+    expect(validateInstallmentDraft(draft({ dueDate: '10/07/2026' }))).toMatch(/AAAA-MM-DD/)
+    expect(validateInstallmentDraft(draft({ dueDate: '2026-07-10' }))).toBeNull()
+  })
+})
+
+describe('parseInstallmentDraft', () => {
+  it('normaliza vírgula e converte números', () => {
+    expect(
+      parseInstallmentDraft(
+        draft({ amountPerInstallment: '487,50', totalInstallments: '4', amountPaid: '975' }),
+      ),
+    ).toEqual({
+      description: undefined,
+      amountPerInstallment: 487.5,
+      totalInstallments: 4,
+      amountPaid: 975,
+      dueDate: undefined,
+    })
+  })
+  it('campos opcionais vazios viram undefined e pago vazio vira 0', () => {
+    expect(parseInstallmentDraft(draft({ amountPaid: '', dueDate: '' }))).toMatchObject({
+      amountPaid: 0,
+      dueDate: undefined,
+      description: undefined,
+    })
   })
 })
