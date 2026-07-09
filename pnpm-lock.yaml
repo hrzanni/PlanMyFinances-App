@@ -90,6 +90,9 @@ importers:
       '@better-auth/expo':
         specifier: ^1.6.23
         version: 1.6.23(48b7ec73593aa64e8da759d725e553d6)
+      '@expo/vector-icons':
+        specifier: 14.1.0
+        version: 14.1.0(expo-font@13.3.2(expo@53.0.27(@babel/core@7.29.7)(@expo/metro-runtime@5.0.5(react-native@0.79.5(@babel/core@7.29.7)(@types/react@19.0.14)(react@19.0.0)))(react-native@0.79.5(@babel/core@7.29.7)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.29.7)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       '@pmf/core':
         specifier: workspace:*
         version: link:../../packages/core

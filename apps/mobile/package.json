@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@better-auth/expo": "^1.6.23",
+    "@expo/vector-icons": "14.1.0",
     "@pmf/core": "workspace:*",
     "@pmf/schemas": "workspace:*",
     "@pmf/types": "workspace:*",

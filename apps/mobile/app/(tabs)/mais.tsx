@@ -1,21 +1,26 @@
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Pressable, ScrollView, Text, View, useColorScheme } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, type Href } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { ScreenTitle } from '@/components/ui'
 import { signOut, useSession } from '@/lib/auth-client'
 
-const items: Array<{ href: Href; label: string; icon: string; soon?: boolean }> = [
-  { href: '/mais/pastas', label: 'Pastas', icon: '📁' },
-  { href: '/mais/categorias', label: 'Categorias', icon: '🏷️' },
-  { href: '/mais/cobrancas', label: 'Cobranças', icon: '📥' },
-  { href: '/mais/faturas', label: 'Faturas', icon: '💳' },
-  { href: '/mais/conexoes', label: 'Conexões', icon: '🔗' },
-  { href: '/mais/agente', label: 'Agente', icon: '💬', soon: true },
+type IconName = keyof typeof Ionicons.glyphMap
+
+const items: Array<{ href: Href; label: string; icon: IconName; soon?: boolean }> = [
+  { href: '/mais/pastas', label: 'Pastas', icon: 'folder-outline' },
+  { href: '/mais/categorias', label: 'Categorias', icon: 'pricetags-outline' },
+  { href: '/mais/cobrancas', label: 'Cobranças', icon: 'arrow-down-circle-outline' },
+  { href: '/mais/faturas', label: 'Faturas', icon: 'card-outline' },
+  { href: '/mais/conexoes', label: 'Conexões', icon: 'link-outline' },
+  { href: '/mais/agente', label: 'Agente', icon: 'chatbubble-ellipses-outline', soon: true },
 ]
 
 export default function MoreScreen() {
   const router = useRouter()
   const { data: session } = useSession()
+  const dark = useColorScheme() === 'dark'
+  const iconColor = dark ? '#FFFFFF' : '#0C0E0E'
 
   async function handleSignOut() {
     await signOut()
@@ -36,7 +41,7 @@ export default function MoreScreen() {
                 i > 0 ? 'border-t border-line dark:border-line-dark' : ''
               }`}
             >
-              <Text className="text-base">{item.icon}</Text>
+              <Ionicons name={item.icon} size={18} color={iconColor} />
               <Text className="flex-1 text-sm font-bold text-foreground dark:text-foreground-dark">
                 {item.label}
               </Text>
@@ -45,7 +50,7 @@ export default function MoreScreen() {
                   Em breve
                 </Text>
               ) : null}
-              <Text className="text-muted dark:text-muted-dark">›</Text>
+              <Ionicons name="chevron-forward" size={14} color="#9C9B9B" />
             </Pressable>
           ))}
         </View>

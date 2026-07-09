@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { formatDate } from '@pmf/core'
 import type { RouterOutputs } from '@/lib/trpc'
 import { money } from '@/lib/format'
@@ -7,7 +8,7 @@ import { Badge } from './ui'
 type Tx = RouterOutputs['transactions']['list']['items'][number]
 
 /** Linha de transação reutilizada em Início, Histórico e Pastas. */
-export function TxRow({ tx }: { tx: Tx }) {
+export function TxRow({ tx, onDelete }: { tx: Tx; onDelete?: () => void }) {
   const positive = tx.type === 'receita'
   return (
     <View className="flex-row items-center gap-3 border-b border-line py-2.5 dark:border-line-dark">
@@ -34,6 +35,11 @@ export function TxRow({ tx }: { tx: Tx }) {
         {positive ? '+ ' : '− '}
         {money(tx.value)}
       </Text>
+      {onDelete ? (
+        <Pressable accessibilityLabel="Excluir transação" hitSlop={8} onPress={onDelete}>
+          <Ionicons name="trash-outline" size={16} color="#9C9B9B" />
+        </Pressable>
+      ) : null}
     </View>
   )
 }

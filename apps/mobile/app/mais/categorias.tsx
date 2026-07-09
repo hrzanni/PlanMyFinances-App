@@ -1,32 +1,8 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import { trpc, type RouterOutputs } from '@/lib/trpc'
+import { trpc } from '@/lib/trpc'
 import { Button, Card, EmptyState, Input } from '@/components/ui'
-
-type Category = RouterOutputs['categories']['list'][number]
-
-function CategoryBlock({ category }: { category: Category }) {
-  return (
-    <Card className="mb-3">
-      <Text className="mb-2 text-sm font-bold text-foreground dark:text-foreground-dark">
-        {category.name}
-      </Text>
-      <View className="flex-row flex-wrap gap-1.5">
-        {category.subcategories.map((sub: Category['subcategories'][number]) => (
-          <View
-            key={sub.id}
-            className="rounded-full border border-line bg-background px-2.5 py-1 dark:border-line-dark dark:bg-background-dark"
-          >
-            <Text className="text-[11px] text-body dark:text-body-dark">{sub.name}</Text>
-          </View>
-        ))}
-        {category.subcategories.length === 0 ? (
-          <Text className="text-[11px] text-muted dark:text-muted-dark">sem subcategorias</Text>
-        ) : null}
-      </View>
-    </Card>
-  )
-}
+import { CategoryBlock } from '@/components/category-block'
 
 export default function CategoriesScreen() {
   const { data: categories } = trpc.categories.list.useQuery()

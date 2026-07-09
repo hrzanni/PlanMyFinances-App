@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 import { trpc } from '@/lib/trpc'
 import { addMonths, currentMonth, money, monthLabel } from '@/lib/format'
-import { Badge, Button, Card, EmptyState, Input, Kpi, ScreenTitle, Toggle } from '@/components/ui'
+import { confirmDelete } from '@/lib/confirm'
+import { Badge, Button, Card, EmptyState, Kpi, ScreenTitle, Toggle } from '@/components/ui'
+import { FixedExpenseFormCard, type EditableFixedExpense } from '@/components/fixed-expense-form'
 
 const toneOf = { pago: 'paid', pendente: 'pending', vencido: 'late' } as const
 
 export default function FixedExpensesScreen() {
   const [month, setMonth] = useState(currentMonth)
   const [formOpen, setFormOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [dueDay, setDueDay] = useState('5')
-  const [error, setError] = useState<string | null>(null)
+  const [editing, setEditing] = useState<EditableFixedExpense | null>(null)
 
   const utils = trpc.useUtils()
   const list = trpc.fixedExpenses.list.useQuery({ month })
@@ -24,24 +24,11 @@ export default function FixedExpensesScreen() {
   }
   const pay = trpc.fixedExpenses.pay.useMutation({ onSuccess: invalidate })
   const unpay = trpc.fixedExpenses.unpay.useMutation({ onSuccess: invalidate })
-  const create = trpc.fixedExpenses.create.useMutation({
-    onSuccess: () => {
-      invalidate()
-      setFormOpen(false)
-      setName('')
-      setAmount('')
-    },
-    onError: () => setError('Erro ao salvar'),
-  })
+  const del = trpc.fixedExpenses.delete.useMutation({ onSuccess: invalidate })
 
-  function submit() {
-    setError(null)
-    const parsed = Number(amount.replace(',', '.'))
-    const day = Number(dueDay)
-    if (!name.trim()) return setError('Informe o nome')
-    if (!parsed || parsed <= 0) return setError('Valor maior que zero')
-    if (!day || day < 1 || day > 31) return setError('Dia entre 1 e 31')
-    create.mutate({ name: name.trim(), amount: parsed, dueDay: day })
+  function closeForm() {
+    setFormOpen(false)
+    setEditing(null)
   }
 
   return (
@@ -87,6 +74,35 @@ export default function FixedExpensesScreen() {
                       <Badge tone={toneOf[item.monthlyStatus]} label={item.monthlyStatus} />
                     </View>
                   </View>
+                  <Pressable
+                    accessibilityLabel={`Editar ${item.name}`}
+                    hitSlop={8}
+                    onPress={() => {
+                      setEditing({
+                        id: item.id,
+                        name: item.name,
+                        amount: item.amount,
+                        dueDay: item.dueDay,
+                        categoryId: item.categoryId,
+                      })
+                      setFormOpen(true)
+                    }}
+                  >
+                    <Ionicons name="create-outline" size={18} color="#9C9B9B" />
+                  </Pressable>
+                  <Pressable
+                    accessibilityLabel={`Excluir ${item.name}`}
+                    hitSlop={8}
+                    onPress={() =>
+                      confirmDelete(
+                        'Excluir gasto fixo',
+                        `Excluir "${item.name}"? O histórico de pagamentos deste gasto será removido; as transações já criadas permanecem.`,
+                        () => del.mutate({ id: item.id }),
+                      )
+                    }
+                  >
+                    <Ionicons name="trash-outline" size={18} color="#9C9B9B" />
+                  </Pressable>
                   <Toggle
                     checked={paid}
                     disabled={pay.isPending || unpay.isPending}
@@ -109,33 +125,11 @@ export default function FixedExpensesScreen() {
 
         <View className="my-4">
           {formOpen ? (
-            <Card>
-              <Input label="Nome" value={name} onChangeText={setName} />
-              <Input
-                label="Valor mensal (R$)"
-                keyboardType="decimal-pad"
-                value={amount}
-                onChangeText={setAmount}
-              />
-              <Input
-                label="Dia do vencimento"
-                keyboardType="number-pad"
-                value={dueDay}
-                onChangeText={setDueDay}
-              />
-              {error ? (
-                <Text className="mb-2 text-xs font-bold text-negative dark:text-negative-dark">
-                  {error}
-                </Text>
-              ) : null}
-              <Button
-                title={create.isPending ? 'Salvando…' : 'Salvar'}
-                onPress={submit}
-                disabled={create.isPending}
-              />
-              <View className="h-2" />
-              <Button title="Cancelar" variant="ghost" onPress={() => setFormOpen(false)} />
-            </Card>
+            <FixedExpenseFormCard
+              key={editing?.id ?? 'new'}
+              editing={editing}
+              onClose={closeForm}
+            />
           ) : (
             <Button title="+ Novo gasto fixo" onPress={() => setFormOpen(true)} />
           )}

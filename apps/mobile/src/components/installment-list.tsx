@@ -1,7 +1,15 @@
 import { Pressable, Text, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { formatDate, installmentTotals, toNumber } from '@pmf/core'
 import { money } from '@/lib/format'
-import { Card } from './ui'
+import { Badge, Card, type BadgeTone } from './ui'
+
+function statusTone(status: string): BadgeTone {
+  if (status === 'pago') return 'paid'
+  if (status === 'pendente') return 'pending'
+  if (status === 'cobrado') return 'info'
+  return 'neutral'
+}
 
 export interface InstallmentRow {
   id: string
@@ -19,10 +27,12 @@ export function InstallmentCard({
   row,
   statuses,
   onSetStatus,
+  onDelete,
 }: {
   row: InstallmentRow
   statuses: readonly string[]
   onSetStatus: (status: string) => void
+  onDelete?: () => void
 }) {
   const totals = installmentTotals(
     toNumber(row.amountPerInstallment),
@@ -31,9 +41,21 @@ export function InstallmentCard({
   )
   return (
     <Card className="mb-3">
-      <Text className="text-sm font-bold text-foreground dark:text-foreground-dark">
-        {row.title}
-      </Text>
+      <View className="flex-row items-center gap-2">
+        <Text className="flex-1 text-sm font-bold text-foreground dark:text-foreground-dark">
+          {row.title}
+        </Text>
+        <Badge tone={statusTone(row.status)} label={row.status} />
+        {onDelete ? (
+          <Pressable
+            accessibilityLabel={`Excluir ${row.title}`}
+            hitSlop={8}
+            onPress={onDelete}
+          >
+            <Ionicons name="trash-outline" size={16} color="#9C9B9B" />
+          </Pressable>
+        ) : null}
+      </View>
       {row.description ? (
         <Text className="text-[11px] text-muted dark:text-muted-dark">{row.description}</Text>
       ) : null}

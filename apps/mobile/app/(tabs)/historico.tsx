@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { FlashList } from '@shopify/flash-list'
 import { trpc } from '@/lib/trpc'
+import { confirmDelete } from '@/lib/confirm'
 import { Button, EmptyState, ScreenTitle } from '@/components/ui'
 import { TxRow } from '@/components/tx-row'
 import { TxFormModal } from '@/components/tx-form-modal'
@@ -21,6 +22,15 @@ export default function HistoryScreen() {
     { limit: 30, type: typeFilter === 'todas' ? undefined : typeFilter },
     { getNextPageParam: (last) => last.nextCursor ?? undefined },
   )
+
+  const utils = trpc.useUtils()
+  const del = trpc.transactions.delete.useMutation({
+    onSuccess: () => {
+      utils.transactions.invalidate()
+      utils.dashboard.invalidate()
+      utils.folders.invalidate()
+    },
+  })
 
   const items = query.data?.pages.flatMap((p) => p.items) ?? []
 
@@ -66,7 +76,16 @@ export default function HistoryScreen() {
             data={items}
             keyExtractor={(item) => item.id}
             estimatedItemSize={56}
-            renderItem={({ item }) => <TxRow tx={item} />}
+            renderItem={({ item }) => (
+              <TxRow
+                tx={item}
+                onDelete={() =>
+                  confirmDelete('Excluir transação', 'Excluir esta transação?', () =>
+                    del.mutate({ id: item.id }),
+                  )
+                }
+              />
+            )}
             onEndReached={() => {
               if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage()
             }}

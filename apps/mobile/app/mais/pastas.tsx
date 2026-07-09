@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { trpc } from '@/lib/trpc'
 import { money } from '@/lib/format'
+import { confirmDelete } from '@/lib/confirm'
 import { Badge, Button, Card, EmptyState, Input } from '@/components/ui'
 import { TxRow } from '@/components/tx-row'
 
@@ -15,6 +17,11 @@ function FolderCard({ id, name, icon, status, totalSpent, txCount }: {
 }) {
   const [expanded, setExpanded] = useState(false)
   const txs = trpc.transactions.list.useQuery({ folderId: id, limit: 10 }, { enabled: expanded })
+  const utils = trpc.useUtils()
+  const invalidate = () => utils.folders.invalidate()
+  const archive = trpc.folders.update.useMutation({ onSuccess: invalidate })
+  const del = trpc.folders.delete.useMutation({ onSuccess: invalidate })
+  const archived = status === 'archived'
 
   return (
     <Card className="mb-3">
@@ -45,6 +52,31 @@ function FolderCard({ id, name, icon, status, totalSpent, txCount }: {
               Nenhuma transação nesta pasta.
             </Text>
           )}
+          <View className="mt-2 flex-row items-center gap-3">
+            <Pressable
+              accessibilityRole="button"
+              disabled={archive.isPending}
+              onPress={() => archive.mutate({ id, status: archived ? 'active' : 'archived' })}
+              className="rounded-full border border-line px-3 py-1.5 dark:border-line-dark"
+            >
+              <Text className="text-xs font-bold text-body dark:text-body-dark">
+                {archived ? 'Reativar' : 'Arquivar'}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel={`Excluir pasta ${name}`}
+              hitSlop={8}
+              onPress={() =>
+                confirmDelete(
+                  'Excluir pasta',
+                  `Excluir a pasta "${name}"? As transações continuam existindo, apenas sem pasta.`,
+                  () => del.mutate({ id }),
+                )
+              }
+            >
+              <Ionicons name="trash-outline" size={16} color="#9C9B9B" />
+            </Pressable>
+          </View>
         </View>
       ) : null}
     </Card>

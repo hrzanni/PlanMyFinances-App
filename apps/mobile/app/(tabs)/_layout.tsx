@@ -1,14 +1,23 @@
 import { Tabs, Redirect } from 'expo-router'
-import { Text, useColorScheme } from 'react-native'
+import { useColorScheme } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSession } from '@/lib/auth-client'
 import { isDevBypassEnabled } from '@/lib/dev-mode'
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
-  return (
-    <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.45 }} accessibilityElementsHidden>
-      {label}
-    </Text>
-  )
+type IconName = keyof typeof Ionicons.glyphMap
+
+function TabIcon({
+  name,
+  focusedName,
+  color,
+  focused,
+}: {
+  name: IconName
+  focusedName: IconName
+  color: string
+  focused: boolean
+}) {
+  return <Ionicons name={focused ? focusedName : name} size={20} color={color} />
 }
 
 /** 5 tabs (FR-151). Guard: sem sessão → login. */
@@ -35,35 +44,39 @@ export default function TabsLayout() {
         name="inicio"
         options={{
           title: 'Início',
-          tabBarIcon: ({ focused }) => <TabIcon label="🏠" focused={focused} />,
+          tabBarIcon: (p) => <TabIcon name="home-outline" focusedName="home" {...p} />,
         }}
       />
       <Tabs.Screen
         name="historico"
         options={{
           title: 'Histórico',
-          tabBarIcon: ({ focused }) => <TabIcon label="🕐" focused={focused} />,
+          tabBarIcon: (p) => <TabIcon name="time-outline" focusedName="time" {...p} />,
         }}
       />
       <Tabs.Screen
         name="fixos"
         options={{
           title: 'Fixos',
-          tabBarIcon: ({ focused }) => <TabIcon label="📅" focused={focused} />,
+          tabBarIcon: (p) => <TabIcon name="calendar-outline" focusedName="calendar" {...p} />,
         }}
       />
       <Tabs.Screen
         name="dash"
         options={{
           title: 'Dash',
-          tabBarIcon: ({ focused }) => <TabIcon label="📊" focused={focused} />,
+          tabBarIcon: (p) => (
+            <TabIcon name="stats-chart-outline" focusedName="stats-chart" {...p} />
+          ),
         }}
       />
       <Tabs.Screen
         name="mais"
         options={{
           title: 'Mais',
-          tabBarIcon: ({ focused }) => <TabIcon label="⋯" focused={focused} />,
+          tabBarIcon: (p) => (
+            <TabIcon name="ellipsis-horizontal" focusedName="ellipsis-horizontal" {...p} />
+          ),
         }}
       />
     </Tabs>
