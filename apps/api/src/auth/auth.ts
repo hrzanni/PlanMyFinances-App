@@ -10,7 +10,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3333',
   secret: process.env.BETTER_AUTH_SECRET,
   // web por cookie; mobile Expo pelo scheme do app (deep link)
-  trustedOrigins: [process.env.WEB_ORIGIN ?? 'http://localhost:3000', 'planmyfinances://'],
+  trustedOrigins: [process.env.WEB_ORIGIN ?? 'http://localhost:3005', 'planmyfinances://'],
   database: drizzleAdapter(db, {
     provider: 'pg',
     // com usePlural o adapter procura as chaves "users", "sessions", "accounts", "verifications"
