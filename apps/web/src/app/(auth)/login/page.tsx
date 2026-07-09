@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button, Field, Input, Label } from '@pmf/ui-web'
 import { signIn } from '@/lib/auth-client'
+import { isDevBypassEnabled } from '@/lib/dev-mode'
 import { AuthCard } from '@/components/auth-card'
 
 export default function LoginPage() {
@@ -56,6 +57,16 @@ export default function LoginPage() {
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Entrando…' : 'Entrar'}
         </Button>
+        {isDevBypassEnabled ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="mt-2 w-full"
+            onClick={() => router.replace('/')}
+          >
+            Entrar em modo dev
+          </Button>
+        ) : null}
       </form>
       <div className="mt-4 flex justify-between text-xs">
         <Link href="/esqueci-senha" className="text-info hover:underline">

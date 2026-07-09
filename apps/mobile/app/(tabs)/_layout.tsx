@@ -1,6 +1,7 @@
 import { Tabs, Redirect } from 'expo-router'
 import { Text, useColorScheme } from 'react-native'
 import { useSession } from '@/lib/auth-client'
+import { isDevBypassEnabled } from '@/lib/dev-mode'
 
 function TabIcon({ label, focused }: { label: string; focused: boolean }) {
   return (
@@ -14,7 +15,7 @@ function TabIcon({ label, focused }: { label: string; focused: boolean }) {
 export default function TabsLayout() {
   const scheme = useColorScheme()
   const { data: session, isPending } = useSession()
-  if (!isPending && !session) return <Redirect href="/login" />
+  if (!isPending && !isDevBypassEnabled && !session) return <Redirect href="/login" />
 
   const dark = scheme === 'dark'
   return (

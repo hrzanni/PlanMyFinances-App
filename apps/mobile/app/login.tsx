@@ -4,6 +4,7 @@ import { Link, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Button, Input } from '@/components/ui'
 import { signIn } from '@/lib/auth-client'
+import { isDevBypassEnabled } from '@/lib/dev-mode'
 
 export default function LoginScreen() {
   const router = useRouter()
@@ -46,6 +47,15 @@ export default function LoginScreen() {
         </Text>
       ) : null}
       <Button title={loading ? 'Entrando…' : 'Entrar'} onPress={handleLogin} disabled={loading} />
+      {isDevBypassEnabled ? (
+        <View className="mt-2">
+          <Button
+            title="Entrar em modo dev"
+            variant="ghost"
+            onPress={() => router.replace('/(tabs)/inicio')}
+          />
+        </View>
+      ) : null}
       <View className="mt-4 flex-row justify-between">
         <Link href="/esqueci-senha" className="text-xs text-info dark:text-info-dark">
           Esqueci minha senha

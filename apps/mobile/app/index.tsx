@@ -1,8 +1,9 @@
 import { Redirect } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import { useSession } from '@/lib/auth-client'
+import { isDevBypassEnabled } from '@/lib/dev-mode'
 
-/** Porta de entrada: decide entre login e as tabs conforme a sessão. */
+/** Porta de entrada: decide entre login e as tabs conforme a sessão (FR-064/FR-080). */
 export default function Index() {
   const { data: session, isPending } = useSession()
   if (isPending) {
@@ -12,5 +13,5 @@ export default function Index() {
       </View>
     )
   }
-  return <Redirect href={session ? '/(tabs)/inicio' : '/login'} />
+  return <Redirect href={isDevBypassEnabled || session ? '/(tabs)/inicio' : '/login'} />
 }
