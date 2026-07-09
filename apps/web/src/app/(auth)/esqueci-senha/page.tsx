@@ -10,13 +10,24 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await authClient.requestPasswordReset({ email, redirectTo: '/redefinir-senha' })
-    setLoading(false)
-    setSent(true)
+    setError(null)
+    try {
+      const { error: err } = await authClient.requestPasswordReset({
+        email,
+        redirectTo: '/redefinir-senha',
+      })
+      if (err) setError('Não foi possível enviar o link. Tente novamente.')
+      else setSent(true)
+    } catch {
+      setError('Não foi possível enviar o link. Verifique a conexão e tente novamente.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -38,6 +49,7 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </Field>
+          {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? 'Enviando…' : 'Enviar link de recuperação'}
           </Button>

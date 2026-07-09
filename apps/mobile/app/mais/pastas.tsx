@@ -57,6 +57,7 @@ export default function FoldersScreen() {
   const [formOpen, setFormOpen] = useState(false)
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const create = trpc.folders.create.useMutation({
     onSuccess: () => {
@@ -65,10 +66,17 @@ export default function FoldersScreen() {
       setName('')
       setIcon('')
     },
+    onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
 
+  function submit() {
+    setError(null)
+    if (!name.trim()) return setError('Informe o nome')
+    create.mutate({ name: name.trim(), icon: icon || undefined })
+  }
+
   return (
-    <ScrollView className="flex-1 px-4 pt-3">
+    <ScrollView className="flex-1 px-4 pt-3" keyboardShouldPersistTaps="handled">
       {folders && folders.length > 0 ? (
         folders.map((f) => (
           <FolderCard
@@ -90,9 +98,14 @@ export default function FoldersScreen() {
           <Card>
             <Input label="Nome" value={name} onChangeText={setName} />
             <Input label="Emoji (opcional)" value={icon} onChangeText={setIcon} maxLength={4} />
+            {error ? (
+              <Text className="mb-2 text-xs font-bold text-negative dark:text-negative-dark">
+                {error}
+              </Text>
+            ) : null}
             <Button
               title={create.isPending ? 'Salvando…' : 'Criar pasta'}
-              onPress={() => name.trim() && create.mutate({ name: name.trim(), icon: icon || undefined })}
+              onPress={submit}
               disabled={create.isPending}
             />
             <View className="h-2" />

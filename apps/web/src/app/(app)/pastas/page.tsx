@@ -153,6 +153,7 @@ export default function FoldersPage() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   const create = trpc.folders.create.useMutation({
     onSuccess: () => {
@@ -161,7 +162,15 @@ export default function FoldersPage() {
       setName('')
       setIcon('')
     },
+    onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (!name.trim()) return setError('Informe o nome')
+    create.mutate({ name: name.trim(), icon: icon || undefined })
+  }
 
   return (
     <>
@@ -189,12 +198,7 @@ export default function FoldersPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Nova pasta">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (name.trim()) create.mutate({ name: name.trim(), icon: icon || undefined })
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-[1fr_5rem] gap-3">
               <Field>
                 <Label htmlFor="folder-name">Nome</Label>
@@ -217,8 +221,9 @@ export default function FoldersPage() {
                 />
               </Field>
             </div>
+            {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
             <Button type="submit" disabled={create.isPending} className="w-full">
-              Criar pasta
+              {create.isPending ? 'Salvando…' : 'Criar pasta'}
             </Button>
           </form>
         </DialogContent>

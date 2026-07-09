@@ -34,6 +34,7 @@ export default function CategoriesScreen() {
   const [formOpen, setFormOpen] = useState(false)
   const [name, setName] = useState('')
   const [type, setType] = useState<'receita' | 'despesa'>('despesa')
+  const [error, setError] = useState<string | null>(null)
 
   const create = trpc.categories.create.useMutation({
     onSuccess: () => {
@@ -41,13 +42,20 @@ export default function CategoriesScreen() {
       setFormOpen(false)
       setName('')
     },
+    onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
+
+  function submit() {
+    setError(null)
+    if (!name.trim()) return setError('Informe o nome')
+    create.mutate({ name: name.trim(), type })
+  }
 
   const expenses = (categories ?? []).filter((c) => c.type === 'despesa')
   const incomes = (categories ?? []).filter((c) => c.type === 'receita')
 
   return (
-    <ScrollView className="flex-1 px-4 pt-3">
+    <ScrollView className="flex-1 px-4 pt-3" keyboardShouldPersistTaps="handled">
       <Text className="mb-2 text-[10px] font-bold uppercase tracking-widest text-negative dark:text-negative-dark">
         Despesas
       </Text>
@@ -95,9 +103,14 @@ export default function CategoriesScreen() {
                 </Pressable>
               ))}
             </View>
+            {error ? (
+              <Text className="mb-2 text-xs font-bold text-negative dark:text-negative-dark">
+                {error}
+              </Text>
+            ) : null}
             <Button
               title={create.isPending ? 'Salvando…' : 'Criar categoria'}
-              onPress={() => name.trim() && create.mutate({ name: name.trim(), type })}
+              onPress={submit}
               disabled={create.isPending}
             />
             <View className="h-2" />

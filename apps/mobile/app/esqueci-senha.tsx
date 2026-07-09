@@ -9,12 +9,24 @@ export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSend() {
     setLoading(true)
-    await authClient.requestPasswordReset({ email, redirectTo: '/redefinir-senha' })
-    setLoading(false)
-    setSent(true)
+    setError(null)
+    try {
+      // deep link: o email abre o app direto na tela de redefinição
+      const { error: err } = await authClient.requestPasswordReset({
+        email,
+        redirectTo: 'planmyfinances://redefinir-senha',
+      })
+      if (err) setError('Não foi possível enviar o link. Tente novamente.')
+      else setSent(true)
+    } catch {
+      setError('Não foi possível enviar o link. Verifique a conexão e tente novamente.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -35,6 +47,11 @@ export default function ForgotPasswordScreen() {
             value={email}
             onChangeText={setEmail}
           />
+          {error ? (
+            <Text className="mb-2 text-xs font-bold text-negative dark:text-negative-dark">
+              {error}
+            </Text>
+          ) : null}
           <Button
             title={loading ? 'Enviando…' : 'Enviar link'}
             onPress={handleSend}

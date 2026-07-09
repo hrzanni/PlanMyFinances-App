@@ -18,7 +18,12 @@ function CategoryCard({ category }: { category: CategoryItem }) {
 
   function handleAddSub(e: React.FormEvent) {
     e.preventDefault()
-    if (!subName.trim()) return
+    // vazio = cancelar, igual ao blur
+    if (!subName.trim()) {
+      setSubName('')
+      setAdding(false)
+      return
+    }
     createSub.mutate({ categoryId: category.id, name: subName.trim() })
     setSubName('')
     setAdding(false)
@@ -56,7 +61,11 @@ function CategoryCard({ category }: { category: CategoryItem }) {
               type="button"
               aria-label={`Excluir subcategoria ${sub.name}`}
               className="hidden text-muted hover:text-negative group-hover:inline"
-              onClick={() => delSub.mutate({ id: sub.id })}
+              onClick={() => {
+                if (window.confirm(`Excluir a subcategoria "${sub.name}"?`)) {
+                  delSub.mutate({ id: sub.id })
+                }
+              }}
             >
               ✕
             </button>
@@ -93,6 +102,7 @@ export default function CategoriesPage() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [type, setType] = useState<'receita' | 'despesa'>('despesa')
+  const [error, setError] = useState<string | null>(null)
 
   const create = trpc.categories.create.useMutation({
     onSuccess: () => {
@@ -100,7 +110,15 @@ export default function CategoriesPage() {
       setOpen(false)
       setName('')
     },
+    onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (!name.trim()) return setError('Informe o nome')
+    create.mutate({ name: name.trim(), type })
+  }
 
   const expenses = (categories ?? []).filter((c) => c.type === 'despesa')
   const incomes = (categories ?? []).filter((c) => c.type === 'receita')
@@ -150,12 +168,7 @@ export default function CategoriesPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Nova categoria">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (name.trim()) create.mutate({ name: name.trim(), type })
-            }}
-          >
+          <form onSubmit={handleSubmit}>
             <Field>
               <Label htmlFor="cat-name">Nome</Label>
               <Input id="cat-name" required value={name} onChange={(e) => setName(e.target.value)} />
@@ -171,8 +184,9 @@ export default function CategoriesPage() {
                 <option value="receita">Receita</option>
               </Select>
             </Field>
+            {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
             <Button type="submit" disabled={create.isPending} className="w-full">
-              Criar categoria
+              {create.isPending ? 'Salvando…' : 'Criar categoria'}
             </Button>
           </form>
         </DialogContent>

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { useColorScheme } from 'react-native'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Alert, useColorScheme } from 'react-native'
+import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { httpBatchLink } from '@trpc/client'
 import { trpc } from '@/lib/trpc'
 import { apiUrl } from '@/lib/api'
@@ -18,6 +18,13 @@ export default function RootLayout() {
         defaultOptions: {
           queries: { staleTime: 30_000, gcTime: 5 * 60_000, retry: 1 },
         },
+        // Rede de segurança: mutação sem onError próprio nunca falha em silêncio (FR-005).
+        mutationCache: new MutationCache({
+          onError: (_error, _variables, _context, mutation) => {
+            if (mutation.options.onError) return
+            Alert.alert('Erro', 'Não foi possível concluir a ação. Tente novamente.')
+          },
+        }),
       }),
   )
   const [trpcClient] = useState(() =>

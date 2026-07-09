@@ -46,7 +46,7 @@ export default function FixedExpensesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background dark:bg-background-dark" edges={['top']}>
-      <ScrollView className="flex-1 px-4 pt-3">
+      <ScrollView className="flex-1 px-4 pt-3" keyboardShouldPersistTaps="handled">
         <ScreenTitle>Gastos Fixos</ScreenTitle>
 
         <View className="mb-3 flex-row items-center justify-center gap-4 rounded-lg border border-line bg-surface py-2 dark:border-line-dark dark:bg-surface-dark">

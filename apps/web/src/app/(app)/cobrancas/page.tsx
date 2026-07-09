@@ -141,7 +141,11 @@ export default function ChargesPage() {
                         type="button"
                         aria-label={`Excluir cobrança de ${row.debtorName}`}
                         className="text-muted hover:text-negative"
-                        onClick={() => del.mutate({ id: row.id })}
+                        onClick={() => {
+                          if (window.confirm(`Excluir a cobrança de "${row.debtorName}"?`)) {
+                            del.mutate({ id: row.id })
+                          }
+                        }}
                       >
                         🗑
                       </button>

@@ -141,7 +141,11 @@ export default function InvoicesPage() {
                         type="button"
                         aria-label={`Excluir fatura ${row.cardName}`}
                         className="text-muted hover:text-negative"
-                        onClick={() => del.mutate({ id: row.id })}
+                        onClick={() => {
+                          if (window.confirm(`Excluir a fatura "${row.cardName}"?`)) {
+                            del.mutate({ id: row.id })
+                          }
+                        }}
                       >
                         🗑
                       </button>
