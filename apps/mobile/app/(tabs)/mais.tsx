@@ -3,11 +3,13 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter, type Href } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { ScreenTitle } from '@/components/ui'
-import { signOut, useSession } from '@/lib/auth-client'
+import { signOut } from '@/lib/auth-client'
+import { trpc } from '@/lib/trpc'
 
 type IconName = keyof typeof Ionicons.glyphMap
 
 const items: Array<{ href: Href; label: string; icon: IconName; soon?: boolean }> = [
+  { href: '/mais/perfil', label: 'Perfil', icon: 'person-circle-outline' },
   { href: '/mais/pastas', label: 'Pastas', icon: 'folder-outline' },
   { href: '/mais/categorias', label: 'Categorias', icon: 'pricetags-outline' },
   { href: '/mais/cobrancas', label: 'Cobranças', icon: 'arrow-down-circle-outline' },
@@ -18,7 +20,7 @@ const items: Array<{ href: Href; label: string; icon: IconName; soon?: boolean }
 
 export default function MoreScreen() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const me = trpc.users.me.useQuery()
   const dark = useColorScheme() === 'dark'
   const iconColor = dark ? '#FFFFFF' : '#0C0E0E'
 
@@ -56,7 +58,7 @@ export default function MoreScreen() {
         </View>
 
         <View className="mt-6 items-center">
-          <Text className="text-xs text-muted dark:text-muted-dark">{session?.user.email}</Text>
+          <Text className="text-xs text-muted dark:text-muted-dark">{me.data?.email}</Text>
           <Pressable onPress={handleSignOut} accessibilityRole="button" className="mt-2 py-2">
             <Text className="text-sm font-bold text-negative dark:text-negative-dark">Sair</Text>
           </Pressable>

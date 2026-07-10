@@ -13,6 +13,11 @@ export const loginInput = z.object({
 })
 export type LoginInput = z.infer<typeof loginInput>
 
+export const updateUserNameInput = z.object({
+  name: z.string().trim().min(1, 'Informe o nome').max(120),
+})
+export type UpdateUserNameInput = z.infer<typeof updateUserNameInput>
+
 export const forgotPasswordInput = z.object({
   email: z.string().email(),
 })

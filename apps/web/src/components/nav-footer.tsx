@@ -1,14 +1,16 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
-import { signOut, useSession } from '@/lib/auth-client'
+import { signOut } from '@/lib/auth-client'
+import { trpc } from '@/lib/trpc'
 
-/** Rodapé da navegação (tema, email, sair) — usado na Sidebar e no MobileNav. */
+/** Rodapé da navegação (tema, perfil, sair) — usado na Sidebar e no MobileNav. */
 export function NavFooter() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const me = trpc.users.me.useQuery()
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
@@ -30,7 +32,12 @@ export function NavFooter() {
       >
         {mounted && resolvedTheme === 'dark' ? '◐ Tema claro' : '◑ Tema escuro'}
       </button>
-      <div className="truncate text-xs text-neutral-500">{session?.user.email}</div>
+      <Link href="/perfil" className="block hover:text-white">
+        <div className="truncate text-xs font-bold text-neutral-300">
+          {me.data?.name ?? 'Perfil'}
+        </div>
+        <div className="truncate text-xs text-neutral-500">{me.data?.email}</div>
+      </Link>
       <button
         type="button"
         onClick={handleSignOut}

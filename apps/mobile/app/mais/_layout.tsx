@@ -13,6 +13,7 @@ export default function MoreStackLayout() {
         contentStyle: { backgroundColor: dark ? '#0C0E0E' : '#F5F5F5' },
       }}
     >
+      <Stack.Screen name="perfil" options={{ title: 'Perfil' }} />
       <Stack.Screen name="pastas" options={{ title: 'Pastas' }} />
       <Stack.Screen name="categorias" options={{ title: 'Categorias' }} />
       <Stack.Screen name="cobrancas" options={{ title: 'Cobranças' }} />

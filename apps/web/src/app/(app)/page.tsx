@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { formatDate } from '@pmf/core'
+import { firstName, formatDate } from '@pmf/core'
 import { Badge, Button, Card, CardTitle, EmptyState, Kpi, LoadingState } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
 import { currentMonth, money, monthLabel } from '@/lib/format'
@@ -18,13 +18,15 @@ export default function HomePage() {
   const summary = trpc.dashboard.month.useQuery({ month })
   const recent = trpc.transactions.list.useQuery({ limit: 5 })
   const fixed = trpc.fixedExpenses.list.useQuery({ month })
+  const me = trpc.users.me.useQuery()
+  const greeting = me.data ? `Bem-vindo, ${firstName(me.data.name)}` : 'Bem-vindo'
 
   const paidCount = fixed.data?.items.filter((i) => i.monthlyStatus === 'pago').length ?? 0
   const nextPending = fixed.data?.items.find((i) => i.monthlyStatus !== 'pago')
 
   return (
     <>
-      <PageHeader title="Início">
+      <PageHeader title={greeting}>
         <span className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-bold text-foreground">
           {monthLabel(month)}
         </span>

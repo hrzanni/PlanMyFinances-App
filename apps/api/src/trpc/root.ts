@@ -6,6 +6,7 @@ import { foldersRouter } from './routers/folders'
 import { chargesRouter } from './routers/charges'
 import { invoicesRouter } from './routers/invoices'
 import { dashboardRouter } from './routers/dashboard'
+import { usersRouter } from './routers/users'
 
 export const appRouter = router({
   health: publicProcedure.query(() => ({ ok: true })),
@@ -16,6 +17,7 @@ export const appRouter = router({
   charges: chargesRouter,
   invoices: invoicesRouter,
   dashboard: dashboardRouter,
+  users: usersRouter,
 })
 
 export type AppRouter = typeof appRouter

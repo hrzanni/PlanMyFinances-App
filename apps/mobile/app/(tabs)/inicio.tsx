@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Link } from 'expo-router'
+import { firstName } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
 import { currentMonth, money, monthLabel } from '@/lib/format'
 import { Button, Card, EmptyState, Kpi, ScreenTitle } from '@/components/ui'
@@ -14,6 +15,8 @@ export default function HomeScreen() {
   const summary = trpc.dashboard.month.useQuery({ month })
   const recent = trpc.transactions.list.useQuery({ limit: 5 })
   const fixed = trpc.fixedExpenses.list.useQuery({ month })
+  const me = trpc.users.me.useQuery()
+  const greeting = me.data ? `Bem-vindo, ${firstName(me.data.name)}` : 'Bem-vindo'
 
   const paidCount = fixed.data?.items.filter((i) => i.monthlyStatus === 'pago').length ?? 0
 
@@ -21,7 +24,7 @@ export default function HomeScreen() {
     <SafeAreaView className="flex-1 bg-background dark:bg-background-dark" edges={['top']}>
       <ScrollView className="flex-1 px-4 pt-3">
         <View className="mb-2 flex-row items-center justify-between">
-          <ScreenTitle>Início</ScreenTitle>
+          <ScreenTitle>{greeting}</ScreenTitle>
           <Text className="text-xs font-bold text-muted dark:text-muted-dark">
             {monthLabel(month)}
           </Text>
