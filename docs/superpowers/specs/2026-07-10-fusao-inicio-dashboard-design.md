@@ -15,12 +15,18 @@ Objetivo: unificar as duas telas em uma só ("Início"), eliminando a rota/tab D
 
 ## Decisão de produto
 
-`Início` passa a ter duas seções verticais:
+> **Emenda 2026-07-13 (remodelagem):** a versão inicial da fusão mantinha a seção de gráficos com seletor, KPIs e título próprios, e aceitava o gráfico de barras duplicado no web. Na prática isso deixou a Início cheia de informação repetida. Redesenho aprovado:
+>
+> 1. **Seletor de mês único no topo.** O indicador fixo do mês no cabeçalho da Início vira o `MonthSelector` ◀ ▶ e controla a tela inteira (KPIs, gastos fixos e gráficos). Não existe mais um segundo mês na tela.
+> 2. **Seção de gráficos sem repetição.** Perde o título "Gráficos por mês", o seletor próprio e os 3 KPIs duplicados. No web fica só o gráfico de linha do saldo acumulado (o de barras já existe no topo); no mobile ficam os dois gráficos (linha + barras), pois o topo mobile não tem gráfico.
+> 3. A "consequência aceita" abaixo (barras em dobro no web) fica **revertida**.
+
+Redação original (histórico): `Início` passa a ter duas seções verticais —
 
 1. **Seção fixa (topo)** — sem alteração de comportamento. Mês atual, não editável. KPIs, últimas transações, gastos fixos e (no web) o gráfico de barras, exatamente como hoje.
 2. **Seção de gráficos (nova, abaixo, via scroll)** — o que hoje é a tela Dashboard. Seletor de mês editável, 3 KPIs do mês selecionado, gráfico de barras e gráfico de linha do saldo acumulado.
 
-Consequência aceita: no web, o gráfico de barras aparece duas vezes na página (fixo no topo + na seção de baixo, mês selecionável) porque nenhum gráfico existente é removido. No mobile não há esse efeito, porque a Início mobile não tinha gráfico algum — a fusão resolve de tabela a divergência de FR-003.
+Consequência aceita ~(revertida pela emenda acima)~: no web, o gráfico de barras aparece duas vezes na página (fixo no topo + na seção de baixo, mês selecionável) porque nenhum gráfico existente é removido. No mobile não há esse efeito, porque a Início mobile não tinha gráfico algum — a fusão resolve de tabela a divergência de FR-003.
 
 ## Arquitetura
 
@@ -30,11 +36,13 @@ Um hook por plataforma, `useMonthSummary(month: string)`:
 - `apps/web/src/hooks/use-month-summary.ts`
 - `apps/mobile/src/hooks/use-month-summary.ts`
 
-Encapsula `trpc.dashboard.month.useQuery({ month })` e a derivação dos 3 KPIs (receitas, despesas, saldo). Consumido em dois pontos por plataforma: seção fixa (mês atual) e seção de gráficos (mês do estado local do seletor).
+Encapsula `trpc.dashboard.month.useQuery({ month })` e a derivação dos 3 KPIs (receitas, despesas, saldo). Após a emenda de 2026-07-13, o mês é um único estado da tela (controlado pelo `MonthSelector` do cabeçalho); no mobile a seção de gráficos repete a chamada com o mesmo mês e o TanStack Query deduplica pela query key.
 
 ### Componentes novos
 
-- **Web**: `apps/web/src/components/month-charts-section.tsx` (`MonthChartsSection`) — usa `MonthSelector` (já existente) e um novo `balance-line-chart.tsx`, extraído do inline atual em `dashboard/page.tsx:40-79`, para ficar consistente com `income-expense-chart.tsx`.
+> **Emenda 2026-07-13:** após a remodelagem, no web o `month-charts-section.tsx` foi removido — o card do gráfico de linha vive direto em `page.tsx`, alimentado pelo mesmo `useMonthSummary` do topo. No mobile o `MonthChartsSection` continua, mas recebe `month` por prop (sem estado nem seletor próprios). O `MonthSelector` de cada plataforma passou a ser usado no cabeçalho da Início.
+
+- **Web**: `balance-line-chart.tsx`, extraído do inline atual em `dashboard/page.tsx:40-79`, para ficar consistente com `income-expense-chart.tsx`.
 - **Mobile**: `apps/mobile/src/components/month-charts-section.tsx` (`MonthChartsSection`) — usa um novo `month-selector.tsx` (extraído do inline em `dash.tsx:19-29`) e os componentes já existentes `BarsChart`/`BalanceLineChart` de `charts.tsx`.
 
 ### Telas afetadas
