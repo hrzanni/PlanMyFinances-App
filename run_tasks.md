@@ -3,7 +3,7 @@
 > Painel mestre de tarefas. Fonte da verdade do progresso.
 > Atualize o status de cada subtarefa conforme avança. Legenda: `[ ]` pendente · `[~]` em andamento · `[x]` concluída · `[!]` bloqueada.
 > Detalhe de cada tarefa vive em `plan/<tarefa>/`.
-> Specs: base `docs/superpowers/specs/2026-06-25-planmyfinances-multiplatform-design.md` + amendment `docs/superpowers/specs/2026-07-06-gastos-fixos-pastas-pluggy-design.md` (gastos fixos, pastas, Pluggy, tela do agente, tema Nexforce).
+> Specs: base `docs/superpowers/specs/2026-06-25-planmyfinances-multiplatform-design.md` + amendment `docs/superpowers/specs/2026-07-06-gastos-fixos-pastas-pluggy-design.md` (gastos fixos, pastas, Pluggy, tela do agente, tema Nexforce) + amendment `docs/superpowers/specs/2026-07-10-fusao-inicio-dashboard-design.md` (funde Início e Dashboard).
 > Referência visual: `docs/mockups/planmyfinances-telas.html` (protótipo aprovado em 2026-07-06).
 
 ## Visão geral
@@ -16,6 +16,7 @@
 | 4 | Integração Meu Pluggy (Conexões) | `[!]` adiada | `plan/04-pluggy/` |
 | 5 | Polimento (edge cases, a11y, E2E) | `[x]` | `plan/05-polimento/` |
 | 6 | Backlog (agente real, iOS) | `[ ]` | `plan/06-backlog/` |
+| 7 | Fusão Início/Dashboard | `[x]` | `plan/07-fusao-inicio-dashboard/` |
 
 > Regra: uma fase só começa quando a anterior está com todas as subtarefas `[x]`, salvo dependências explicitamente liberadas.
 
@@ -127,6 +128,23 @@ Entrega: contas reais sincronizando transações via Open Finance gratuito, tela
 
 ---
 
+## Fase 7 — Fusão Início/Dashboard (DETALHADA) · `plan/07-fusao-inicio-dashboard/`
+
+Entrega: rota `/dashboard` (web) e tab "Dash" (mobile) removidas; conteúdo unificado dentro da Início como seção de scroll com seletor de mês próprio.
+
+- [x] **7.1–7.4 Web** · `01-web.md`
+  - [x] 7.1 Hook `useMonthSummary` (web)
+  - [x] 7.2 Componente `BalanceLineChart` (extraído do inline do Dashboard)
+  - [x] 7.3 Componente `MonthChartsSection` (web)
+  - [x] 7.4 Início unificada + remoção de `/dashboard` e do item de nav
+- [x] **7.5–7.8 Mobile** · `02-mobile.md`
+  - [x] 7.5 Hook `useMonthSummary` (mobile)
+  - [x] 7.6 Componente `MonthSelector` (extraído do inline do Dash)
+  - [x] 7.7 Componente `MonthChartsSection` (mobile)
+  - [x] 7.8 Início unificada + remoção da tab "Dash" (5→4 tabs)
+
+---
+
 ## Changelog do progresso
 
 > Registre aqui marcos concluídos com data ISO.
@@ -140,4 +158,5 @@ Entrega: contas reais sincronizando transações via Open Finance gratuito, tela
 - 2026-07-07: Fase 5 concluída — cores de gráfico resolvidas por tema (fix: var() não funciona em atributo SVG do Recharts), filtro de pasta no Histórico, confirmação ao excluir, monorepo alinhado em React 19 (mobile atualizado para Expo SDK 53 / RN 0.79, elimina conflito de tipos 18×19), .npmrc sem auto-install-peers. Gates: lint/typecheck/test(57)/build verdes em todos os pacotes.
 - 2026-07-09: Paridade mobile + polimento — criar/excluir cobrança e fatura no mobile (installment-form-modal), CRUD de subcategorias e exclusão de categoria (category-block), confirmação destrutiva via Alert (lib/confirm), badge de status no InstallmentCard, Ionicons no lugar de emojis (tabs e menu Mais, @expo/vector-icons declarado para o pnpm estrito). Lógica de draft de installment movida de apps/web para @pmf/core (validateInstallmentDraft com RN-004 + formato de data). Gates verdes; web verificada em runtime (criar com vírgula, erro RN-004, excluir); bundle Metro compila com os módulos novos. Teste de toque no Expo Go pendente (aparelho).
 - 2026-07-09: Paridade mobile completa — gastos fixos com editar/excluir e campo categoria (form extraído em fixed-expense-form.tsx, espelha FR-105), pastas com arquivar/reativar/excluir no card expandido, excluir transação no Histórico (TxRow com onDelete opcional; Início e Pastas seguem sem ação, como na web). Gates verdes; bundle Metro compila com os módulos novos. Toda ação destrutiva passa por confirmDelete.
+- 2026-07-13: Fase 7 concluída — fusão Início/Dashboard nas duas plataformas: rota /dashboard e tab Dash removidas (mobile 5→4 tabs), seção "Gráficos por mês" (seletor de mês, KPIs, linha de saldo acumulado, barras) dentro da Início via scroll, com mês independente do topo. Duplicações eliminadas: hook useMonthSummary por plataforma (query dashboard.month era repetida em 4 arquivos), BalanceLineChart extraído do inline do Dashboard web, MonthSelector mobile extraído do inline do Dash. Specs emendadas (FR-003 reescrito, FR-006 removido, FR-151 sem Dashboard/Dash). Gates verdes (lint/typecheck/test 69/build); web verificada em runtime no navegador (seção renderiza, seletor muda só a seção de baixo, /dashboard → 404, nav sem o item); bundle Metro do mobile compila.
 - 2026-07-09: Perfil do usuário (web + mobile) e saudação — router tRPC `users` (me/updateName sobre a tabela users do Better Auth, funciona no bypass), tela /perfil na web (nome editável, email fixo, sair) e Mais → Perfil no mobile, rodapé da sidebar vira link de perfil com nome/email via users.me, "Bem-vindo, {primeiro nome}" nas telas iniciais (`firstName` puro em @pmf/core, com testes). Gates verdes; web verificada em runtime (salvar, erro "Informe o nome", saudação atualiza); bundle Metro compila com os módulos novos.
