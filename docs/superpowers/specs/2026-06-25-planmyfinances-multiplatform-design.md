@@ -131,10 +131,10 @@ Os FRs abaixo descrevem comportamento, independente de plataforma. Cada FR vira 
 ### Transações
 - FR-001: O sistema MUST permitir criar, editar e excluir transações `receita`/`despesa`, com `value`, `date` (default hoje), `description?`, `category_id?` e `subcategory_id?`.
 - FR-002: O formulário MUST filtrar categorias pela `type` selecionada e carregar subcategorias da categoria escolhida.
-- FR-003: A Home MUST exibir as 5 transações mais recentes (`date DESC, created_at DESC`), 3 cards do mês corrente (receitas, despesas, saldo) e gráfico de barras receitas × despesas do mês.
+- FR-003: A Home MUST ter um seletor de mês único no cabeçalho, que controla a tela inteira. Para o mês selecionado, MUST exibir: 3 cards (receitas, despesas, saldo), as 5 transações mais recentes (`date DESC, created_at DESC`, independentes do mês), resumo dos gastos fixos, gráfico de barras receitas × despesas (uma única vez) e, abaixo via scroll, gráfico de linha do saldo acumulado por dia. Nenhum KPI, seletor ou gráfico MUST aparecer duplicado na tela. *(Redação atualizada em 2026-07-13, ver emenda em `2026-07-10-fusao-inicio-dashboard-design.md`; absorve o conteúdo do antigo FR-006.)*
 - FR-004: O Histórico MUST listar transações com filtros independentes e cumulativos (`type`, `category_id`, `subcategory_id`, `date_from`, `date_to`) e permitir excluir.
 - FR-005: Na web, os filtros do Histórico MUST persistir na URL (query params). No mobile, MUST persistir no estado de navegação da tela (equivalente funcional).
-- FR-006: O Dashboard MUST ter seletor de mês, 3 cards do mês selecionado, gráfico de barras receitas × despesas e gráfico de linha do saldo acumulado por dia.
+- FR-006: *(removido em 2026-07-10 — conteúdo absorvido por FR-003, ver `2026-07-10-fusao-inicio-dashboard-design.md`. Não existe mais tela/rota Dashboard separada.)*
 
 ### Categorias e Subcategorias
 - FR-010: CRUD de categorias (`name`, `type`) e subcategorias (`name`, vinculadas a categoria).

@@ -30,13 +30,18 @@ Nomes e tipos que tarefas posteriores consomem. Mantidos idênticos ao longo do 
 ```ts
 // packages/types
 type TransactionType = 'receita' | 'despesa'
+type TransactionSource = 'manual' | 'fixed_expense' | 'pluggy'   // spec amendment 2026-07-06
 type ChargeStatus = 'pendente' | 'cobrado' | 'pago'
 type InvoiceStatus = 'pendente' | 'pago'
-type SubscriptionStatus = 'ativo' | 'cancelado'
+type FixedExpenseStatus = 'active' | 'archived'
+type FolderStatus = 'active' | 'archived'
+type BankConnectionStatus = 'connected' | 'error' | 'expired'
+type MonthlyExpenseStatus = 'pago' | 'pendente' | 'vencido'      // derivado (RN-100)
 
 interface Transaction {
   id: string; userId: string; type: TransactionType; value: string; // numeric vem como string
   description: string | null; categoryId: string | null; subcategoryId: string | null;
+  folderId: string | null; source: TransactionSource; externalId: string | null;
   date: string; createdAt: string;
 }
 
@@ -47,6 +52,12 @@ function installmentTotals(amountPerInstallment: number, totalInstallments: numb
 function dueThisMonth(dueDate: string | null, ref: Date): boolean
 function formatCurrency(value: number): string  // pt-BR / BRL
 function formatDate(iso: string): string        // DD/MM/YYYY
+// spec amendment 2026-07-06 (gastos fixos / pastas):
+function referenceMonth(d: string): string      // normaliza para YYYY-MM-01 (RN-102)
+function effectiveDueDate(dueDay: number, month: string): string // due_day 31 em mês curto → último dia
+function fixedExpenseStatus(i: { dueDay: number; month: string; today: string; paidAt: string | null }): MonthlyExpenseStatus // RN-100
+function fixedExpenseTotals(actives: { amount: string }[], monthPayments: { amount: string }[]): { total: number; paid: number; pending: number } // RN-101
+function folderTotal(txs: Pick<Transaction,'type'|'value'|'folderId'>[], folderId: string): number // RN-110
 
 // packages/schemas (Zod)
 const createTransactionInput // { type, value>0, date, description?, categoryId?, subcategoryId? }

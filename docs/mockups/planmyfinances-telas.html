@@ -1,0 +1,658 @@
+<title>PlanMyFinances — Protótipo Visual</title>
+<style>
+  :root {
+    --pg-bg: #F5F5F5; --pg-surface: #FFFFFF; --pg-text: #0C0E0E; --pg-body: #515151;
+    --pg-muted: #777777; --pg-line: #E2E2E0; --pg-navy: #303F63; --pg-blue: #215A9F;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --pg-bg: #0C0E0E; --pg-surface: #171A1A; --pg-text: #FFFFFF; --pg-body: #C7C7C5;
+            --pg-muted: #9C9B9B; --pg-line: #2A2D2D; --pg-navy: #8FA3D1; --pg-blue: #7FB0E8; }
+  }
+  :root[data-theme="dark"] { --pg-bg: #0C0E0E; --pg-surface: #171A1A; --pg-text: #FFFFFF; --pg-body: #C7C7C5;
+            --pg-muted: #9C9B9B; --pg-line: #2A2D2D; --pg-navy: #8FA3D1; --pg-blue: #7FB0E8; }
+  :root[data-theme="light"] { --pg-bg: #F5F5F5; --pg-surface: #FFFFFF; --pg-text: #0C0E0E; --pg-body: #515151;
+            --pg-muted: #777777; --pg-line: #E2E2E0; --pg-navy: #303F63; --pg-blue: #215A9F; }
+
+  * { box-sizing: border-box; }
+  body { background: var(--pg-bg); color: var(--pg-body); margin: 0;
+         font-family: 'Lato', 'Segoe UI', 'Helvetica Neue', Calibri, sans-serif; line-height: 1.55; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: 11px; font-weight: 700; color: var(--pg-navy); }
+  h1 { color: var(--pg-text); font-size: 30px; margin: 6px 0 4px; text-wrap: balance; }
+  h2 { color: var(--pg-text); font-size: 20px; margin: 0 0 4px; }
+  .sec { margin-top: 56px; }
+  .sec > p.lead { max-width: 68ch; margin-top: 6px; }
+  .meta { font-size: 13px; color: var(--pg-muted); }
+
+  /* ---------- swatches ---------- */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+  .sw { border: 1px solid var(--pg-line); border-radius: 8px; overflow: hidden; background: var(--pg-surface); }
+  .sw .chip { height: 52px; }
+  .sw .lbl { padding: 8px 10px; font-size: 12px; }
+  .sw .lbl b { display: block; color: var(--pg-text); }
+  .sw .lbl code { font-size: 11px; color: var(--pg-muted); }
+
+  .rulecards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 16px; }
+  .rulecard { background: var(--pg-surface); border: 1px solid var(--pg-line); border-left: 4px solid var(--pg-navy);
+              border-radius: 8px; padding: 14px 16px; font-size: 13.5px; }
+  .rulecard b { color: var(--pg-text); display: block; margin-bottom: 4px; }
+
+  /* ---------- app mockup tokens ---------- */
+  .app { --bg: #F5F5F5; --surface: #FFFFFF; --raise: #FFFFFF; --text: #0C0E0E; --body: #515151;
+         --muted: #777777; --line: #E4E4E2; --sideb: #0C0E0E; --sidet: #C9C9C9; --sideactive: #FFFFFF;
+         --navy: #303F63; --blue: #215A9F; --green: #2D6E44; --red: #BA1925; --greenbg: #EEF7F1; --redbg: #FDECEA;
+         --yellow: #8a7414; --yellowbg: #FDF8E1; }
+  .app.t-dark { --bg: #0C0E0E; --surface: #161919; --raise: #1D2121; --text: #FFFFFF; --body: #C7C7C5;
+         --muted: #9C9B9B; --line: #292D2D; --sideb: #060707; --sidet: #9C9B9B; --sideactive: #FFFFFF;
+         --navy: #8FA3D1; --blue: #7FB0E8; --green: #5CBF8B; --red: #F0707A; --greenbg: rgba(92,191,139,.12);
+         --redbg: rgba(240,112,122,.12); --yellow: #D8B523; --yellowbg: rgba(216,181,35,.12); }
+
+  .browser { border: 1px solid var(--pg-line); border-radius: 12px; overflow: hidden; margin-top: 18px;
+             box-shadow: 0 12px 32px rgba(12,14,14,.10); }
+  .browser-bar { display: flex; align-items: center; gap: 8px; padding: 9px 14px; background: var(--pg-surface);
+                 border-bottom: 1px solid var(--pg-line); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pg-line); }
+  .urlbox { flex: 1; margin-left: 8px; background: var(--pg-bg); border: 1px solid var(--pg-line); border-radius: 6px;
+            font-size: 12px; color: var(--pg-muted); padding: 4px 12px; }
+
+  .app { display: flex; min-height: 620px; background: var(--bg); color: var(--body); font-size: 13.5px; }
+  .side { width: 208px; flex-shrink: 0; background: var(--sideb); color: var(--sidet); display: flex; flex-direction: column; padding: 18px 0 14px; }
+  .brand { color: #FFFFFF; font-weight: 900; font-size: 16px; padding: 0 20px 16px; letter-spacing: .01em; }
+  .brand span { color: #9C9B9B; font-weight: 300; }
+  .nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; padding: 14px 20px 6px; color: #6E6E6E; }
+  .nitem { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; border-left: 3px solid transparent; }
+  .nitem:hover { color: #FFFFFF; }
+  .nitem.active { color: var(--sideactive); background: rgba(255,255,255,.06); border-left-color: #FFFFFF; font-weight: 700; }
+  .nitem svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.8; flex-shrink: 0; }
+  .side .foot { margin-top: auto; padding: 12px 20px 0; border-top: 1px solid rgba(255,255,255,.08); font-size: 12px; }
+  .badge-soon { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; background: rgba(255,255,255,.12);
+                color: #D8B523; border-radius: 999px; padding: 2px 8px; margin-left: auto; }
+
+  .main { flex: 1; padding: 22px 26px 30px; overflow: hidden; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .shead { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .shead h3 { color: var(--text); font-size: 18px; margin: 0; }
+  .shead .sub { font-size: 12.5px; color: var(--muted); width: 100%; }
+  .spacer { flex: 1; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12.5px; border-radius: 7px;
+         padding: 7px 14px; cursor: pointer; border: 1px solid transparent; }
+  .btn-primary { background: var(--text); color: var(--bg); }
+  .app.t-dark .btn-primary { background: #FFFFFF; color: #0C0E0E; }
+  .btn-ghost { border-color: var(--line); color: var(--body); background: var(--surface); }
+  .btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+  .monthsel { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--surface);
+              border-radius: 7px; padding: 5px 10px; font-weight: 700; color: var(--text); font-size: 12.5px; }
+  .monthsel span.ar { color: var(--muted); cursor: pointer; font-weight: 400; }
+
+  .cards3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .kpi .t { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 700; }
+  .kpi .v { font-size: 22px; font-weight: 900; color: var(--text); margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi .v.pos { color: var(--green); } .kpi .v.neg { color: var(--red); }
+  .kpi .d { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+  .panel h4 { margin: 0 0 10px; color: var(--text); font-size: 13.5px; }
+  .cols2 { display: grid; grid-template-columns: 1.15fr .85fr; gap: 14px; }
+
+  table.tb { width: 100%; border-collapse: collapse; font-size: 12.8px; font-variant-numeric: tabular-nums; }
+  .tb th { text-align: left; background: var(--text); color: var(--bg); padding: 7px 10px; font-size: 11px;
+           text-transform: uppercase; letter-spacing: .07em; }
+  .app.t-dark .tb th { background: #060707; color: #FFFFFF; }
+  .tb td { padding: 8px 10px; border-bottom: 1px solid var(--line); color: var(--body); }
+  .tb td.num, .tb th.num { text-align: right; }
+  .tb td .cat { font-size: 11px; color: var(--muted); display: block; }
+  .val-in { color: var(--green); font-weight: 700; } .val-out { color: var(--red); font-weight: 700; }
+
+  .pill { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 2.5px 9px; text-transform: uppercase; letter-spacing: .05em; }
+  .pill-paid { color: var(--green); background: var(--greenbg); }
+  .pill-pend { color: var(--yellow); background: var(--yellowbg); }
+  .pill-late { color: var(--red); background: var(--redbg); }
+  .pill-info { color: var(--blue); background: rgba(33,90,159,.10); }
+  .app.t-dark .pill-info { background: rgba(127,176,232,.14); }
+  .pill-neutral { color: var(--muted); background: var(--bg); border: 1px solid var(--line); }
+
+  .toggle { width: 34px; height: 19px; border-radius: 999px; background: var(--line); position: relative; display: inline-block; vertical-align: middle; cursor: pointer; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .toggle.on { background: var(--green); } .toggle.on::after { left: 17px; background: #fff; }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .fsel { border: 1px solid var(--line); background: var(--surface); color: var(--body); font-size: 12px; border-radius: 7px; padding: 6px 10px; display: inline-flex; align-items: center; gap: 6px; }
+  .fsel b { color: var(--text); }
+
+  .chartbox { height: 150px; display: flex; align-items: flex-end; gap: 14px; padding: 8px 4px 0; }
+  .bargroup { flex: 1; display: flex; align-items: flex-end; gap: 5px; height: 100%; position: relative; }
+  .bar { flex: 1; border-radius: 3px 3px 0 0; }
+  .bar.in { background: var(--green); opacity: .9; } .bar.out { background: var(--red); opacity: .85; }
+  .axis { display: flex; gap: 14px; padding: 6px 4px 0; font-size: 10.5px; color: var(--muted); }
+  .axis span { flex: 1; text-align: center; }
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; }
+
+  .callout { border-left: 4px solid var(--blue); background: rgba(33,90,159,.07); border-radius: 0 8px 8px 0; padding: 11px 14px; font-size: 12.5px; margin: 12px 0; }
+  .app.t-dark .callout { background: rgba(127,176,232,.09); }
+  .callout b { color: var(--text); display: block; margin-bottom: 2px; }
+
+  /* conexões */
+  .conn { display: flex; align-items: center; gap: 14px; border: 1px solid var(--line); border-radius: 10px; padding: 13px 16px; margin-bottom: 10px; background: var(--surface); }
+  .bank-ic { width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: 15px; flex-shrink: 0; }
+  .conn .inf { flex: 1; } .conn .inf b { color: var(--text); display: block; font-size: 13.5px; }
+  .conn .inf span { font-size: 11.5px; color: var(--muted); }
+
+  /* agente */
+  .chat { max-width: 560px; margin: 0 auto; opacity: .55; }
+  .bub { border-radius: 12px; padding: 10px 14px; margin-bottom: 10px; font-size: 13px; max-width: 82%; }
+  .bub.user { background: var(--text); color: var(--bg); margin-left: auto; border-bottom-right-radius: 3px; }
+  .app.t-dark .bub.user { background: #FFFFFF; color: #0C0E0E; }
+  .bub.bot { background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
+  .chat-input { display: flex; gap: 8px; max-width: 560px; margin: 14px auto 0; opacity: .55; }
+  .chat-input input { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; padding: 10px 14px; font-size: 13px; color: var(--muted); }
+  .soon-banner { max-width: 560px; margin: 0 auto 18px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; padding: 14px; background: var(--surface); }
+  .soon-banner b { color: var(--text); }
+
+  /* categorias */
+  .catgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .catcard { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 13px 15px; }
+  .catcard .h { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .catcard .h b { color: var(--text); font-size: 13.5px; flex: 1; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip2 { font-size: 11.5px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--body); background: var(--bg); }
+
+  /* login */
+  .login-stage { display: flex; align-items: center; justify-content: center; min-height: 560px; background: var(--bg); }
+  .login-card { width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 28px; }
+  .login-card .logo { font-weight: 900; font-size: 19px; color: var(--text); margin-bottom: 2px; }
+  .login-card .logo span { color: var(--muted); font-weight: 300; }
+  .fld { margin-top: 14px; } .fld label { font-size: 11.5px; font-weight: 700; color: var(--text); display: block; margin-bottom: 4px; }
+  .fld .inp { border: 1px solid var(--line); border-radius: 7px; padding: 9px 12px; font-size: 13px; color: var(--muted); background: var(--bg); }
+  .login-card .btn { width: 100%; justify-content: center; margin-top: 18px; }
+  .login-links { display: flex; justify-content: space-between; font-size: 11.5px; margin-top: 12px; }
+  .login-links a { color: var(--blue); text-decoration: none; }
+
+  /* phones */
+  .phones { display: flex; gap: 26px; flex-wrap: wrap; justify-content: center; margin-top: 22px; }
+  .phone { width: 290px; border-radius: 34px; border: 8px solid #0C0E0E; overflow: hidden; background: var(--bg);
+           box-shadow: 0 16px 40px rgba(12,14,14,.18); flex-shrink: 0; }
+  .phone .pscreen { display: flex; flex-direction: column; height: 590px; background: var(--bg); color: var(--body); font-size: 12.5px; }
+  .statusbar { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); padding: 8px 18px 2px; }
+  .ptitle { display: flex; align-items: center; padding: 10px 16px 8px; }
+  .ptitle b { color: var(--text); font-size: 16px; flex: 1; }
+  .pbody { flex: 1; overflow: hidden; padding: 4px 14px 8px; }
+  .tabbar { display: flex; border-top: 1px solid var(--line); background: var(--surface); padding: 7px 4px 12px; }
+  .tab { flex: 1; text-align: center; font-size: 9.5px; color: var(--muted); }
+  .tab svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.7; display: block; margin: 0 auto 2px; }
+  .tab.on { color: var(--text); font-weight: 700; }
+  .pcards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .pkpi { background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 9px 11px; }
+  .pkpi .t { font-size: 9.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; }
+  .pkpi .v { font-size: 15px; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; }
+  .pkpi .v.pos { color: var(--green); } .pkpi .v.neg { color: var(--red); }
+  .prow { display: flex; align-items: center; gap: 9px; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+  .prow .ic { width: 28px; height: 28px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line);
+              display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .prow .nm { flex: 1; min-width: 0; } .prow .nm b { color: var(--text); font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prow .nm span { font-size: 10px; color: var(--muted); }
+  .prow .vl { font-weight: 700; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+  .flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 16px; }
+  .fstep { background: var(--pg-surface); border: 1px solid var(--pg-line); border-radius: 10px; padding: 14px 16px; font-size: 13px; position: relative; }
+  .fstep b { color: var(--pg-text); display: block; margin-bottom: 4px; }
+  .fstep .n { position: absolute; top: -10px; left: 14px; background: var(--pg-navy); color: #fff; font-size: 11px; font-weight: 700;
+              border-radius: 999px; padding: 1px 9px; }
+  :root[data-theme="dark"] .fstep .n { color: #0C0E0E; }
+
+  .note { font-size: 12.5px; color: var(--pg-muted); margin-top: 10px; }
+  @media (max-width: 860px) { .cols2, .catgrid { grid-template-columns: 1fr; } .cards3 { grid-template-columns: 1fr; } .side { width: 176px; } }
+  .scrollx { overflow-x: auto; }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">PlanMyFinances · Proposta de telas · 06/07/2026</div>
+  <h1>Protótipo visual — web e mobile</h1>
+  <p class="meta">Identidade: paleta Nexforce (preto <code>#0C0E0E</code>, cinzas, navy, azul; verde/vermelho reservados a valores) · Tipografia Lato · Tema claro e escuro.</p>
+
+  <!-- ================= DECISÕES ================= -->
+  <div class="sec">
+    <div class="eyebrow">Decisões aprovadas</div>
+    <div class="rulecards">
+      <div class="rulecard"><b>Gastos Fixos unificado</b>Substitui "Assinaturas". Aluguel, IPTU, streaming — tudo com valor, dia de vencimento e status pago/pendente que reinicia a cada mês.</div>
+      <div class="rulecard"><b>Pagar gera a despesa</b>Marcar como pago cria a transação do mês automaticamente (desmarcar remove). Saldo sempre coerente.</div>
+      <div class="rulecard"><b>Open Finance via Meu Pluggy</b>Tela "Conexões" sincroniza suas contas reais gratuitamente. Entra após o core estar pronto.</div>
+      <div class="rulecard"><b>Agente: só a tela</b>Interface de chat presente na navegação, marcada como "Em breve", sem funcionalidade nesta versão.</div>
+      <div class="rulecard"><b>Pastas</b>Agrupe despesas em uma pasta (ex.: uma viagem) e veja o custo total. Toda transação pode ser associada a uma pasta, opcionalmente.</div>
+      <div class="rulecard"><b>Valor de gasto fixo muda? Só daqui pra frente</b>Editar o valor do aluguel vale a partir do mês vigente. Meses já pagos guardam o valor da época — o histórico nunca é reescrito.</div>
+    </div>
+  </div>
+
+  <!-- ================= PALETA ================= -->
+  <div class="sec">
+    <div class="eyebrow">Identidade visual</div>
+    <h2>Paleta Nexforce aplicada a finanças</h2>
+    <p class="lead">Interface predominantemente preto/branco/cinza. Verde e vermelho aparecem <em>apenas</em> em valores e status — entrada verde, saída vermelha (regra da spec + regra da marca). Navy e azul para elementos informativos.</p>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#0C0E0E"></div><div class="lbl"><b>Primary Black</b><code>#0C0E0E · sidebar, títulos, fundo dark</code></div></div>
+      <div class="sw"><div class="chip" style="background:#F5F5F5;border-bottom:1px solid #E2E2E0"></div><div class="lbl"><b>Near White</b><code>#F5F5F5 · fundo do app claro</code></div></div>
+      <div class="sw"><div class="chip" style="background:#515151"></div><div class="lbl"><b>Dark Gray</b><code>#515151 · texto corrido</code></div></div>
+      <div class="sw"><div class="chip" style="background:#303F63"></div><div class="lbl"><b>Navy</b><code>#303F63 · seções, gráficos</code></div></div>
+      <div class="sw"><div class="chip" style="background:#215A9F"></div><div class="lbl"><b>Blue</b><code>#215A9F · links, informativos</code></div></div>
+      <div class="sw"><div class="chip" style="background:#2D6E44"></div><div class="lbl"><b>Green</b><code>#2D6E44 · receitas, pago</code></div></div>
+      <div class="sw"><div class="chip" style="background:#BA1925"></div><div class="lbl"><b>Red</b><code>#BA1925 · despesas, vencido</code></div></div>
+      <div class="sw"><div class="chip" style="background:#D8B523"></div><div class="lbl"><b>Yellow</b><code>#D8B523 · atenção (só sobre escuro)</code></div></div>
+    </div>
+    <p class="note">No tema escuro, verde e vermelho são clareados (<code>#5CBF8B</code> / <code>#F0707A</code>) para manter contraste AA sobre <code>#0C0E0E</code> — derivação permitida porque a cor semântica continua marcando apenas valores. Fonte: Lato (Google Fonts) no app real; este protótipo usa a fonte do sistema como fallback.</p>
+  </div>
+
+  <!-- ================= WEB ================= -->
+  <div class="sec">
+    <div class="eyebrow">Aplicação web</div>
+    <h2>Protótipo navegável — clique nos itens da sidebar</h2>
+    <p class="lead">Use o botão <b>Alternar tema</b> na barra do navegador simulado para ver claro ↔ escuro.</p>
+
+    <div class="browser">
+      <div class="browser-bar">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="urlbox">app.planmyfinances.com.br</div>
+        <button class="btn btn-ghost" id="themeBtn" style="font-size:11.5px;padding:5px 10px">◐ Alternar tema</button>
+      </div>
+
+      <div class="app t-light" id="app">
+        <!-- sidebar -->
+        <div class="side">
+          <div class="brand">Plan<span>My</span>Finances</div>
+          <div class="nitem active" data-s="home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg>Início</div>
+          <div class="nitem" data-s="hist"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Histórico</div>
+          <div class="nitem" data-s="dash"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Dashboard</div>
+          <div class="nitem" data-s="cat"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>Categorias</div>
+          <div class="nitem" data-s="proj"><svg viewBox="0 0 24 24"><path d="M3 7h5l2-2h11v14H3zM3 7v12"/></svg>Pastas</div>
+          <div class="nav-label">Contas</div>
+          <div class="nitem" data-s="fix"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M8 15l2.5 2.5L15 13"/></svg>Gastos Fixos</div>
+          <div class="nitem" data-s="cob"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 8l5-5 5 5"/></svg>Cobranças</div>
+          <div class="nitem" data-s="fat"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Faturas</div>
+          <div class="nav-label">Automação</div>
+          <div class="nitem" data-s="conn"><svg viewBox="0 0 24 24"><path d="M9 12h6M7 8a4 4 0 0 0 0 8h2M17 8a4 4 0 0 1 0 8h-2"/></svg>Conexões</div>
+          <div class="nitem" data-s="ai"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>Agente <span class="badge-soon">Em breve</span></div>
+          <div class="nav-label">Conta</div>
+          <div class="nitem" data-s="login"><svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>Sair</div>
+          <div class="foot">hugo@email.com</div>
+        </div>
+
+        <!-- main -->
+        <div class="main">
+          <!-- HOME -->
+          <div class="screen active" id="s-home">
+            <div class="shead"><h3>Início</h3><div class="spacer"></div><span class="monthsel">Julho 2026</span><button class="btn btn-primary">+ Nova transação</button></div>
+            <div class="cards3">
+              <div class="kpi"><div class="t">Receitas do mês</div><div class="v pos">R$ 8.450,00</div><div class="d">2 lançamentos</div></div>
+              <div class="kpi"><div class="t">Despesas do mês</div><div class="v neg">R$ 5.230,45</div><div class="d">23 lançamentos</div></div>
+              <div class="kpi"><div class="t">Saldo do mês</div><div class="v">R$ 3.219,55</div><div class="d">▲ +12% vs junho</div></div>
+            </div>
+            <div class="cols2">
+              <div class="panel">
+                <h4>Últimas transações</h4>
+                <table class="tb">
+                  <tr><td><b style="color:var(--text)">Salário</b><span class="cat">Renda · 05/07</span></td><td class="num val-in">+ R$ 7.900,00</td></tr>
+                  <tr><td><b style="color:var(--text)">Aluguel</b><span class="cat">Moradia · 05/07 · <span class="pill pill-info">gasto fixo</span></span></td><td class="num val-out">− R$ 1.850,00</td></tr>
+                  <tr><td><b style="color:var(--text)">Mercado Pão de Açúcar</b><span class="cat">Alimentação · 05/07</span></td><td class="num val-out">− R$ 234,10</td></tr>
+                  <tr><td><b style="color:var(--text)">Uber</b><span class="cat">Transporte · 04/07 · <span class="pill pill-info">Nubank</span></span></td><td class="num val-out">− R$ 18,40</td></tr>
+                  <tr><td><b style="color:var(--text)">Freela — identidade visual</b><span class="cat">Renda extra · 02/07</span></td><td class="num val-in">+ R$ 550,00</td></tr>
+                </table>
+              </div>
+              <div>
+                <div class="panel">
+                  <h4>Receitas × Despesas — Julho</h4>
+                  <div class="chartbox">
+                    <div class="bargroup"><div class="bar in" style="height:92%"></div><div class="bar out" style="height:57%"></div></div>
+                  </div>
+                  <div class="legend"><span><i style="background:var(--green)"></i>Receitas</span><span><i style="background:var(--red)"></i>Despesas</span></div>
+                </div>
+                <div class="panel">
+                  <h4>Gastos fixos do mês</h4>
+                  <div style="font-size:12.5px;margin-bottom:8px"><b style="color:var(--text)">2 de 7 pagos</b> · R$ 553,02 pendentes</div>
+                  <div style="font-size:12px;color:var(--muted)">Próximo: Energia (CPFL) — vence dia 12 <span class="pill pill-pend">pendente</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GASTOS FIXOS -->
+          <div class="screen" id="s-fix">
+            <div class="shead">
+              <h3>Gastos Fixos</h3><div class="spacer"></div>
+              <span class="monthsel"><span class="ar">◀</span> Julho 2026 <span class="ar">▶</span></span>
+              <button class="btn btn-primary">+ Novo gasto fixo</button>
+              <div class="sub">Despesas recorrentes com vencimento e controle mensal. Marcar como pago registra a despesa do mês automaticamente.</div>
+            </div>
+            <div class="cards3">
+              <div class="kpi"><div class="t">Total mensal</div><div class="v">R$ 2.883,02</div><div class="d">7 gastos ativos</div></div>
+              <div class="kpi"><div class="t">Pago em julho</div><div class="v pos">R$ 2.330,00</div><div class="d">2 de 7</div></div>
+              <div class="kpi"><div class="t">Pendente</div><div class="v neg">R$ 553,02</div><div class="d">próximo vence dia 12</div></div>
+            </div>
+            <div class="panel scrollx">
+              <table class="tb">
+                <thead><tr><th>Gasto</th><th>Categoria</th><th class="num">Valor</th><th>Vencimento</th><th>Status em julho</th><th>Pago</th><th></th></tr></thead>
+                <tr><td><b style="color:var(--text)">Aluguel</b></td><td>Moradia</td><td class="num">R$ 1.850,00</td><td>dia 05</td><td><span class="pill pill-paid">pago em 05/07</span></td><td><span class="toggle on"></span></td><td>✎</td></tr>
+                <tr><td><b style="color:var(--text)">Condomínio</b></td><td>Moradia</td><td class="num">R$ 480,00</td><td>dia 10</td><td><span class="pill pill-paid">pago em 08/07</span></td><td><span class="toggle on"></span></td></tr>
+                <tr><td><b style="color:var(--text)">Energia — CPFL</b></td><td>Moradia</td><td class="num">R$ 210,00</td><td>dia 12</td><td><span class="pill pill-pend">vence em 6 dias</span></td><td><span class="toggle"></span></td></tr>
+                <tr><td><b style="color:var(--text)">Internet — Vivo Fibra</b></td><td>Moradia</td><td class="num">R$ 119,90</td><td>dia 15</td><td><span class="pill pill-pend">pendente</span></td><td><span class="toggle"></span></td></tr>
+                <tr><td><b style="color:var(--text)">IPTU — parcela 7/10</b></td><td>Impostos</td><td class="num">R$ 145,32</td><td>dia 20</td><td><span class="pill pill-pend">pendente</span></td><td><span class="toggle"></span></td></tr>
+                <tr><td><b style="color:var(--text)">Spotify</b></td><td>Assinaturas</td><td class="num">R$ 21,90</td><td>dia 22</td><td><span class="pill pill-pend">pendente</span></td><td><span class="toggle"></span></td></tr>
+                <tr><td><b style="color:var(--text)">Netflix</b></td><td>Assinaturas</td><td class="num">R$ 55,90</td><td>dia 22</td><td><span class="pill pill-pend">pendente</span></td><td><span class="toggle"></span></td></tr>
+              </table>
+            </div>
+            <div class="callout"><b>Como funciona o mês virado</b>Em agosto, todos os status voltam para "pendente" automaticamente — o histórico de pagamento de cada mês fica guardado (você pode navegar para meses anteriores no seletor acima). Um gasto não pago no vencimento aparece como <span class="pill pill-late">vencido</span>.</div>
+            <div class="callout" style="border-left-color:var(--navy)"><b>Mudou o valor? Vale só daqui pra frente</b>Ao editar o valor de um gasto (✎), o novo valor passa a valer do mês vigente em diante. Cada pagamento guarda o valor da época: se o aluguel subir para R$ 1.980,00 em agosto, julho continua registrado como R$ 1.850,00 — o histórico nunca é reescrito.</div>
+          </div>
+
+          <!-- HISTÓRICO -->
+          <div class="screen" id="s-hist">
+            <div class="shead"><h3>Histórico</h3><div class="spacer"></div><button class="btn btn-primary">+ Nova transação</button>
+              <div class="sub">Filtros cumulativos persistidos na URL. Transações importadas do Pluggy mostram a origem.</div></div>
+            <div class="filters">
+              <span class="fsel">Tipo: <b>Todos</b> ▾</span><span class="fsel">Categoria: <b>Todas</b> ▾</span>
+              <span class="fsel">Subcategoria: <b>—</b> ▾</span><span class="fsel">De: <b>01/07/2026</b></span><span class="fsel">Até: <b>06/07/2026</b></span>
+              <span class="fsel" style="color:var(--blue);border-color:var(--blue)">Limpar filtros</span>
+            </div>
+            <div class="panel scrollx">
+              <table class="tb">
+                <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Origem</th><th class="num">Valor</th><th></th></tr></thead>
+                <tr><td>05/07</td><td>Salário</td><td>Renda</td><td><span class="pill pill-neutral">manual</span></td><td class="num val-in">+ R$ 7.900,00</td><td>✎ 🗑</td></tr>
+                <tr><td>05/07</td><td>Aluguel</td><td>Moradia</td><td><span class="pill pill-info">gasto fixo</span></td><td class="num val-out">− R$ 1.850,00</td><td>✎ 🗑</td></tr>
+                <tr><td>05/07</td><td>Mercado Pão de Açúcar</td><td>Alimentação › Mercado</td><td><span class="pill pill-neutral">manual</span></td><td class="num val-out">− R$ 234,10</td><td>✎ 🗑</td></tr>
+                <tr><td>04/07</td><td>Uber</td><td>Transporte › App</td><td><span class="pill pill-info">Nubank</span></td><td class="num val-out">− R$ 18,40</td><td>✎ 🗑</td></tr>
+                <tr><td>04/07</td><td>Padaria Santa Marta</td><td>Alimentação</td><td><span class="pill pill-info">Nubank</span></td><td class="num val-out">− R$ 14,50</td><td>✎ 🗑</td></tr>
+                <tr><td>03/07</td><td>Ingresso Valle Nevado <span class="pill pill-info" style="text-transform:none">✈️ Viagem Chile</span></td><td>Viagem › Lazer</td><td><span class="pill pill-neutral">manual</span></td><td class="num val-out">− R$ 240,50</td><td>✎ 🗑</td></tr>
+                <tr><td>02/07</td><td>Freela — identidade visual</td><td>Renda extra</td><td><span class="pill pill-neutral">manual</span></td><td class="num val-in">+ R$ 550,00</td><td>✎ 🗑</td></tr>
+                <tr><td>01/07</td><td>Farmácia Droga Raia</td><td>Saúde</td><td><span class="pill pill-info">Inter</span></td><td class="num val-out">− R$ 67,80</td><td>✎ 🗑</td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- DASHBOARD -->
+          <div class="screen" id="s-dash">
+            <div class="shead"><h3>Dashboard</h3><div class="spacer"></div><span class="monthsel"><span class="ar">◀</span> Julho 2026 <span class="ar">▶</span></span></div>
+            <div class="cards3">
+              <div class="kpi"><div class="t">Receitas</div><div class="v pos">R$ 8.450,00</div></div>
+              <div class="kpi"><div class="t">Despesas</div><div class="v neg">R$ 5.230,45</div></div>
+              <div class="kpi"><div class="t">Saldo</div><div class="v">R$ 3.219,55</div></div>
+            </div>
+            <div class="cols2">
+              <div class="panel">
+                <h4>Saldo acumulado por dia</h4>
+                <svg viewBox="0 0 320 130" style="width:100%;height:140px">
+                  <line x1="0" y1="110" x2="320" y2="110" stroke="var(--line)" stroke-width="1"/>
+                  <line x1="0" y1="70" x2="320" y2="70" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>
+                  <line x1="0" y1="30" x2="320" y2="30" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>
+                  <path d="M8 100 L48 96 L88 20 L128 34 L168 38 L208 52 L248 48 L288 40 L312 36" fill="none" stroke="var(--navy)" stroke-width="2.4" stroke-linecap="round"/>
+                  <circle cx="312" cy="36" r="4" fill="var(--navy)"/>
+                  <text x="308" y="22" font-size="10" fill="var(--text)" text-anchor="end" font-weight="700">R$ 3.219</text>
+                </svg>
+              </div>
+              <div class="panel">
+                <h4>Receitas × Despesas por semana</h4>
+                <div class="chartbox">
+                  <div class="bargroup"><div class="bar in" style="height:88%"></div><div class="bar out" style="height:64%"></div></div>
+                  <div class="bargroup"><div class="bar in" style="height:8%"></div><div class="bar out" style="height:36%"></div></div>
+                  <div class="bargroup"><div class="bar in" style="height:14%"></div><div class="bar out" style="height:42%"></div></div>
+                  <div class="bargroup"><div class="bar in" style="height:6%"></div><div class="bar out" style="height:22%"></div></div>
+                </div>
+                <div class="axis"><span>Sem 1</span><span>Sem 2</span><span>Sem 3</span><span>Sem 4</span></div>
+                <div class="legend"><span><i style="background:var(--green)"></i>Receitas</span><span><i style="background:var(--red)"></i>Despesas</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CATEGORIAS -->
+          <div class="screen" id="s-cat">
+            <div class="shead"><h3>Categorias</h3><div class="spacer"></div><button class="btn btn-primary">+ Nova categoria</button></div>
+            <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--red);margin:2px 0 8px">Despesas</div>
+            <div class="catgrid">
+              <div class="catcard"><div class="h"><b>Moradia</b></div>
+                <div class="chips"><span class="chip2">Aluguel</span><span class="chip2">Condomínio</span><span class="chip2">Energia</span><span class="chip2">Internet</span><span class="chip2">+ sub</span></div></div>
+              <div class="catcard"><div class="h"><b>Alimentação</b></div>
+                <div class="chips"><span class="chip2">Mercado</span><span class="chip2">Restaurante</span><span class="chip2">Delivery</span><span class="chip2">+ sub</span></div></div>
+              <div class="catcard"><div class="h"><b>Transporte</b></div>
+                <div class="chips"><span class="chip2">Combustível</span><span class="chip2">App</span><span class="chip2">+ sub</span></div></div>
+              <div class="catcard"><div class="h"><b>Viagem</b></div>
+                <div class="chips"><span class="chip2">Transporte</span><span class="chip2">Hospedagem</span><span class="chip2">Lazer</span><span class="chip2">+ sub</span></div></div>
+            </div>
+            <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--green);margin:18px 0 8px">Receitas</div>
+            <div class="catgrid">
+              <div class="catcard"><div class="h"><b>Renda</b></div>
+                <div class="chips"><span class="chip2">Salário</span><span class="chip2">Freelas</span><span class="chip2">+ sub</span></div></div>
+              <div class="catcard"><div class="h"><b>Investimentos</b></div>
+                <div class="chips"><span class="chip2">Dividendos</span><span class="chip2">Rendimento CDB</span><span class="chip2">+ sub</span></div></div>
+            </div>
+            <p class="note" style="color:var(--muted)">Excluir categoria remove as subcategorias e deixa as transações afetadas como "sem categoria" (regra da spec).</p>
+          </div>
+
+          <!-- PASTAS -->
+          <div class="screen" id="s-proj">
+            <div class="shead"><h3>Pastas</h3><div class="spacer"></div><button class="btn btn-primary">+ Nova pasta</button>
+              <div class="sub">Agrupe despesas de um objetivo (viagem, reforma, evento) e acompanhe o custo total. As transações de cada pasta vivem dentro do próprio card.</div></div>
+
+            <div class="panel">
+              <div style="display:flex;align-items:center;gap:8px"><h4 style="margin:0;flex:1">✈️ Viagem Chile</h4><span class="pill pill-info">ativa</span><span style="color:var(--muted);font-size:12px;cursor:pointer">recolher ▴</span></div>
+              <div style="display:flex;align-items:baseline;gap:10px;margin:4px 0 10px">
+                <span style="font-size:20px;font-weight:900;color:var(--text);font-variant-numeric:tabular-nums">R$ 2.340,80</span>
+                <span style="font-size:12px;color:var(--muted)">total gasto · 14 transações · criada em jun/2026</span>
+              </div>
+              <table class="tb">
+                <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th class="num">Valor</th></tr></thead>
+                <tr><td>28/06</td><td>Passagem aérea GRU→SCL</td><td>Viagem › Transporte</td><td class="num val-out">− R$ 1.480,00</td></tr>
+                <tr><td>30/06</td><td>Reserva hotel Santiago (sinal)</td><td>Viagem › Hospedagem</td><td class="num val-out">− R$ 620,30</td></tr>
+                <tr><td>03/07</td><td>Ingresso Valle Nevado</td><td>Viagem › Lazer</td><td class="num val-out">− R$ 240,50</td></tr>
+              </table>
+              <div style="font-size:12px;color:var(--blue);font-weight:700;margin-top:8px;cursor:pointer">ver todas as 14 transações →</div>
+            </div>
+
+            <div class="panel">
+              <div style="display:flex;align-items:center;gap:8px"><h4 style="margin:0;flex:1">🛠️ Reforma do quarto</h4><span class="pill pill-neutral">arquivada</span><span style="color:var(--muted);font-size:12px;cursor:pointer">expandir ▾</span></div>
+              <div style="display:flex;align-items:baseline;gap:10px;margin-top:4px">
+                <span style="font-size:20px;font-weight:900;color:var(--text);font-variant-numeric:tabular-nums">R$ 4.812,55</span>
+                <span style="font-size:12px;color:var(--muted)">total gasto · 22 transações · mar–mai/2026</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- COBRANÇAS -->
+          <div class="screen" id="s-cob">
+            <div class="shead"><h3>Cobranças <span style="font-weight:400;color:var(--muted);font-size:13px">· a receber</span></h3><div class="spacer"></div><button class="btn btn-primary">+ Nova cobrança</button></div>
+            <div class="cards3">
+              <div class="kpi"><div class="t">A receber</div><div class="v">R$ 1.220,00</div></div>
+              <div class="kpi"><div class="t">Vence este mês</div><div class="v">R$ 470,00</div></div>
+              <div class="kpi"><div class="t">Total recebido</div><div class="v pos">R$ 600,00</div></div>
+            </div>
+            <div class="panel scrollx">
+              <table class="tb">
+                <thead><tr><th>Devedor</th><th class="num">Parcela</th><th class="num">Total</th><th class="num">Recebido</th><th class="num">Restante</th><th>Vencimento</th><th>Status</th></tr></thead>
+                <tr><td><b style="color:var(--text)">João — empréstimo</b></td><td class="num">R$ 150,00 ×10</td><td class="num">R$ 1.500,00</td><td class="num val-in">R$ 600,00</td><td class="num">R$ 900,00</td><td>15/07</td><td><span class="fsel">cobrado ▾</span></td></tr>
+                <tr><td><b style="color:var(--text)">Maria — conserto notebook</b></td><td class="num">R$ 320,00 ×1</td><td class="num">R$ 320,00</td><td class="num val-in">R$ 0,00</td><td class="num">R$ 320,00</td><td>28/07</td><td><span class="fsel">pendente ▾</span></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- FATURAS -->
+          <div class="screen" id="s-fat">
+            <div class="shead"><h3>Faturas <span style="font-weight:400;color:var(--muted);font-size:13px">· a pagar</span></h3><div class="spacer"></div><button class="btn btn-primary">+ Nova fatura</button></div>
+            <div class="cards3">
+              <div class="kpi"><div class="t">Em aberto</div><div class="v neg">R$ 1.437,50</div></div>
+              <div class="kpi"><div class="t">Vence este mês</div><div class="v">R$ 487,50</div></div>
+              <div class="kpi"><div class="t">Total pago</div><div class="v pos">R$ 975,00</div></div>
+            </div>
+            <div class="panel scrollx">
+              <table class="tb">
+                <thead><tr><th>Cartão</th><th class="num">Parcela</th><th class="num">Total</th><th class="num">Pago</th><th class="num">Restante</th><th>Vencimento</th><th>Status</th></tr></thead>
+                <tr><td><b style="color:var(--text)">Nubank — notebook</b></td><td class="num">R$ 487,50 ×4</td><td class="num">R$ 1.950,00</td><td class="num val-in">R$ 975,00</td><td class="num">R$ 975,00</td><td>10/07</td><td><span class="fsel">pendente ▾</span></td></tr>
+                <tr><td><b style="color:var(--text)">Inter — passagem aérea</b></td><td class="num">R$ 462,50 ×1</td><td class="num">R$ 462,50</td><td class="num val-in">R$ 0,00</td><td class="num">R$ 462,50</td><td>05/08</td><td><span class="fsel">pendente ▾</span></td></tr>
+              </table>
+            </div>
+          </div>
+
+          <!-- CONEXÕES -->
+          <div class="screen" id="s-conn">
+            <div class="shead"><h3>Conexões</h3><div class="spacer"></div><button class="btn btn-ghost">↻ Sincronizar agora</button><button class="btn btn-primary">+ Conectar conta</button>
+              <div class="sub">Open Finance via Meu Pluggy — leitura das suas contas com consentimento revogável, aprovado no app do seu banco.</div></div>
+            <div class="conn">
+              <div class="bank-ic" style="background:#820AD1">Nu</div>
+              <div class="inf"><b>Nubank — conta e cartão</b><span>Sincronizado há 2 horas · 34 transações importadas em julho · consentimento válido até 03/2027</span></div>
+              <span class="pill pill-paid">conectado</span>
+            </div>
+            <div class="conn">
+              <div class="bank-ic" style="background:#FF7A00">In</div>
+              <div class="inf"><b>Banco Inter — conta</b><span>Sincronizado há 2 horas · 11 transações importadas em julho · consentimento válido até 01/2027</span></div>
+              <span class="pill pill-paid">conectado</span>
+            </div>
+            <div class="callout"><b>3 transações importadas aguardando categoria</b>Transações do banco chegam sem categoria — revise e categorize para que os gráficos fiquem precisos. <span style="color:var(--blue);font-weight:700">Revisar agora →</span></div>
+            <p class="note" style="color:var(--muted)">Você nunca informa sua senha bancária aqui. A conexão é aprovada dentro do app do banco (Open Finance regulado pelo Banco Central) e pode ser revogada a qualquer momento.</p>
+          </div>
+
+          <!-- AGENTE -->
+          <div class="screen" id="s-ai">
+            <div class="shead"><h3>Agente</h3></div>
+            <div class="soon-banner"><b>Em breve</b><div style="font-size:12.5px;margin-top:3px">Converse com suas finanças por chat — e futuramente pelo WhatsApp. Prévia da interface abaixo.</div></div>
+            <div class="chat">
+              <div class="bub user">Quanto gastei com alimentação em junho?</div>
+              <div class="bub bot">Em junho você gastou <b>R$ 842,30</b> com Alimentação — 12% a menos que em maio. O maior gasto foi Mercado Pão de Açúcar (R$ 310,45).</div>
+              <div class="bub user">E o aluguel de julho, já foi pago?</div>
+              <div class="bub bot">Sim — o Aluguel (R$ 1.850,00) foi marcado como pago em 05/07 e a despesa já está no seu histórico.</div>
+            </div>
+            <div class="chat-input"><input disabled placeholder="Pergunte sobre suas finanças…"><button class="btn btn-primary" disabled>Enviar</button></div>
+          </div>
+
+          <!-- LOGIN -->
+          <div class="screen" id="s-login">
+            <div class="login-stage">
+              <div class="login-card">
+                <div class="logo">Plan<span>My</span>Finances</div>
+                <div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">Entre para continuar</div>
+                <div class="fld"><label>Email</label><div class="inp">hugo@email.com</div></div>
+                <div class="fld"><label>Senha</label><div class="inp">••••••••••</div></div>
+                <button class="btn btn-primary">Entrar</button>
+                <div class="login-links"><a>Esqueci minha senha</a><a>Criar conta</a></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MOBILE ================= -->
+  <div class="sec">
+    <div class="eyebrow">Aplicação mobile (Expo / Android primeiro)</div>
+    <h2>Mesmas funcionalidades, navegação nativa</h2>
+    <p class="lead">Cinco abas fixas: Início, Histórico, Fixos, Dashboard e Mais (Pastas, Categorias, Cobranças, Faturas, Conexões, Agente, Sair). Terceiro aparelho mostrado no tema escuro.</p>
+    <div class="phones">
+
+      <!-- phone 1: início (claro) -->
+      <div class="phone"><div class="app t-light pscreen" style="display:flex">
+        <div class="statusbar"><span>9:41</span><span>▮▮▮ ⚡︎</span></div>
+        <div class="ptitle"><b>Início</b><span class="pill pill-neutral">Julho</span></div>
+        <div class="pbody">
+          <div class="pcards">
+            <div class="pkpi"><div class="t">Receitas</div><div class="v pos">R$ 8.450</div></div>
+            <div class="pkpi"><div class="t">Despesas</div><div class="v neg">R$ 5.230</div></div>
+          </div>
+          <div class="pkpi" style="margin-bottom:10px"><div class="t">Saldo do mês</div><div class="v">R$ 3.219,55</div></div>
+          <div style="font-size:11px;font-weight:700;color:var(--text);margin:8px 0 2px">ÚLTIMAS TRANSAÇÕES</div>
+          <div class="prow"><div class="ic">💼</div><div class="nm"><b>Salário</b><span>Renda · 05/07</span></div><div class="vl val-in">+7.900,00</div></div>
+          <div class="prow"><div class="ic">🏠</div><div class="nm"><b>Aluguel</b><span>Moradia · 05/07</span></div><div class="vl val-out">−1.850,00</div></div>
+          <div class="prow"><div class="ic">🛒</div><div class="nm"><b>Mercado Pão de Açúcar</b><span>Alimentação · 05/07</span></div><div class="vl val-out">−234,10</div></div>
+          <div class="prow"><div class="ic">🚗</div><div class="nm"><b>Uber</b><span>Transporte · 04/07</span></div><div class="vl val-out">−18,40</div></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg>Início</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Histórico</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Fixos</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/></svg>Dash</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mais</div>
+        </div>
+      </div></div>
+
+      <!-- phone 2: gastos fixos (claro) -->
+      <div class="phone"><div class="app t-light pscreen" style="display:flex">
+        <div class="statusbar"><span>9:41</span><span>▮▮▮ ⚡︎</span></div>
+        <div class="ptitle"><b>Gastos Fixos</b><span class="pill pill-neutral">◀ Julho ▶</span></div>
+        <div class="pbody">
+          <div class="pcards">
+            <div class="pkpi"><div class="t">Pago</div><div class="v pos">R$ 2.330</div></div>
+            <div class="pkpi"><div class="t">Pendente</div><div class="v neg">R$ 553</div></div>
+          </div>
+          <div class="prow"><div class="ic">🏠</div><div class="nm"><b>Aluguel</b><span>dia 05 · R$ 1.850,00</span></div><span class="toggle on"></span></div>
+          <div class="prow"><div class="ic">🏢</div><div class="nm"><b>Condomínio</b><span>dia 10 · R$ 480,00</span></div><span class="toggle on"></span></div>
+          <div class="prow"><div class="ic">⚡</div><div class="nm"><b>Energia — CPFL</b><span>vence em 6 dias · R$ 210,00</span></div><span class="toggle"></span></div>
+          <div class="prow"><div class="ic">📶</div><div class="nm"><b>Internet — Vivo</b><span>dia 15 · R$ 119,90</span></div><span class="toggle"></span></div>
+          <div class="prow"><div class="ic">🏛️</div><div class="nm"><b>IPTU 7/10</b><span>dia 20 · R$ 145,32</span></div><span class="toggle"></span></div>
+          <div class="prow"><div class="ic">🎵</div><div class="nm"><b>Spotify</b><span>dia 22 · R$ 21,90</span></div><span class="toggle"></span></div>
+          <div style="text-align:center;margin-top:10px"><span class="btn btn-primary" style="width:88%;justify-content:center">+ Novo gasto fixo</span></div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg>Início</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Histórico</div>
+          <div class="tab on"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Fixos</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/></svg>Dash</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mais</div>
+        </div>
+      </div></div>
+
+      <!-- phone 3: agente (escuro) -->
+      <div class="phone"><div class="app t-dark pscreen" style="display:flex">
+        <div class="statusbar"><span>9:41</span><span>▮▮▮ ⚡︎</span></div>
+        <div class="ptitle"><b>Agente</b><span class="badge-soon" style="background:rgba(216,181,35,.15)">Em breve</span></div>
+        <div class="pbody" style="display:flex;flex-direction:column">
+          <div style="flex:1;opacity:.55">
+            <div class="bub user" style="font-size:12px">Quanto gastei com alimentação em junho?</div>
+            <div class="bub bot" style="font-size:12px">Em junho você gastou <b>R$ 842,30</b> com Alimentação — 12% a menos que maio.</div>
+            <div class="bub user" style="font-size:12px">E o aluguel de julho?</div>
+            <div class="bub bot" style="font-size:12px">Pago em 05/07 ✓ — despesa já registrada no histórico.</div>
+          </div>
+          <div style="display:flex;gap:6px;opacity:.55">
+            <div style="flex:1;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 12px;font-size:11.5px;color:var(--muted)">Pergunte sobre suas finanças…</div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/></svg>Início</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Histórico</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Fixos</div>
+          <div class="tab"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7"/></svg>Dash</div>
+          <div class="tab on"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Mais</div>
+        </div>
+      </div></div>
+
+    </div>
+  </div>
+
+  <!-- ================= FLUXO ================= -->
+  <div class="sec">
+    <div class="eyebrow">Comportamento-chave</div>
+    <h2>O que acontece ao marcar um gasto fixo como pago</h2>
+    <div class="flow">
+      <div class="fstep"><span class="n">1</span><b>Você liga o toggle</b>No gasto "Energia — CPFL" de julho, na web ou no mobile.</div>
+      <div class="fstep"><span class="n">2</span><b>O app registra o pagamento</b>Grava data do pagamento no mês vigente. Status vira <em>pago</em>; cards recalculam.</div>
+      <div class="fstep"><span class="n">3</span><b>Despesa criada automaticamente</b>Transação de R$ 210,00 na categoria do gasto entra no histórico, saldo e dashboard, marcada como "gasto fixo".</div>
+      <div class="fstep"><span class="n">4</span><b>Desmarcou? Desfaz tudo</b>O pagamento do mês e a transação vinculada são removidos juntos. Nada fica órfão.</div>
+    </div>
+    <p class="note">Na virada do mês não existe ação automática: os gastos simplesmente aparecem como pendentes no novo mês, e o histórico dos meses anteriores fica preservado e navegável.</p>
+  </div>
+
+</div>
+
+<script>
+  var app = document.getElementById('app');
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    app.classList.toggle('t-dark'); app.classList.toggle('t-light');
+  });
+  var items = document.querySelectorAll('.nitem');
+  items.forEach(function (it) {
+    it.addEventListener('click', function () {
+      items.forEach(function (o) { o.classList.remove('active'); });
+      it.classList.add('active');
+      document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('active'); });
+      document.getElementById('s-' + it.getAttribute('data-s')).classList.add('active');
+    });
+  });
+</script>

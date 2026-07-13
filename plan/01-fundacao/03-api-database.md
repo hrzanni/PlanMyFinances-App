@@ -63,6 +63,9 @@ RESEND_API_KEY=
 AUTH_BYPASS=false
 PORT=3333
 WEB_ORIGIN=http://localhost:3000
+# Meu Pluggy (fase 4 — Conexões); credenciais de desenvolvimento de meu.pluggy.ai
+PLUGGY_CLIENT_ID=
+PLUGGY_CLIENT_SECRET=
 ```
 
 - [ ] **Passo 3: `apps/api/tsconfig.json`**
@@ -82,9 +85,11 @@ import { pgTable, uuid, text, numeric, integer, date, timestamp, pgEnum, check }
 import { sql } from 'drizzle-orm'
 
 export const txType = pgEnum('tx_type', ['receita', 'despesa'])
+export const txSource = pgEnum('tx_source', ['manual', 'fixed_expense', 'pluggy'])
 export const chargeStatus = pgEnum('charge_status', ['pendente', 'cobrado', 'pago'])
 export const invoiceStatus = pgEnum('invoice_status', ['pendente', 'pago'])
-export const subStatus = pgEnum('sub_status', ['ativo', 'cancelado'])
+export const activeStatus = pgEnum('active_status', ['active', 'archived'])
+export const connectionStatus = pgEnum('connection_status', ['connected', 'error', 'expired'])
 
 // users é criada pelo adapter do Better Auth (tarefa 1.7). Referenciamos por id (uuid).
 export const users = pgTable('users', { id: uuid('id').primaryKey().defaultRandom() })
@@ -103,6 +108,15 @@ export const subcategories = pgTable('subcategories', {
   name: text('name').notNull(),
 })
 
+export const folders = pgTable('folders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  icon: text('icon'),
+  status: activeStatus('status').notNull().default('active'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const transactions = pgTable('transactions', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -111,9 +125,15 @@ export const transactions = pgTable('transactions', {
   description: text('description'),
   categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
   subcategoryId: uuid('subcategory_id').references(() => subcategories.id, { onDelete: 'set null' }),
+  folderId: uuid('folder_id').references(() => folders.id, { onDelete: 'set null' }),
+  source: txSource('source').notNull().default('manual'),
+  externalId: text('external_id'),
   date: date('date').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({ valuePositive: check('tx_value_positive', sql`${t.value} > 0`) }))
+}, (t) => ({
+  valuePositive: check('tx_value_positive', sql`${t.value} > 0`),
+  externalUnique: uniqueIndex('tx_user_external_unique').on(t.userId, t.externalId).where(sql`${t.externalId} is not null`),
+}))
 
 export const charges = pgTable('charges', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -147,16 +167,48 @@ export const invoices = pgTable('invoices', {
   installmentsMin: check('invoice_installments_min', sql`${t.totalInstallments} >= 1`),
 }))
 
-export const subscriptions = pgTable('subscriptions', {
+// Gastos fixos (spec amendment 2026-07-06) — substitui a antiga `subscriptions`
+export const fixedExpenses = pgTable('fixed_expenses', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
-  dueDay: integer('due_day'),
-  status: subStatus('status').notNull().default('ativo'),
+  dueDay: integer('due_day').notNull(),
+  categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
+  status: activeStatus('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({ dueDayRange: check('sub_due_day_range', sql`${t.dueDay} is null or (${t.dueDay} >= 1 and ${t.dueDay} <= 31)`) }))
+}, (t) => ({
+  amountPositive: check('fe_amount_positive', sql`${t.amount} > 0`),
+  dueDayRange: check('fe_due_day_range', sql`${t.dueDay} >= 1 and ${t.dueDay} <= 31`),
+}))
+
+export const fixedExpensePayments = pgTable('fixed_expense_payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  fixedExpenseId: uuid('fixed_expense_id').notNull().references(() => fixedExpenses.id, { onDelete: 'cascade' }),
+  referenceMonth: date('reference_month').notNull(), // sempre dia 1 do mês
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(), // snapshot do valor na época (FR-105)
+  paidAt: date('paid_at').notNull(),
+  transactionId: uuid('transaction_id').references(() => transactions.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  onePerMonth: uniqueIndex('fep_expense_month_unique').on(t.fixedExpenseId, t.referenceMonth),
+}))
+
+// Conexões Open Finance via Meu Pluggy (spec amendment 2026-07-06)
+export const bankConnections = pgTable('bank_connections', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  pluggyItemId: text('pluggy_item_id').notNull(),
+  institutionName: text('institution_name').notNull(),
+  status: connectionStatus('status').notNull().default('connected'),
+  lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
+  consentExpiresAt: date('consent_expires_at'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
 ```
+
+> Import adicional necessário: `uniqueIndex` de `drizzle-orm/pg-core`.
 
 > Nota: a tabela `users` aqui é um placeholder mínimo. A tarefa 1.7 (Better Auth) define as colunas reais de `users` e as tabelas de sessão; ao integrar, substituir o placeholder pelo schema do adapter, mantendo `id uuid` como PK para as FKs acima continuarem válidas.
 
