@@ -6,6 +6,7 @@ import { firstName, formatDate } from '@pmf/core'
 import { Badge, Button, Card, CardTitle, EmptyState, Kpi, LoadingState } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
 import { currentMonth, money, monthLabel } from '@/lib/format'
+import { useMonthSummary } from '@/hooks/use-month-summary'
 import { PageHeader } from '@/components/page-header'
 import { TransactionForm } from '@/components/transaction-form'
 import { SourceBadge } from '@/components/tx-badges'
@@ -15,7 +16,7 @@ export default function HomePage() {
   const month = currentMonth()
   const [formOpen, setFormOpen] = useState(false)
 
-  const summary = trpc.dashboard.month.useQuery({ month })
+  const summary = useMonthSummary(month)
   const recent = trpc.transactions.list.useQuery({ limit: 5 })
   const fixed = trpc.fixedExpenses.list.useQuery({ month })
   const me = trpc.users.me.useQuery()
