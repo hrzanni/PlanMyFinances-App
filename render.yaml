@@ -27,7 +27,7 @@ services:
           name: planmyfinances-api
           envVarKey: RENDER_EXTERNAL_URL
       - key: WEB_ORIGIN
-        value: http://localhost:3005
+        value: https://plan-my-finances-app-web.vercel.app
       - key: EMAIL_FROM
         value: PlanMyFinances <onboarding@resend.dev>
       - key: RESEND_API_KEY

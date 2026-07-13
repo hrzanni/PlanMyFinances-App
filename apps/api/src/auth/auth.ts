@@ -25,6 +25,12 @@ export const auth = betterAuth({
   },
   // bearer: mobile autentica com token de sessão em Authorization (FR-063); expo: deep links
   plugins: [bearer(), expo()],
+  // Produção: web (vercel.app) e API (onrender.com) vivem em domínios distintos;
+  // cookie cross-site exige SameSite=None + Secure. Local (http) mantém o padrão Lax.
+  advanced:
+    process.env.NODE_ENV === 'production'
+      ? { defaultCookieAttributes: { sameSite: 'none', secure: true } }
+      : undefined,
 })
 
 export type Auth = typeof auth
