@@ -4,6 +4,7 @@
     "slug": "planmyfinances",
     "scheme": "planmyfinances",
     "version": "0.1.0",
+    "icon": "./assets/icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,7 +15,8 @@
     "android": {
       "package": "br.com.planmyfinances.app",
       "adaptiveIcon": {
-        "backgroundColor": "#0C0E0E"
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F1F1F1"
       }
     },
     "plugins": [
