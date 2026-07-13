@@ -11,10 +11,11 @@ import { PageHeader } from '@/components/page-header'
 import { TransactionForm } from '@/components/transaction-form'
 import { SourceBadge } from '@/components/tx-badges'
 import { IncomeExpenseChart } from '@/components/income-expense-chart'
-import { MonthChartsSection } from '@/components/month-charts-section'
+import { BalanceLineChart } from '@/components/balance-line-chart'
+import { MonthSelector } from '@/components/month-selector'
 
 export default function HomePage() {
-  const month = currentMonth()
+  const [month, setMonth] = useState(currentMonth)
   const [formOpen, setFormOpen] = useState(false)
 
   const summary = useMonthSummary(month)
@@ -29,9 +30,7 @@ export default function HomePage() {
   return (
     <>
       <PageHeader title={greeting}>
-        <span className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-bold text-foreground">
-          {monthLabel(month)}
-        </span>
+        <MonthSelector month={month} onChange={setMonth} />
         <Button onClick={() => setFormOpen(true)}>+ Nova transação</Button>
       </PageHeader>
 
@@ -142,7 +141,17 @@ export default function HomePage() {
         </div>
       </div>
 
-      <MonthChartsSection />
+      <Card className="mt-4">
+        <CardTitle>Saldo acumulado por dia</CardTitle>
+        {(summary.data?.incomeCount ?? 0) + (summary.data?.expenseCount ?? 0) > 0 ? (
+          <BalanceLineChart daily={summary.data?.daily ?? []} />
+        ) : (
+          <EmptyState
+            title={`Sem transações em ${monthLabel(month)}`}
+            hint="O gráfico aparece quando houver lançamentos no mês."
+          />
+        )}
+      </Card>
 
       <TransactionForm open={formOpen} onOpenChange={setFormOpen} />
     </>
