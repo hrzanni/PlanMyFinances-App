@@ -11,7 +11,6 @@ export interface NavItem {
 export const mainItems: NavItem[] = [
   { href: '/', label: 'Início' },
   { href: '/historico', label: 'Histórico' },
-  { href: '/dashboard', label: 'Dashboard' },
   { href: '/categorias', label: 'Categorias' },
   { href: '/pastas', label: 'Pastas' },
 ]

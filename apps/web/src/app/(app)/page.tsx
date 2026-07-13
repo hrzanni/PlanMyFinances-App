@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/page-header'
 import { TransactionForm } from '@/components/transaction-form'
 import { SourceBadge } from '@/components/tx-badges'
 import { IncomeExpenseChart } from '@/components/income-expense-chart'
+import { MonthChartsSection } from '@/components/month-charts-section'
 
 export default function HomePage() {
   const month = currentMonth()
@@ -140,6 +141,8 @@ export default function HomePage() {
           </Card>
         </div>
       </div>
+
+      <MonthChartsSection />
 
       <TransactionForm open={formOpen} onOpenChange={setFormOpen} />
     </>
