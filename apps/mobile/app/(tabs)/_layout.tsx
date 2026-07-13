@@ -20,7 +20,7 @@ function TabIcon({
   return <Ionicons name={focused ? focusedName : name} size={20} color={color} />
 }
 
-/** 5 tabs (FR-151). Guard: sem sessão → login. */
+/** 4 tabs (FR-151). Guard: sem sessão → login. */
 export default function TabsLayout() {
   const scheme = useColorScheme()
   const { data: session, isPending } = useSession()
@@ -59,15 +59,6 @@ export default function TabsLayout() {
         options={{
           title: 'Fixos',
           tabBarIcon: (p) => <TabIcon name="calendar-outline" focusedName="calendar" {...p} />,
-        }}
-      />
-      <Tabs.Screen
-        name="dash"
-        options={{
-          title: 'Dash',
-          tabBarIcon: (p) => (
-            <TabIcon name="stats-chart-outline" focusedName="stats-chart" {...p} />
-          ),
         }}
       />
       <Tabs.Screen

@@ -9,6 +9,7 @@ import { useMonthSummary } from '@/hooks/use-month-summary'
 import { Button, Card, EmptyState, Kpi, ScreenTitle } from '@/components/ui'
 import { TxRow } from '@/components/tx-row'
 import { TxFormModal } from '@/components/tx-form-modal'
+import { MonthChartsSection } from '@/components/month-charts-section'
 
 export default function HomeScreen() {
   const month = currentMonth()
@@ -75,6 +76,8 @@ export default function HomeScreen() {
             <EmptyState title="Nenhum gasto fixo" hint="Cadastre na aba Fixos." />
           )}
         </Card>
+
+        <MonthChartsSection />
       </ScrollView>
       <TxFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </SafeAreaView>
