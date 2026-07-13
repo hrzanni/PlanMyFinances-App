@@ -4,15 +4,16 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Link } from 'expo-router'
 import { firstName } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
-import { currentMonth, money, monthLabel } from '@/lib/format'
+import { currentMonth, money } from '@/lib/format'
 import { useMonthSummary } from '@/hooks/use-month-summary'
 import { Button, Card, EmptyState, Kpi, ScreenTitle } from '@/components/ui'
 import { TxRow } from '@/components/tx-row'
 import { TxFormModal } from '@/components/tx-form-modal'
+import { MonthSelector } from '@/components/month-selector'
 import { MonthChartsSection } from '@/components/month-charts-section'
 
 export default function HomeScreen() {
-  const month = currentMonth()
+  const [month, setMonth] = useState(currentMonth)
   const [formOpen, setFormOpen] = useState(false)
   const summary = useMonthSummary(month)
   const recent = trpc.transactions.list.useQuery({ limit: 5 })
@@ -25,12 +26,11 @@ export default function HomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-background dark:bg-background-dark" edges={['top']}>
       <ScrollView className="flex-1 px-4 pt-3">
-        <View className="mb-2 flex-row items-center justify-between">
+        <View className="mb-2">
           <ScreenTitle>{greeting}</ScreenTitle>
-          <Text className="text-xs font-bold text-muted dark:text-muted-dark">
-            {monthLabel(month)}
-          </Text>
         </View>
+
+        <MonthSelector month={month} onChange={setMonth} />
 
         <View className="mb-3 flex-row gap-2">
           <Kpi label="Receitas" value={money(summary.data?.income ?? 0)} tone="positive" />
@@ -77,7 +77,7 @@ export default function HomeScreen() {
           )}
         </Card>
 
-        <MonthChartsSection />
+        <MonthChartsSection month={month} />
       </ScrollView>
       <TxFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </SafeAreaView>
