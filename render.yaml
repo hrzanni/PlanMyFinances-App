@@ -1,0 +1,34 @@
+# Blueprint do Render — deploy da API (apps/api) com banco no Neon.
+# Uso: Render Dashboard → New → Blueprint → selecionar este repositório.
+# DATABASE_URL (Neon) é o único valor preenchido à mão, no painel do Render.
+services:
+  - type: web
+    name: planmyfinances-api
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && corepack prepare pnpm@10.11.0 --activate && pnpm install --frozen-lockfile
+    # Migrations rodam a cada boot (idempotente) antes de subir o servidor.
+    startCommand: pnpm --filter @pmf/api db:migrate && pnpm --filter @pmf/api start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_BYPASS
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+      - key: BETTER_AUTH_URL
+        fromService:
+          type: web
+          name: planmyfinances-api
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: WEB_ORIGIN
+        value: http://localhost:3005
+      - key: EMAIL_FROM
+        value: PlanMyFinances <onboarding@resend.dev>
+      - key: RESEND_API_KEY
+        sync: false

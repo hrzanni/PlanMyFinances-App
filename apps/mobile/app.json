@@ -25,6 +25,13 @@
     ],
     "experiments": {
       "typedRoutes": false
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ddc6b9e2-8efd-4949-b5db-04e9036f3ed4"
+      }
+    },
+    "owner": "hrzannis-team"
   }
 }
