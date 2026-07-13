@@ -20,13 +20,18 @@ export default function SignupScreen() {
       return
     }
     setLoading(true)
-    const { error: err } = await signUp.email({ name, email, password })
-    setLoading(false)
-    if (err) {
-      setError('Não foi possível criar a conta')
-      return
+    try {
+      const { error: err } = await signUp.email({ name, email, password })
+      if (err) {
+        setError('Não foi possível criar a conta')
+        return
+      }
+      router.replace('/(tabs)/inicio')
+    } catch {
+      setError('Não foi possível conectar ao servidor. Verifique a conexão e tente de novo.')
+    } finally {
+      setLoading(false)
     }
-    router.replace('/(tabs)/inicio')
   }
 
   return (
