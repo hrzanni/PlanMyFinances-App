@@ -5,6 +5,7 @@ import { Link } from 'expo-router'
 import { firstName } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
 import { currentMonth, money, monthLabel } from '@/lib/format'
+import { useMonthSummary } from '@/hooks/use-month-summary'
 import { Button, Card, EmptyState, Kpi, ScreenTitle } from '@/components/ui'
 import { TxRow } from '@/components/tx-row'
 import { TxFormModal } from '@/components/tx-form-modal'
@@ -12,7 +13,7 @@ import { TxFormModal } from '@/components/tx-form-modal'
 export default function HomeScreen() {
   const month = currentMonth()
   const [formOpen, setFormOpen] = useState(false)
-  const summary = trpc.dashboard.month.useQuery({ month })
+  const summary = useMonthSummary(month)
   const recent = trpc.transactions.list.useQuery({ limit: 5 })
   const fixed = trpc.fixedExpenses.list.useQuery({ month })
   const me = trpc.users.me.useQuery()
