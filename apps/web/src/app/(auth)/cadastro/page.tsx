@@ -23,13 +23,18 @@ export default function SignupPage() {
       return
     }
     setLoading(true)
-    const { error: err } = await signUp.email({ name, email, password })
-    setLoading(false)
-    if (err) {
-      setError(err.message === 'User already exists' ? 'Este email já está cadastrado' : 'Não foi possível criar a conta')
-      return
+    try {
+      const { error: err } = await signUp.email({ name, email, password })
+      if (err) {
+        setError(err.message === 'User already exists' ? 'Este email já está cadastrado' : 'Não foi possível criar a conta')
+        return
+      }
+      router.replace('/')
+    } catch {
+      setError('Não foi possível conectar ao servidor. Aguarde alguns segundos e tente de novo.')
+    } finally {
+      setLoading(false)
     }
-    router.replace('/')
   }
 
   return (

@@ -22,13 +22,18 @@ function ResetForm() {
       return
     }
     setLoading(true)
-    const { error: err } = await authClient.resetPassword({ newPassword: password, token })
-    setLoading(false)
-    if (err) {
-      setError('Link inválido ou expirado. Solicite um novo.')
-      return
+    try {
+      const { error: err } = await authClient.resetPassword({ newPassword: password, token })
+      if (err) {
+        setError('Link inválido ou expirado. Solicite um novo.')
+        return
+      }
+      router.replace('/login')
+    } catch {
+      setError('Não foi possível conectar ao servidor. Aguarde alguns segundos e tente de novo.')
+    } finally {
+      setLoading(false)
     }
-    router.replace('/login')
   }
 
   return (

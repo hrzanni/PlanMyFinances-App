@@ -19,13 +19,18 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    const { error: err } = await signIn.email({ email, password })
-    setLoading(false)
-    if (err) {
-      setError('Email ou senha inválidos')
-      return
+    try {
+      const { error: err } = await signIn.email({ email, password })
+      if (err) {
+        setError('Email ou senha inválidos')
+        return
+      }
+      router.replace('/')
+    } catch {
+      setError('Não foi possível conectar ao servidor. Aguarde alguns segundos e tente de novo.')
+    } finally {
+      setLoading(false)
     }
-    router.replace('/')
   }
 
   return (
