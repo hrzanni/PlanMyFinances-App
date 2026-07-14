@@ -10,6 +10,8 @@ import { router, protectedProcedure } from '../trpc'
 import * as service from '../../services/categories'
 
 const notFound = () => new TRPCError({ code: 'NOT_FOUND', message: 'Registro não encontrado' })
+const forbidden = () =>
+  new TRPCError({ code: 'FORBIDDEN', message: 'Categoria do sistema não pode ser alterada' })
 
 export const categoriesRouter = router({
   list: protectedProcedure.query(({ ctx }) => service.listCategories(ctx.db, ctx.userId)),
@@ -21,12 +23,14 @@ export const categoriesRouter = router({
   update: protectedProcedure.input(updateCategoryInput).mutation(async ({ ctx, input }) => {
     const row = await service.updateCategory(ctx.db, ctx.userId, input)
     if (!row) throw notFound()
+    if (row === 'forbidden') throw forbidden()
     return row
   }),
 
   delete: protectedProcedure.input(deleteByIdInput).mutation(async ({ ctx, input }) => {
     const row = await service.deleteCategory(ctx.db, ctx.userId, input.id)
     if (!row) throw notFound()
+    if (row === 'forbidden') throw forbidden()
     return row
   }),
 

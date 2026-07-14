@@ -13,7 +13,7 @@ const items: Array<{ href: Href; label: string; icon: IconName; soon?: boolean }
   { href: '/mais/pastas', label: 'Pastas', icon: 'folder-outline' },
   { href: '/mais/categorias', label: 'Categorias', icon: 'pricetags-outline' },
   { href: '/mais/cobrancas', label: 'Cobranças', icon: 'arrow-down-circle-outline' },
-  { href: '/mais/faturas', label: 'Faturas', icon: 'card-outline' },
+  { href: '/mais/faturas', label: 'Faturas', icon: 'receipt-outline' },
   { href: '/mais/conexoes', label: 'Conexões', icon: 'link-outline' },
   { href: '/mais/agente', label: 'Agente', icon: 'chatbubble-ellipses-outline', soon: true },
 ]

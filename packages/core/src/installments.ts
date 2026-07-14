@@ -72,3 +72,47 @@ export function parseInstallmentDraft(d: InstallmentDraft) {
     dueDate: d.dueDate || undefined,
   }
 }
+
+/** Rascunho de fatura (Faturas v2) como digitado no formulário (strings cruas). */
+export interface InvoiceDraft {
+  name: string
+  description: string
+  amountPerInstallment: string
+  totalInstallments: string
+  firstDueDate: string
+  categoryId: string
+  cardId: string
+}
+
+export const emptyInvoiceDraft: InvoiceDraft = {
+  name: '',
+  description: '',
+  amountPerInstallment: '',
+  totalInstallments: '1',
+  firstDueDate: '',
+  categoryId: '',
+  cardId: '',
+}
+
+/** Valida o rascunho de fatura no cliente. Retorna erro ou null. */
+export function validateInvoiceDraft(d: InvoiceDraft): string | null {
+  const per = toAmount(d.amountPerInstallment)
+  const count = Number(d.totalInstallments)
+  if (!per || per <= 0) return 'Informe o valor da parcela'
+  if (!count || count < 1) return 'Quantidade de parcelas deve ser ao menos 1'
+  if (!d.firstDueDate) return 'Informe o primeiro vencimento'
+  if (!ISO_DATE.test(d.firstDueDate)) return 'Data no formato AAAA-MM-DD'
+  return null
+}
+
+/** Converte o rascunho validado para o input da mutation invoices.create. */
+export function parseInvoiceDraft(d: InvoiceDraft) {
+  return {
+    description: d.description || undefined,
+    amountPerInstallment: toAmount(d.amountPerInstallment),
+    totalInstallments: Number(d.totalInstallments),
+    firstDueDate: d.firstDueDate,
+    categoryId: d.categoryId || undefined,
+    cardId: d.cardId || undefined,
+  }
+}

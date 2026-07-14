@@ -13,6 +13,7 @@ import { SourceBadge } from '@/components/tx-badges'
 import { IncomeExpenseChart } from '@/components/income-expense-chart'
 import { BalanceLineChart } from '@/components/balance-line-chart'
 import { MonthSelector } from '@/components/month-selector'
+import { InvoicesMonthWidget } from '@/components/invoices-month-widget'
 
 export default function HomePage() {
   const [month, setMonth] = useState(currentMonth)
@@ -138,6 +139,8 @@ export default function HomePage() {
               <EmptyState title="Nenhum gasto fixo" hint="Cadastre aluguel, contas e assinaturas." />
             )}
           </Card>
+
+          <InvoicesMonthWidget />
         </div>
       </div>
 

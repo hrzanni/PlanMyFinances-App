@@ -1,51 +1,88 @@
-import { and, desc, eq } from 'drizzle-orm'
-import { dueThisMonth, installmentTotals, sumAmounts, toNumber } from '@pmf/core'
+import { and, asc, desc, eq } from 'drizzle-orm'
 import type { CreateInvoiceInput, SetInvoiceStatusInput, UpdateInvoiceInput } from '@pmf/schemas'
 import type { DrizzleDB } from '../db/client'
-import { invoices } from '../db/schema'
+import { categories, invoicePayments, invoices } from '../db/schema'
+import { cardBelongsToUser } from './cards'
 
-export async function listInvoices(db: DrizzleDB, userId: string) {
-  return db
-    .select()
-    .from(invoices)
-    .where(eq(invoices.userId, userId))
-    .orderBy(desc(invoices.createdAt))
+/** Garante que a categoria referenciada numa fatura pertence ao usuário. */
+async function categoryBelongsToUser(
+  db: DrizzleDB,
+  userId: string,
+  categoryId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: categories.id })
+    .from(categories)
+    .where(and(eq(categories.id, categoryId), eq(categories.userId, userId)))
+  return Boolean(row)
 }
 
-/** Cards: Em aberto, Vence este mês, Total pago (FR-031, RN-005). */
-export async function invoicesSummary(db: DrizzleDB, userId: string) {
-  const allRows = await db.select().from(invoices).where(eq(invoices.userId, userId))
-  const pending = allRows.filter((r) => r.status === 'pendente')
-  const now = new Date()
+/** Lista faturas com categoria (leftJoin) e parcelas pagas (single select, agrupado em memória). */
+export async function listInvoices(db: DrizzleDB, userId: string) {
+  const rows = await db
+    .select({
+      id: invoices.id,
+      userId: invoices.userId,
+      cardName: invoices.cardName,
+      cardId: invoices.cardId,
+      description: invoices.description,
+      amountPerInstallment: invoices.amountPerInstallment,
+      totalInstallments: invoices.totalInstallments,
+      amountPaid: invoices.amountPaid,
+      categoryId: invoices.categoryId,
+      categoryName: categories.name,
+      firstDueDate: invoices.firstDueDate,
+      status: invoices.status,
+      createdAt: invoices.createdAt,
+    })
+    .from(invoices)
+    .leftJoin(categories, eq(invoices.categoryId, categories.id))
+    .where(eq(invoices.userId, userId))
+    .orderBy(desc(invoices.createdAt))
 
-  const remainingOf = (r: (typeof allRows)[number]) =>
-    installmentTotals(toNumber(r.amountPerInstallment), r.totalInstallments, toNumber(r.amountPaid))
-      .remaining
+  const paymentRows = await db
+    .select({
+      id: invoicePayments.id,
+      invoiceId: invoicePayments.invoiceId,
+      installmentNumber: invoicePayments.installmentNumber,
+      amount: invoicePayments.amount,
+      paidOn: invoicePayments.paidOn,
+    })
+    .from(invoicePayments)
+    .where(eq(invoicePayments.userId, userId))
+    .orderBy(asc(invoicePayments.installmentNumber))
 
-  const open = pending.reduce((acc, r) => acc + remainingOf(r), 0)
-  const dueMonth = pending
-    .filter((r) => dueThisMonth(r.dueDate, now))
-    .reduce((acc, r) => acc + remainingOf(r), 0)
-  const paid = sumAmounts(allRows.map((r) => r.amountPaid))
-
-  return {
-    open: Math.round(open * 100) / 100,
-    dueThisMonth: Math.round(dueMonth * 100) / 100,
-    paid,
+  const paymentsByInvoice = new Map<string, typeof paymentRows>()
+  for (const payment of paymentRows) {
+    const list = paymentsByInvoice.get(payment.invoiceId) ?? []
+    list.push(payment)
+    paymentsByInvoice.set(payment.invoiceId, list)
   }
+
+  return rows.map((row) => ({
+    ...row,
+    categoryName: row.categoryName ?? null,
+    payments: paymentsByInvoice.get(row.id) ?? [],
+  }))
 }
 
 export async function createInvoice(db: DrizzleDB, userId: string, input: CreateInvoiceInput) {
+  if (input.cardId && !(await cardBelongsToUser(db, userId, input.cardId)))
+    return 'card_not_found' as const
+  if (input.categoryId && !(await categoryBelongsToUser(db, userId, input.categoryId)))
+    return 'category_not_found' as const
   const [row] = await db
     .insert(invoices)
     .values({
       userId,
       cardName: input.cardName,
+      cardId: input.cardId ?? null,
       description: input.description ?? null,
       amountPerInstallment: input.amountPerInstallment.toFixed(2),
       totalInstallments: input.totalInstallments,
-      amountPaid: input.amountPaid.toFixed(2),
-      dueDate: input.dueDate ?? null,
+      amountPaid: '0',
+      categoryId: input.categoryId ?? null,
+      firstDueDate: input.firstDueDate,
       status: input.status,
     })
     .returning()
@@ -53,15 +90,20 @@ export async function createInvoice(db: DrizzleDB, userId: string, input: Create
 }
 
 export async function updateInvoice(db: DrizzleDB, userId: string, input: UpdateInvoiceInput) {
+  if (input.cardId && !(await cardBelongsToUser(db, userId, input.cardId)))
+    return 'card_not_found' as const
+  if (input.categoryId && !(await categoryBelongsToUser(db, userId, input.categoryId)))
+    return 'category_not_found' as const
   const [row] = await db
     .update(invoices)
     .set({
       cardName: input.cardName,
+      cardId: input.cardId ?? null,
       description: input.description ?? null,
       amountPerInstallment: input.amountPerInstallment.toFixed(2),
       totalInstallments: input.totalInstallments,
-      amountPaid: input.amountPaid.toFixed(2),
-      dueDate: input.dueDate ?? null,
+      categoryId: input.categoryId ?? null,
+      firstDueDate: input.firstDueDate,
       status: input.status,
     })
     .where(and(eq(invoices.id, input.id), eq(invoices.userId, userId)))

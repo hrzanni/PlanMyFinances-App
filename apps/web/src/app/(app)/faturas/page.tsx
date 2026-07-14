@@ -1,64 +1,96 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
-  emptyInstallmentDraft,
-  formatDate,
-  installmentTotals,
-  parseInstallmentDraft,
-  toNumber,
-  validateInstallmentDraft,
-  type InstallmentDraft,
+  emptyInvoiceDraft,
+  isInvoiceClosed,
+  parseInvoiceDraft,
+  validateInvoiceDraft,
+  type InvoiceDraft,
 } from '@pmf/core'
-import {
-  Button,
-  Card,
-  Dialog,
-  DialogContent,
-  EmptyState,
-  Kpi,
-  LoadingState,
-  Select,
-  Table,
-  Td,
-  Th,
-} from '@pmf/ui-web'
+import { Button, Card, Dialog, DialogContent, EmptyState, LoadingState } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
-import { money } from '@/lib/format'
+import { currentMonth } from '@/lib/format'
 import { PageHeader } from '@/components/page-header'
-import { InstallmentFormFields } from '@/components/installment-form-fields'
-
-const statuses = ['pendente', 'pago'] as const
+import { BankLogo } from '@/components/bank-logo'
+import { CardStrip } from '@/components/card-strip'
+import { InvoiceMonthHero } from '@/components/invoice-month-hero'
+import { InvoiceFormFields } from '@/components/invoice-form-fields'
+import { InvoiceTable } from '@/components/invoice-table'
+import { ClosedInvoices } from '@/components/closed-invoices'
+import {
+  InstallmentPaymentDialog,
+  type PaymentTarget,
+} from '@/components/installment-payment-dialog'
+import { toPayments, toSchedule, type InvoiceRow } from '@/components/invoice-derive'
 
 export default function InvoicesPage() {
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const utils = trpc.useUtils()
   const list = trpc.invoices.list.useQuery()
-  const summary = trpc.invoices.summary.useQuery()
-  const invalidate = () => utils.invoices.invalidate()
+  const cards = trpc.cards.list.useQuery()
+  const create = trpc.invoices.create.useMutation({ onSuccess: () => utils.invoices.invalidate() })
+  const del = trpc.invoices.delete.useMutation({ onSuccess: () => utils.invoices.invalidate() })
 
-  const create = trpc.invoices.create.useMutation({ onSuccess: invalidate })
-  const setStatus = trpc.invoices.setStatus.useMutation({ onSuccess: invalidate })
-  const del = trpc.invoices.delete.useMutation({ onSuccess: invalidate })
-
-  const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState<InstallmentDraft>(emptyInstallmentDraft)
+  const [month, setMonth] = useState(currentMonth)
+  const [cardFilter, setCardFilter] = useState<string | 'all'>('all')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [payingTarget, setPayingTarget] = useState<PaymentTarget | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [draft, setDraft] = useState<InvoiceDraft>(emptyInvoiceDraft)
   const [error, setError] = useState<string | null>(null)
+
+  const rows = list.data ?? []
+  const filtered = cardFilter === 'all' ? rows : rows.filter((r) => r.cardId === cardFilter)
+  const closedOf = (r: InvoiceRow) => isInvoiceClosed(toSchedule(r), toPayments(r))
+  const active = filtered.filter((r) => !closedOf(r))
+  const closed = filtered.filter(closedOf)
+  const heroRows = useMemo(
+    () => filtered.map((r) => ({ schedule: toSchedule(r), payments: toPayments(r) })),
+    [filtered],
+  )
+
+  const tableProps = {
+    month,
+    today,
+    expandedId,
+    onToggle: (id: string) => setExpandedId((cur) => (cur === id ? null : id)),
+    onOpenPayment: (invoiceId: string, n: number) =>
+      setPayingTarget({ invoiceId, installmentNumber: n }),
+    onDelete: (row: InvoiceRow) => {
+      if (window.confirm(`Excluir a fatura "${row.description || row.cardName}"?`))
+        del.mutate({ id: row.id })
+    },
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const err = validateInstallmentDraft(draft)
+    const err = validateInvoiceDraft(draft)
     if (err) return setError(err)
     setError(null)
     create.mutate(
-      { cardName: draft.name, status: 'pendente', ...parseInstallmentDraft(draft) },
+      { cardName: draft.name, status: 'pendente', ...parseInvoiceDraft(draft) },
       {
         onSuccess: () => {
-          setOpen(false)
-          setDraft(emptyInstallmentDraft)
+          setFormOpen(false)
+          setDraft(emptyInvoiceDraft)
         },
       },
     )
   }
+
+  const cardList = cards.data ?? []
+  const activeGroups =
+    cardFilter === 'all'
+      ? cardList
+          .map((card) => ({ card, rows: active.filter((r) => r.cardId === card.id) }))
+          .filter((g) => g.rows.length > 0)
+      : cardList
+          .filter((c) => c.id === cardFilter)
+          .map((card) => ({ card, rows: active.filter((r) => r.cardId === card.id) }))
+          .filter((g) => g.rows.length > 0)
+  const unlinked = cardFilter === 'all' ? active.filter((r) => !r.cardId) : []
+  const hasActive = activeGroups.length > 0 || unlinked.length > 0
 
   return (
     <>
@@ -69,106 +101,63 @@ export default function InvoicesPage() {
           </>
         }
       >
-        <Button onClick={() => setOpen(true)}>+ Nova fatura</Button>
+        <Button onClick={() => setFormOpen(true)}>+ Nova fatura</Button>
       </PageHeader>
 
-      <div className="mb-5 grid gap-3 md:grid-cols-3">
-        <Kpi label="Em aberto" value={money(summary.data?.open ?? 0)} tone="negative" />
-        <Kpi label="Vence este mês" value={money(summary.data?.dueThisMonth ?? 0)} />
-        <Kpi label="Total pago" value={money(summary.data?.paid ?? 0)} tone="positive" />
-      </div>
-
-      <Card>
-        {list.isLoading ? (
+      {list.isLoading ? (
+        <Card>
           <LoadingState />
-        ) : list.data && list.data.length > 0 ? (
-          <Table>
-            <thead>
-              <tr>
-                <Th>Cartão</Th>
-                <Th numeric>Parcela</Th>
-                <Th numeric>Total</Th>
-                <Th numeric>Pago</Th>
-                <Th numeric>Restante</Th>
-                <Th>Vencimento</Th>
-                <Th>Status</Th>
-                <Th aria-label="Ações" />
-              </tr>
-            </thead>
-            <tbody>
-              {list.data.map((row) => {
-                const totals = installmentTotals(
-                  toNumber(row.amountPerInstallment),
-                  row.totalInstallments,
-                  toNumber(row.amountPaid),
-                )
-                return (
-                  <tr key={row.id}>
-                    <Td>
-                      <span className="font-bold text-foreground">{row.cardName}</span>
-                      {row.description ? (
-                        <span className="block text-xs text-muted">{row.description}</span>
-                      ) : null}
-                    </Td>
-                    <Td numeric>
-                      {money(row.amountPerInstallment)} ×{row.totalInstallments}
-                    </Td>
-                    <Td numeric>{money(totals.total)}</Td>
-                    <Td numeric>
-                      <span className="font-bold text-positive">{money(row.amountPaid)}</span>
-                    </Td>
-                    <Td numeric>{money(totals.remaining)}</Td>
-                    <Td>{row.dueDate ? formatDate(row.dueDate) : '—'}</Td>
-                    <Td>
-                      <Select
-                        aria-label={`Status de ${row.cardName}`}
-                        className="w-28 py-1 text-xs"
-                        value={row.status}
-                        onChange={(e) =>
-                          setStatus.mutate({
-                            id: row.id,
-                            status: e.target.value as (typeof statuses)[number],
-                          })
-                        }
-                      >
-                        {statuses.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </Select>
-                    </Td>
-                    <Td numeric>
-                      <button
-                        type="button"
-                        aria-label={`Excluir fatura ${row.cardName}`}
-                        className="text-muted hover:text-negative"
-                        onClick={() => {
-                          if (window.confirm(`Excluir a fatura "${row.cardName}"?`)) {
-                            del.mutate({ id: row.id })
-                          }
-                        }}
-                      >
-                        🗑
-                      </button>
-                    </Td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </Table>
-        ) : (
-          <EmptyState
-            title="Nenhuma fatura"
-            hint="Registre parcelamentos de cartão com valor, parcelas e vencimento."
+        </Card>
+      ) : (
+        <>
+          {rows.length > 0 ? (
+            <InvoiceMonthHero rows={heroRows} month={month} onMonthChange={setMonth} today={today} />
+          ) : null}
+          <CardStrip
+            selected={cardFilter}
+            onSelect={setCardFilter}
+            invoiceCount={rows.filter((r) => !closedOf(r)).length}
           />
-        )}
-      </Card>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+          <div className="space-y-3.5">
+            {activeGroups.map(({ card, rows: groupRows }) => (
+              <Card key={card.id}>
+                <div className="mb-2.5 flex items-center gap-2">
+                  <BankLogo preset={card.bankPreset} size={24} />
+                  <b className="text-[13.5px] text-foreground">{card.name}</b>
+                </div>
+                <InvoiceTable rows={groupRows} {...tableProps} />
+              </Card>
+            ))}
+            {unlinked.length > 0 ? (
+              <Card>
+                <div className="mb-2.5 text-[10px] font-black uppercase tracking-[2.5px] text-muted">
+                  Sem cartão
+                </div>
+                <InvoiceTable rows={unlinked} {...tableProps} />
+              </Card>
+            ) : null}
+            {rows.length === 0 ? (
+              <Card>
+                <EmptyState
+                  title="Nenhuma fatura"
+                  hint="Registre parcelamentos de cartão com valor, parcelas e primeiro vencimento."
+                />
+              </Card>
+            ) : !hasActive ? (
+              <Card>
+                <p className="text-xs text-muted">Nenhuma fatura ativa neste filtro.</p>
+              </Card>
+            ) : null}
+            <ClosedInvoices rows={closed} showCard={cardFilter === 'all'} />
+          </div>
+        </>
+      )}
+
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent title="Nova fatura">
           <form onSubmit={handleSubmit}>
-            <InstallmentFormFields draft={draft} nameLabel="Cartão" onChange={setDraft} />
+            <InvoiceFormFields draft={draft} onChange={setDraft} />
             {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
             <Button type="submit" disabled={create.isPending} className="w-full">
               Salvar fatura
@@ -176,6 +165,8 @@ export default function InvoicesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <InstallmentPaymentDialog target={payingTarget} onClose={() => setPayingTarget(null)} />
     </>
   )
 }

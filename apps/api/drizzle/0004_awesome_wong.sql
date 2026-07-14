@@ -1,0 +1,1 @@
+ALTER TABLE "invoices" DROP CONSTRAINT "invoice_paid_le_total";

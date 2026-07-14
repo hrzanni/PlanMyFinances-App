@@ -1,6 +1,7 @@
 import { pgTable, uuid, text, numeric, date, timestamp, check, uniqueIndex } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { users } from './auth'
+import { cards } from './cards'
 import { categories, subcategories } from './categories'
 import { folders } from './folders'
 import { txType, txSource } from './enums'
@@ -20,6 +21,7 @@ export const transactions = pgTable(
       onDelete: 'set null',
     }),
     folderId: uuid('folder_id').references(() => folders.id, { onDelete: 'set null' }),
+    cardId: uuid('card_id').references(() => cards.id, { onDelete: 'set null' }),
     source: txSource('source').notNull().default('manual'),
     externalId: text('external_id'),
     date: date('date').notNull(),

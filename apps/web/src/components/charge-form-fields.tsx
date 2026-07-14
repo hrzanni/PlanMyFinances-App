@@ -3,41 +3,39 @@
 import type { InstallmentDraft } from '@pmf/core'
 import { Field, Input, Label } from '@pmf/ui-web'
 
-/** Campos comuns de cobrança/fatura (parcela, parcelas, pago, vencimento). */
-export function InstallmentFormFields({
+/** Campos do formulário de cobrança (parcela, parcelas, recebido, vencimento). */
+export function ChargeFormFields({
   draft,
-  nameLabel,
   onChange,
 }: {
   draft: InstallmentDraft
-  nameLabel: string
   onChange: (draft: InstallmentDraft) => void
 }) {
   const set = (patch: Partial<InstallmentDraft>) => onChange({ ...draft, ...patch })
   return (
     <>
       <Field>
-        <Label htmlFor="inst-name">{nameLabel}</Label>
+        <Label htmlFor="charge-name">Devedor</Label>
         <Input
-          id="inst-name"
+          id="charge-name"
           required
           value={draft.name}
           onChange={(e) => set({ name: e.target.value })}
         />
       </Field>
       <Field>
-        <Label htmlFor="inst-desc">Descrição (opcional)</Label>
+        <Label htmlFor="charge-desc">Descrição (opcional)</Label>
         <Input
-          id="inst-desc"
+          id="charge-desc"
           value={draft.description}
           onChange={(e) => set({ description: e.target.value })}
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field>
-          <Label htmlFor="inst-per">Valor da parcela (R$)</Label>
+          <Label htmlFor="charge-per">Valor da parcela (R$)</Label>
           <Input
-            id="inst-per"
+            id="charge-per"
             inputMode="decimal"
             required
             placeholder="0,00"
@@ -46,9 +44,9 @@ export function InstallmentFormFields({
           />
         </Field>
         <Field>
-          <Label htmlFor="inst-count">Parcelas</Label>
+          <Label htmlFor="charge-count">Parcelas</Label>
           <Input
-            id="inst-count"
+            id="charge-count"
             type="number"
             min={1}
             required
@@ -59,18 +57,18 @@ export function InstallmentFormFields({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <Field>
-          <Label htmlFor="inst-paid">Já pago/recebido (R$)</Label>
+          <Label htmlFor="charge-paid">Já recebido (R$)</Label>
           <Input
-            id="inst-paid"
+            id="charge-paid"
             inputMode="decimal"
             value={draft.amountPaid}
             onChange={(e) => set({ amountPaid: e.target.value })}
           />
         </Field>
         <Field>
-          <Label htmlFor="inst-due">Vencimento (opcional)</Label>
+          <Label htmlFor="charge-due">Vencimento (opcional)</Label>
           <Input
-            id="inst-due"
+            id="charge-due"
             type="date"
             value={draft.dueDate}
             onChange={(e) => set({ dueDate: e.target.value })}

@@ -9,6 +9,7 @@ export const createTransactionInput = z.object({
   categoryId: uuid.optional(),
   subcategoryId: uuid.optional(),
   folderId: uuid.optional(),
+  cardId: uuid.optional(),
 })
 export type CreateTransactionInput = z.infer<typeof createTransactionInput>
 
@@ -18,6 +19,7 @@ export const updateTransactionInput = createTransactionInput.partial().extend({
   categoryId: uuid.nullable().optional(),
   subcategoryId: uuid.nullable().optional(),
   folderId: uuid.nullable().optional(),
+  cardId: uuid.nullable().optional(),
 })
 export type UpdateTransactionInput = z.infer<typeof updateTransactionInput>
 
@@ -27,6 +29,7 @@ export const listTransactionsInput = z.object({
   categoryId: uuid.optional(),
   subcategoryId: uuid.optional(),
   folderId: uuid.optional(),
+  cardId: uuid.optional(),
   uncategorized: z.boolean().optional(),
   dateFrom: isoDate.optional(),
   dateTo: isoDate.optional(),

@@ -30,7 +30,19 @@ export async function createCategory(db: DrizzleDB, userId: string, input: Creat
   return row
 }
 
+async function findCategory(db: DrizzleDB, userId: string, id: string) {
+  const [row] = await db
+    .select()
+    .from(categories)
+    .where(and(eq(categories.id, id), eq(categories.userId, userId)))
+  return row ?? null
+}
+
+/** Categorias de sistema (ex.: "Cobrança") não podem ser editadas ('forbidden' vira FORBIDDEN no router). */
 export async function updateCategory(db: DrizzleDB, userId: string, input: UpdateCategoryInput) {
+  const existing = await findCategory(db, userId, input.id)
+  if (!existing) return null
+  if (existing.isSystem) return 'forbidden' as const
   const [row] = await db
     .update(categories)
     .set({ name: input.name })
@@ -41,11 +53,40 @@ export async function updateCategory(db: DrizzleDB, userId: string, input: Updat
 
 /** Cascade apaga subcategorias; transações viram "sem categoria" via SET NULL (FR-011). */
 export async function deleteCategory(db: DrizzleDB, userId: string, id: string) {
+  const existing = await findCategory(db, userId, id)
+  if (!existing) return null
+  if (existing.isSystem) return 'forbidden' as const
   const [row] = await db
     .delete(categories)
     .where(and(eq(categories.id, id), eq(categories.userId, userId)))
     .returning({ id: categories.id })
   return row ?? null
+}
+
+/** Categoria criada pelo sistema (fase 8.1); idempotente por usuário+nome+tipo. */
+export async function getOrCreateSystemCategory(
+  db: DrizzleDB,
+  userId: string,
+  name: string,
+  type: 'receita' | 'despesa',
+) {
+  const [existing] = await db
+    .select()
+    .from(categories)
+    .where(
+      and(
+        eq(categories.userId, userId),
+        eq(categories.name, name),
+        eq(categories.type, type),
+        eq(categories.isSystem, true),
+      ),
+    )
+  if (existing) return existing
+  const [row] = await db
+    .insert(categories)
+    .values({ userId, name, type, isSystem: true })
+    .returning()
+  return row!
 }
 
 export async function createSubcategory(

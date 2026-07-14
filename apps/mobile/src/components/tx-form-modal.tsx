@@ -8,6 +8,7 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
   const utils = trpc.useUtils()
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: open })
   const { data: folders } = trpc.folders.list.useQuery(undefined, { enabled: open })
+  const { data: cards } = trpc.cards.list.useQuery(undefined, { enabled: open })
 
   const [type, setType] = useState<'receita' | 'despesa'>('despesa')
   const [value, setValue] = useState('')
@@ -15,6 +16,7 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState('')
   const [folderId, setFolderId] = useState('')
+  const [cardId, setCardId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const typeCategories = useMemo(
@@ -50,6 +52,7 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
       description: description || undefined,
       categoryId: categoryId || undefined,
       folderId: folderId || undefined,
+      cardId: cardId || undefined,
     })
   }
 
@@ -128,6 +131,25 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
                       active={folderId === f.id}
                       label={`${f.icon ? `${f.icon} ` : ''}${f.name}`}
                       onPress={() => setFolderId(f.id)}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : null}
+
+            {(cards ?? []).length > 0 ? (
+              <>
+                <Text className="mb-1 text-xs font-bold text-foreground dark:text-foreground-dark">
+                  Cartão (opcional)
+                </Text>
+                <View className="mb-3 flex-row flex-wrap gap-2">
+                  <Chip active={cardId === ''} label="Nenhum" onPress={() => setCardId('')} />
+                  {(cards ?? []).map((c) => (
+                    <Chip
+                      key={c.id}
+                      active={cardId === c.id}
+                      label={c.name}
+                      onPress={() => setCardId(c.id)}
                     />
                   ))}
                 </View>

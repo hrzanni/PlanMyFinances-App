@@ -18,8 +18,10 @@ export const transactionsRouter = router({
     return listTransactions(ctx.db, ctx.userId, input)
   }),
 
-  create: protectedProcedure.input(createTransactionInput).mutation(({ ctx, input }) => {
-    return createTransaction(ctx.db, ctx.userId, input)
+  create: protectedProcedure.input(createTransactionInput).mutation(async ({ ctx, input }) => {
+    const row = await createTransaction(ctx.db, ctx.userId, input)
+    if (!row) throw new TRPCError({ code: 'NOT_FOUND', message: 'Cartão não encontrado' })
+    return row
   }),
 
   update: protectedProcedure.input(updateTransactionInput).mutation(async ({ ctx, input }) => {
