@@ -4,10 +4,12 @@ import { trpc } from '@/lib/trpc'
 import { money } from '@/lib/format'
 import { confirmDelete } from '@/lib/confirm'
 import { Button, EmptyState, Kpi } from '@/components/ui'
-import { InstallmentCard } from '@/components/installment-list'
-import { InstallmentFormModal } from '@/components/installment-form-modal'
-
-const statuses = ['pendente', 'cobrado', 'pago'] as const
+import { ChargeCard } from '@/components/charge-card'
+import { ChargeFormModal } from '@/components/charge-form-modal'
+import {
+  ChargePaymentModal,
+  type ChargePaymentTarget,
+} from '@/components/charge-payment-modal'
 
 export default function ChargesScreen() {
   const utils = trpc.useUtils()
@@ -20,6 +22,10 @@ export default function ChargesScreen() {
     onSuccess: () => utils.charges.invalidate(),
   })
   const [formOpen, setFormOpen] = useState(false)
+  // guarda só o id: o alvo é derivado da lista para o modal refletir o cache atualizado
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const paying: ChargePaymentTarget | null =
+    list.data?.find((r) => r.id === payingId) ?? null
 
   return (
     <ScrollView className="flex-1 px-4 pt-3">
@@ -36,13 +42,11 @@ export default function ChargesScreen() {
 
       {list.data && list.data.length > 0 ? (
         list.data.map((row) => (
-          <InstallmentCard
+          <ChargeCard
             key={row.id}
-            row={{ ...row, title: row.debtorName }}
-            statuses={statuses}
-            onSetStatus={(status) =>
-              setStatus.mutate({ id: row.id, status: status as (typeof statuses)[number] })
-            }
+            row={row}
+            onSetStatus={(status) => setStatus.mutate({ id: row.id, status })}
+            onRegisterPayment={() => setPayingId(row.id)}
             onDelete={() =>
               confirmDelete('Excluir cobrança', `Excluir a cobrança de "${row.debtorName}"?`, () =>
                 del.mutate({ id: row.id }),
@@ -58,7 +62,8 @@ export default function ChargesScreen() {
       )}
       <View className="h-8" />
 
-      <InstallmentFormModal open={formOpen} onClose={() => setFormOpen(false)} kind="charge" />
+      <ChargeFormModal open={formOpen} onClose={() => setFormOpen(false)} />
+      <ChargePaymentModal charge={paying} onClose={() => setPayingId(null)} />
     </ScrollView>
   )
 }

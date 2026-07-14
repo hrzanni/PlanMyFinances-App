@@ -33,6 +33,8 @@ export function TxRow({ tx, onDelete }: { tx: Tx; onDelete?: () => void }) {
           ) : null}
           {tx.source === 'fixed_expense' ? <Badge tone="info" label="gasto fixo" /> : null}
           {tx.source === 'pluggy' ? <Badge tone="info" label="banco" /> : null}
+          {tx.source === 'charge' ? <Badge tone="info" label="cobrança" /> : null}
+          {tx.source === 'invoice' ? <Badge tone="info" label="fatura" /> : null}
         </View>
       </View>
       <Text

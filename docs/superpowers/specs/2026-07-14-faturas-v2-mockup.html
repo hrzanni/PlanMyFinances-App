@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup — Faturas · mês, atrasos, encerradas + Início</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+
+  :root {
+    --background: 245 245 245;
+    --surface: 255 255 255;
+    --foreground: 12 14 14;
+    --body: 81 81 81;
+    --muted: 119 119 119;
+    --line: 228 228 226;
+    --positive: 45 110 68;
+    --negative: 186 25 37;
+    --attention: 138 116 20;
+    --sidebar: 12 14 14;
+    --shadow: 0 1px 2px rgb(12 14 14 / .05), 0 12px 32px -16px rgb(12 14 14 / .18);
+  }
+  .dark {
+    --background: 12 14 14;
+    --surface: 22 25 25;
+    --foreground: 255 255 255;
+    --body: 199 199 197;
+    --muted: 156 155 155;
+    --line: 41 45 45;
+    --positive: 92 191 139;
+    --negative: 240 112 122;
+    --attention: 216 181 35;
+    --sidebar: 6 7 7;
+    --shadow: 0 1px 2px rgb(0 0 0 / .4), 0 12px 32px -16px rgb(0 0 0 / .7);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: Lato, Calibri, sans-serif;
+    background: rgb(var(--background));
+    color: rgb(var(--body));
+    padding-bottom: 60px;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ---- barra de controle do mockup ---- */
+  .controls {
+    position: sticky; top: 0; z-index: 60;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    padding: 12px 20px; background: rgb(var(--sidebar)); color: #fff;
+  }
+  .controls .tag { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2.5px; opacity: .55; }
+  .controls .hint { font-size: 12.5px; opacity: .8; }
+  .controls .spacer { flex: 1; }
+  .controls button {
+    font: inherit; font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: 999px;
+    cursor: pointer; border: 1px solid rgb(255 255 255 / .3); background: transparent; color: #fff;
+  }
+
+  /* ---- molduras ---- */
+  .stage { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; padding: 18px 20px; position: relative; z-index: 2; align-items: flex-start; }
+  .frame-label { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2.5px; color: rgb(var(--muted)); margin-bottom: 8px; }
+  .desktop {
+    width: 1060px; max-width: 100%;
+    border: 1px solid rgb(var(--line)); border-radius: 16px; overflow: hidden;
+    display: flex; background: rgb(var(--background)); box-shadow: var(--shadow);
+  }
+  .phone {
+    width: 350px; height: 720px; position: relative; overflow: hidden;
+    border: 1px solid rgb(var(--line)); border-radius: 30px;
+    background: rgb(var(--background)); box-shadow: var(--shadow);
+  }
+  .phone .scroll { height: 100%; overflow-y: auto; padding: 18px 14px 40px; scrollbar-width: none; }
+  .home-frame {
+    width: 560px; max-width: 100%;
+    border: 1px solid rgb(var(--line)); border-radius: 16px;
+    background: rgb(var(--background)); box-shadow: var(--shadow);
+    padding: 22px 24px;
+  }
+  .home-mobile { width: 330px; border: 1px solid rgb(var(--line)); border-radius: 24px; background: rgb(var(--background)); box-shadow: var(--shadow); padding: 16px 14px; margin-top: 18px; }
+
+  /* ---- sidebar web ---- */
+  .sidebar { width: 200px; flex: none; background: rgb(var(--sidebar)); padding: 16px 0; }
+  .sidebar .brand { color: #fff; font-weight: 900; font-size: 15px; letter-spacing: -.02em; padding: 4px 20px 14px; }
+  .sidebar .group { padding: 16px 20px 5px; font-size: 9px; font-weight: 900; letter-spacing: 2.5px; text-transform: uppercase; color: #6b6b6b; }
+  .sidebar a { display: block; padding: 8px 20px; font-size: 13px; color: #9c9b9b; border-left: 2px solid transparent; }
+  .sidebar a.active { color: #fff; font-weight: 800; border-left-color: #fff; background: rgb(255 255 255 / .06); }
+
+  .page { flex: 1; padding: 24px 28px; min-width: 0; }
+  .page-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  h1 { font-size: 21px; font-weight: 900; letter-spacing: -.02em; color: rgb(var(--foreground)); }
+  h1 small { font-size: 13px; font-weight: 400; letter-spacing: 0; color: rgb(var(--muted)); }
+  h2.home { font-size: 19px; font-weight: 900; letter-spacing: -.02em; color: rgb(var(--foreground)); margin-bottom: 14px; }
+
+  .btn {
+    font: inherit; font-size: 13px; font-weight: 800; cursor: pointer;
+    padding: 9px 16px; border-radius: 12px;
+    background: rgb(var(--foreground)); color: rgb(var(--background));
+    border: 1px solid rgb(var(--foreground));
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  .btn.ghost { background: transparent; color: rgb(var(--foreground)); border-color: rgb(var(--line)); }
+
+  /* ---- HERO ---- */
+  .hero {
+    background: rgb(var(--foreground)); color: rgb(var(--background));
+    border-radius: 18px; padding: 20px 22px; margin-bottom: 16px;
+    display: flex; gap: 24px; align-items: stretch; flex-wrap: wrap;
+    box-shadow: var(--shadow); animation: fadeUp .5s ease both;
+  }
+  .hero .left { flex: 1; min-width: 220px; display: flex; flex-direction: column; justify-content: center; }
+  .hero .lbl { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2.5px; opacity: .55; }
+  .hero .amount { font-size: 34px; font-weight: 900; letter-spacing: -.03em; margin: 6px 0 4px; }
+  .hero .sub { font-size: 12.5px; opacity: .78; }
+  .hero .sub .ok { color: rgb(var(--positive)); font-weight: 800; }
+  .hero .alert { font-size: 12px; font-weight: 800; color: rgb(var(--negative)); margin-top: 6px; }
+  .hero .track { height: 6px; border-radius: 99px; background: rgb(var(--background) / .18); margin-top: 11px; overflow: hidden; max-width: 320px; }
+  .hero .track .fill { height: 100%; border-radius: 99px; background: rgb(var(--positive)); transition: width .5s cubic-bezier(.2,.8,.2,1); }
+
+  .months { display: flex; gap: 8px; align-items: flex-end; padding-top: 6px; }
+  .mo { width: 42px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+  .mo .barwrap { height: 62px; display: flex; align-items: flex-end; justify-content: center; }
+  .mo .bar {
+    width: 22px; border-radius: 7px 7px 3px 3px; position: relative; overflow: hidden;
+    background: rgb(var(--background) / .22); transition: transform .2s; min-height: 4px;
+  }
+  .mo:hover .bar { transform: scaleY(1.04); transform-origin: bottom; }
+  .mo.sel .bar { background: rgb(var(--background) / .95); }
+  .mo .bar .paid { position: absolute; bottom: 0; left: 0; right: 0; background: rgb(var(--positive)); }
+  .mo .bar .ovd { position: absolute; left: 0; right: 0; background: rgb(var(--negative)); }
+  .mo .lbl2 { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: .55; margin-top: 6px; }
+  .mo.sel .lbl2 { opacity: 1; font-weight: 900; }
+  .mo .val { font-size: 9px; opacity: 0; height: 11px; }
+  .mo.sel .val { opacity: .8; }
+
+  /* ---- faixa de cartões ---- */
+  .strip { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px; margin-bottom: 16px; animation: fadeUp .5s .08s ease both; }
+  .card-tile {
+    display: flex; align-items: center; gap: 10px; flex: none; cursor: pointer;
+    background: rgb(var(--surface)); border: 1px solid rgb(var(--line));
+    border-radius: 14px; padding: 10px 13px; min-width: 190px;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s;
+  }
+  .card-tile:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+  .card-tile.sel { border-color: rgb(var(--foreground)); box-shadow: 0 0 0 1.5px rgb(var(--foreground)), var(--shadow); }
+  .card-tile .nm { font-size: 13px; font-weight: 800; color: rgb(var(--foreground)); }
+  .card-tile .sub { font-size: 11px; color: rgb(var(--muted)); }
+  .card-tile .acts { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .card-tile .acts a { font-size: 11px; color: rgb(var(--muted)); cursor: pointer; }
+  .card-tile .acts a:first-child { text-decoration: underline; }
+  .card-tile.add { justify-content: center; border-style: dashed; min-width: 116px; color: rgb(var(--muted)); font-size: 13px; font-weight: 800; }
+
+  .logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 9px; font-weight: 900; color: #fff; flex: none; letter-spacing: -.03em;
+  }
+
+  /* ---- grupos / tabela ---- */
+  .card { background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 16px; padding: 15px 17px; box-shadow: var(--shadow); }
+  .group-card { margin-bottom: 14px; animation: fadeUp .5s .14s ease both; }
+  .group-head { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+  .group-head b { font-size: 13.5px; color: rgb(var(--foreground)); letter-spacing: -.01em; }
+  .sem-cartao { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2.5px; color: rgb(var(--muted)); margin-bottom: 10px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.5px; color: rgb(var(--muted)); padding: 6px 8px; border-bottom: 1px solid rgb(var(--line)); font-weight: 800; }
+  td { padding: 9px 8px; border-bottom: 1px solid rgb(var(--line)); color: rgb(var(--body)); white-space: nowrap; }
+  td.fg { font-weight: 800; color: rgb(var(--foreground)); }
+  .inv-row { cursor: pointer; }
+  .inv-row:hover td { background: rgb(var(--foreground) / .03); }
+
+  /* expander (substitui o ▶) */
+  .expander {
+    display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+    font-size: 11px; font-weight: 800; color: rgb(var(--foreground));
+    background: rgb(var(--foreground) / .05); border: 1px solid rgb(var(--line));
+    border-radius: 999px; padding: 4.5px 11px; transition: background .15s;
+  }
+  .expander:hover { background: rgb(var(--foreground) / .1); }
+  .expander svg { transition: transform .2s ease; }
+  .expander.open svg { transform: rotate(180deg); }
+  .m-expander {
+    display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer;
+    font-size: 11px; font-weight: 800; color: rgb(var(--muted));
+    border-top: 1px dashed rgb(var(--line)); margin-top: 10px; padding-top: 8px;
+  }
+  .m-expander svg { transition: transform .2s ease; }
+  .m-expander.open svg { transform: rotate(180deg); }
+
+  .mini-track { display: inline-block; width: 54px; height: 4px; border-radius: 99px; background: rgb(var(--line)); vertical-align: 2px; margin-left: 7px; overflow: hidden; }
+  .mini-track i { display: block; height: 100%; border-radius: 99px; background: rgb(var(--positive)); }
+
+  .pill { font-size: 10px; font-weight: 800; padding: 3.5px 10px; border-radius: 999px; white-space: nowrap; }
+  .pill.pend { color: rgb(var(--attention)); background: rgb(var(--attention) / .12); }
+  .pill.pago { color: rgb(var(--positive)); background: rgb(var(--positive) / .12); }
+  .pill.atra { color: rgb(var(--negative)); background: rgb(var(--negative) / .12); }
+  .pill.none { color: rgb(var(--muted)); background: rgb(var(--muted) / .1); }
+  td .row-acts a { font-size: 11px; color: rgb(var(--muted)); cursor: pointer; text-decoration: underline; }
+
+  /* ---- faturas encerradas ---- */
+  .closed-head {
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
+    color: rgb(var(--muted));
+  }
+  .closed-head svg { transition: transform .2s ease; }
+  .closed-head.open svg { transform: rotate(180deg); }
+  .closed-head .count { background: rgb(var(--muted) / .12); border-radius: 999px; padding: 2px 9px; font-size: 10px; letter-spacing: 0; }
+  .closed-card { opacity: .92; }
+  .closed-card td.fg { color: rgb(var(--body)); }
+
+  /* ---- painel de parcelas ---- */
+  .parcelas-panel { background: rgb(var(--foreground) / .035); border-radius: 12px; padding: 13px 15px; margin: 3px 0 5px; }
+  .parcelas-panel .pt { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2.5px; color: rgb(var(--muted)); margin-bottom: 9px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
+  .pchip {
+    min-width: 32px; height: 32px; border-radius: 10px; cursor: pointer; padding: 0 4px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 2px;
+    font-size: 11px; font-weight: 900;
+    border: 1px solid rgb(var(--line)); color: rgb(var(--muted)); background: rgb(var(--surface));
+    transition: transform .12s ease;
+  }
+  .pchip:hover { transform: translateY(-2px); }
+  .pchip.paga { background: rgb(var(--positive) / .14); border-color: rgb(var(--positive) / .35); color: rgb(var(--positive)); }
+  .pchip.prox { border-color: rgb(var(--attention)); color: rgb(var(--attention)); box-shadow: 0 0 0 1px rgb(var(--attention) / .4); }
+  .pchip.atra { border-color: rgb(var(--negative)); color: rgb(var(--negative)); box-shadow: 0 0 0 1px rgb(var(--negative) / .4); }
+  .pchip .ck { font-size: 8px; }
+  .ptable td, .ptable th { padding: 6px 8px; font-size: 12px; }
+  .ptable tr:last-child td { border-bottom: none; }
+  .plink { font-size: 11px; color: rgb(var(--muted)); text-decoration: underline; cursor: pointer; }
+  .plink.strong { color: rgb(var(--foreground)); font-weight: 800; }
+
+  /* ---- widget Início ---- */
+  .skel { border: 1px dashed rgb(var(--line)); border-radius: 14px; padding: 14px; opacity: .5; }
+  .skel .l { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: rgb(var(--muted)); }
+  .skel .bar-sk { height: 10px; border-radius: 6px; background: rgb(var(--line)); margin-top: 8px; }
+  .home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .widget { animation: fadeUp .5s .1s ease both; }
+  .w-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .w-head .l { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2.5px; color: rgb(var(--muted)); }
+  .w-head a { font-size: 11.5px; font-weight: 800; color: rgb(var(--foreground)); cursor: pointer; text-decoration: underline; }
+  .w-amount { font-size: 24px; font-weight: 900; letter-spacing: -.02em; color: rgb(var(--foreground)); }
+  .w-amount small { font-size: 12px; font-weight: 400; color: rgb(var(--muted)); letter-spacing: 0; }
+  .w-amount.ok { color: rgb(var(--positive)); font-size: 18px; }
+  .w-track { height: 5px; border-radius: 99px; background: rgb(var(--line)); margin: 9px 0 4px; overflow: hidden; }
+  .w-track i { display: block; height: 100%; border-radius: 99px; background: rgb(var(--positive)); }
+  .w-alert { font-size: 11.5px; font-weight: 800; color: rgb(var(--negative)); margin: 6px 0 2px; }
+  .w-list { margin-top: 8px; }
+  .w-item { display: flex; align-items: center; gap: 8px; padding: 6.5px 0; border-top: 1px solid rgb(var(--line)); font-size: 12px; }
+  .w-item .nm { font-weight: 800; color: rgb(var(--foreground)); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .w-item .dt { color: rgb(var(--muted)); font-size: 11px; }
+  .w-item .dt.late { color: rgb(var(--negative)); font-weight: 800; }
+  .w-item .vl { font-weight: 800; color: rgb(var(--foreground)); }
+  .w-item .vl.late { color: rgb(var(--negative)); }
+
+  /* ---- dialog ---- */
+  .backdrop {
+    position: fixed; inset: 0; z-index: 100; background: rgb(0 0 0 / .55);
+    display: flex; align-items: center; justify-content: center; animation: fadeIn .18s ease both;
+  }
+  .dialog { width: 390px; max-width: 92vw; background: rgb(var(--surface)); border-radius: 18px; padding: 22px; box-shadow: var(--shadow); animation: pop .22s cubic-bezier(.2,.9,.3,1.2) both; }
+  .dialog h3 { font-size: 15.5px; font-weight: 900; letter-spacing: -.01em; color: rgb(var(--foreground)); margin-bottom: 2px; }
+  .dialog .sub { font-size: 12px; color: rgb(var(--muted)); margin-bottom: 15px; }
+  .fld { margin-bottom: 12px; }
+  .fld label { display: block; font-size: 10.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; color: rgb(var(--foreground)); margin-bottom: 5px; }
+  .fld input {
+    width: 100%; font: inherit; font-size: 15px; font-weight: 700; padding: 10px 13px; border-radius: 12px;
+    border: 1px solid rgb(var(--line)); background: rgb(var(--background)); color: rgb(var(--foreground));
+    font-variant-numeric: tabular-nums;
+  }
+  .fld .note { font-size: 11px; color: rgb(var(--muted)); margin-top: 5px; }
+  .seg { display: flex; border: 1px solid rgb(var(--line)); border-radius: 12px; overflow: hidden; }
+  .seg button { flex: 1; font: inherit; font-size: 12.5px; font-weight: 800; padding: 9px 0; border: 0; cursor: pointer; background: transparent; color: rgb(var(--muted)); }
+  .seg button.on { background: rgb(var(--foreground)); color: rgb(var(--background)); }
+  .dlg-acts { display: flex; gap: 8px; margin-top: 18px; }
+  .dlg-acts .btn { flex: 1; }
+
+  /* ---- mobile ---- */
+  .m-title { font-size: 19px; font-weight: 900; letter-spacing: -.02em; color: rgb(var(--foreground)); margin-bottom: 12px; }
+  .m-hero { padding: 16px 16px 14px; border-radius: 18px; margin-bottom: 12px; }
+  .m-hero .amount { font-size: 26px; }
+  .m-hero .months { gap: 5px; }
+  .m-hero .mo { width: 34px; }
+  .m-hero .mo .bar { width: 18px; }
+  .m-hero .mo .barwrap { height: 48px; }
+  .m-strip { display: flex; gap: 6px; overflow-x: auto; margin: 2px 0 12px; padding: 2px; scrollbar-width: none; }
+  .m-tile {
+    display: flex; align-items: center; gap: 6px; flex: none; cursor: pointer;
+    background: rgb(var(--surface)); border: 1px solid rgb(var(--line));
+    border-radius: 999px; padding: 6px 12px 6px 7px;
+    font-size: 12px; font-weight: 800; color: rgb(var(--foreground));
+  }
+  .m-tile .logo { border-radius: 999px; }
+  .m-tile.sel { border-color: rgb(var(--foreground)); box-shadow: 0 0 0 1.5px rgb(var(--foreground)); }
+  .m-tile.add { border-style: dashed; color: rgb(var(--muted)); padding: 6px 12px; }
+  .m-btn { display: block; width: 100%; text-align: center; margin: 4px 0 14px; }
+  .inv-card { background: rgb(var(--surface)); border: 1px solid rgb(var(--line)); border-radius: 14px; padding: 13px; margin-bottom: 9px; box-shadow: var(--shadow); }
+  .inv-card .t { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 5px; cursor: pointer; }
+  .inv-card .t b { font-size: 13.5px; color: rgb(var(--foreground)); letter-spacing: -.01em; }
+  .inv-card .d { font-size: 11.5px; color: rgb(var(--muted)); line-height: 1.5; }
+  .m-group-head { display: flex; align-items: center; gap: 8px; margin: 8px 0 8px; }
+  .m-group-head b { font-size: 13px; color: rgb(var(--foreground)); }
+  .m-parcelas { border-top: 1px solid rgb(var(--line)); margin-top: 11px; padding-top: 11px; }
+  .m-prow { display: flex; align-items: center; gap: 7px; padding: 5.5px 0; font-size: 11.5px; white-space: nowrap; }
+  .m-prow .n { font-weight: 800; color: rgb(var(--foreground)); width: 38px; flex: none; }
+  .m-prow .dt { color: rgb(var(--muted)); width: 40px; flex: none; }
+  .m-prow .vl { font-weight: 700; color: rgb(var(--foreground)); flex: 1; text-align: right; }
+  .m-prow .pill { padding: 2.5px 8px; font-size: 9.5px; }
+  .m-prow .plink { flex: none; }
+  .m-backdrop { position: absolute; inset: 0; z-index: 40; background: rgb(0 0 0 / .55); display: flex; align-items: flex-end; animation: fadeIn .18s ease both; }
+  .m-sheet { width: 100%; background: rgb(var(--surface)); border-radius: 22px 22px 0 0; padding: 20px 16px 24px; animation: slideUp .25s cubic-bezier(.2,.9,.3,1) both; }
+
+  /* ---- toast "despesa criada" ---- */
+  .toast {
+    position: fixed; bottom: 26px; right: 26px; z-index: 130;
+    max-width: 380px; background: rgb(var(--foreground)); color: rgb(var(--background));
+    border-radius: 14px; padding: 13px 16px; box-shadow: var(--shadow);
+    border-left: 4px solid rgb(var(--positive));
+    animation: slideUp .28s cubic-bezier(.2,.9,.3,1) both;
+  }
+  .toast .tt { font-size: 12.5px; font-weight: 900; display: flex; align-items: center; gap: 6px; }
+  .toast .tt .ok { color: rgb(var(--positive)); }
+  .toast .td { font-size: 11.5px; opacity: .8; margin-top: 3px; line-height: 1.5; }
+  .toast .undo { font-size: 11px; font-weight: 800; text-decoration: underline; cursor: pointer; margin-top: 6px; display: inline-block; opacity: .9; }
+  .m-toastwrap { position: absolute; left: 12px; right: 12px; bottom: 16px; z-index: 45; }
+  .m-toastwrap .toast { position: static; max-width: none; }
+
+  /* aviso de despesa automática no dialog */
+  .auto-exp {
+    display: flex; gap: 9px; align-items: flex-start;
+    background: rgb(var(--positive) / .08); border: 1px solid rgb(var(--positive) / .25);
+    border-radius: 12px; padding: 10px 12px; margin-bottom: 12px;
+  }
+  .auto-exp .ic { color: rgb(var(--positive)); font-weight: 900; font-size: 13px; }
+  .auto-exp .tx { font-size: 11.5px; line-height: 1.55; color: rgb(var(--body)); }
+  .auto-exp .tx b { color: rgb(var(--foreground)); }
+  .auto-exp .tx .cat { color: rgb(var(--positive)); font-weight: 800; }
+
+  .hide { display: none !important; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+</style>
+</head>
+<body>
+  <div class="controls">
+    <span class="tag">Mockup v4</span>
+    <span class="hint">Mês e cartão filtram a tela · "parcelas" expande · vermelho = em atraso · "Faturas encerradas" fica recolhido</span>
+    <span class="spacer"></span>
+    <button onclick="document.documentElement.classList.toggle('dark')">☀/☾ tema</button>
+  </div>
+
+  <div class="stage">
+    <div>
+      <div class="frame-label">Web · /faturas</div>
+      <div class="desktop">
+        <nav class="sidebar">
+          <div class="brand">PlanMyFinances</div>
+          <a>Início</a><a>Histórico</a><a>Categorias</a><a>Pastas</a>
+          <div class="group">Contas</div>
+          <a>Gastos Fixos</a><a>Cobranças</a><a class="active">Faturas</a>
+          <div class="group">Automação</div>
+          <a>Conexões</a><a>Agente</a>
+        </nav>
+        <main class="page" id="web"></main>
+      </div>
+    </div>
+    <div>
+      <div class="frame-label">Mobile · Mais → Faturas</div>
+      <div class="phone"><div class="scroll" id="mob"></div><div id="msheet"></div><div class="m-toastwrap" id="mtoast"></div></div>
+    </div>
+    <div>
+      <div class="frame-label">Web · Início — widget "Faturas do mês"</div>
+      <div class="home-frame">
+        <h2 class="home">Início</h2>
+        <div class="home-grid">
+          <div class="skel"><div class="l">Saldo do mês</div><div class="bar-sk" style="width:70%"></div></div>
+          <div class="skel"><div class="l">Despesas por categoria</div><div class="bar-sk" style="width:55%"></div></div>
+        </div>
+        <div class="card widget" id="home-widget"></div>
+        <div class="skel" style="margin-top:12px"><div class="l">Últimas transações</div><div class="bar-sk" style="width:85%"></div><div class="bar-sk" style="width:60%"></div></div>
+      </div>
+      <div class="frame-label" style="margin-top:20px">Mobile · Início</div>
+      <div class="home-mobile"><div class="card widget" id="home-widget-m"></div></div>
+    </div>
+  </div>
+
+  <div id="wdialog"></div>
+  <div id="wtoast"></div>
+
+<script>
+const BANKS = {
+  nubank: { mark: 'nu', color: '#820AD1', mc: '#FFFFFF', label: 'Nubank' },
+  inter: { mark: 'in', color: '#FF7A00', mc: '#FFFFFF', label: 'Inter' },
+  outro: { mark: '💳', color: '#54545C', mc: '#FFFFFF', label: 'Outro' },
+}
+const CARDS = [
+  { id: 'nubank', bank: 'nubank', name: 'Nubank', tx: 12 },
+  { id: 'inter', bank: 'inter', name: 'Inter', tx: 5 },
+  { id: 'xp', bank: 'outro', name: 'Cartão XP', tx: 0 },
+]
+// paid = parcelas já pagas (1..paid); parcelas mensais a partir de start
+// cat = categoria escolhida ao criar a fatura (vai para a despesa de cada parcela)
+const INVOICES = [
+  { id: 'i1', cardId: 'nubank', d: 'Notebook', per: 250, total: 10, paid: 4, start: '2026-04-05', cat: 'Eletrônicos' },
+  { id: 'i2', cardId: 'nubank', d: 'Passagens', per: 210, total: 3, paid: 3, start: '2026-05-10', cat: 'Viagem' },
+  { id: 'i3', cardId: 'inter', d: 'Celular', per: 180, total: 12, paid: 2, start: '2026-05-28', cat: 'Eletrônicos' },
+  { id: 'i5', cardId: 'inter', d: 'Academia', per: 95, total: 8, paid: 1, start: '2026-05-15', cat: 'Saúde' },
+  { id: 'i4', cardId: null, d: 'Sofá (loja)', per: 130, total: 6, paid: 1, start: '2026-06-01', cat: 'Casa' },
+  { id: 'i6', cardId: 'inter', d: 'Fone Bluetooth', per: 60, total: 4, paid: 4, start: '2026-02-10', cat: 'Eletrônicos' },
+]
+const MONTHS = ['2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12']
+const MLBL = { '03':'mar','04':'abr','05':'mai','06':'jun','07':'jul','08':'ago','09':'set','10':'out','11':'nov','12':'dez' }
+const CURRENT = '2026-07'
+const TODAY = '2026-07-14'
+
+const state = { month: CURRENT, filter: 'all', open: new Set(['i5']), mopen: new Set(['i5']), closed: false, mclosed: false }
+
+const fmt = (n) => 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+const fmtK = (n) => n >= 1000 ? (n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + 'k' : String(Math.round(n))
+const logo = (b, s, round) => `<span class="logo" style="width:${s}px;height:${s}px;font-size:${s * .38}px;background:${BANKS[b].color};color:${BANKS[b].mc}${round ? ';border-radius:999px' : ''}">${BANKS[b].mark}</span>`
+const mlabel = (m) => MLBL[m.slice(5)]
+const mlong = (m) => ({ mar:'março', abr:'abril', mai:'maio', jun:'junho', jul:'julho', ago:'agosto', set:'setembro', out:'outubro', nov:'novembro', dez:'dezembro' })[mlabel(m)]
+const ddmm = (iso) => `${iso.slice(8)}/${iso.slice(5, 7)}`
+const chevSvg = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
+
+const dueOf = (inv, n) => {
+  const [y, m, d] = inv.start.split('-').map(Number)
+  const dt = new Date(y, m - 1 + (n - 1), d)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+const restante = (inv) => (inv.total - inv.paid) * inv.per
+const isClosed = (inv) => inv.paid >= inv.total
+const isOverdue = (inv, n) => n > inv.paid && dueOf(inv, n) < TODAY
+const parcelaNoMes = (inv, m) => {
+  for (let n = 1; n <= inv.total; n++) if (dueOf(inv, n).slice(0, 7) === m) return n
+  return null
+}
+function monthTotals(m, cardFilter) {
+  let due = 0, paidAmt = 0, overdue = 0, nPend = 0, nPaid = 0
+  for (const inv of INVOICES) {
+    if (cardFilter && cardFilter !== 'all' && inv.cardId !== cardFilter) continue
+    const n = parcelaNoMes(inv, m)
+    if (!n) continue
+    if (n <= inv.paid) { paidAmt += inv.per; nPaid++ }
+    else { due += inv.per; nPend++; if (isOverdue(inv, n)) overdue += inv.per }
+  }
+  return { due, paidAmt, overdue, nPend, nPaid, total: due + paidAmt }
+}
+// atraso global: toda parcela não paga com vencimento < hoje, em qualquer mês
+function globalOverdue(cardFilter) {
+  let amt = 0, count = 0
+  for (const inv of INVOICES) {
+    if (cardFilter && cardFilter !== 'all' && inv.cardId !== cardFilter) continue
+    for (let n = inv.paid + 1; n <= inv.total; n++) if (isOverdue(inv, n)) { amt += inv.per; count++ }
+  }
+  return { amt, count }
+}
+
+/* ---------------- hero ---------------- */
+function heroHtml(mobile) {
+  const t = monthTotals(state.month, state.filter)
+  const ovd = globalOverdue(state.filter)
+  const max = Math.max(...MONTHS.map((m) => monthTotals(m, state.filter).total), 1)
+  const bars = MONTHS.map((m) => {
+    const mt = monthTotals(m, state.filter)
+    const h = Math.round((mt.total / max) * 100)
+    const paidH = mt.total ? Math.round((mt.paidAmt / mt.total) * 100) : 0
+    const ovdH = mt.total ? Math.round((mt.overdue / mt.total) * 100) : 0
+    return `<div class="mo ${m === state.month ? 'sel' : ''}" onclick="setMonth('${m}')" title="${mlong(m)}: ${fmt(mt.total)}">
+      <div class="barwrap"><div class="bar" style="height:${Math.max(h, 6)}%">
+        <div class="paid" style="height:${paidH}%"></div>
+        <div class="ovd" style="bottom:${paidH}%;height:${ovdH}%"></div>
+      </div></div>
+      <div class="lbl2">${mlabel(m)}${m === CURRENT ? '·' : ''}</div>
+      <div class="val num">${mt.total ? fmtK(mt.total) : ''}</div>
+    </div>`
+  }).join('')
+  const quit = t.nPend === 0 && t.nPaid > 0
+  return `
+    <div class="hero ${mobile ? 'm-hero' : ''}">
+      <div class="left">
+        <div class="lbl">A pagar em ${mlong(state.month)}${state.month === CURRENT ? ' · mês atual' : ''}</div>
+        <div class="amount num">${fmt(t.due)}</div>
+        <div class="sub">${quit
+          ? '<span class="ok">✓ tudo pago neste mês</span>'
+          : `${t.nPend} ${t.nPend === 1 ? 'parcela em aberto' : 'parcelas em aberto'}${t.nPaid ? ` · <span class="ok">${fmt(t.paidAmt)} já pagos ✓</span>` : ''}`}</div>
+        ${ovd.count ? `<div class="alert">⚠ ${ovd.count} ${ovd.count === 1 ? 'parcela em atraso' : 'parcelas em atraso'} · ${fmt(ovd.amt)}</div>` : ''}
+        <div class="track"><div class="fill" style="width:${t.total ? Math.round((t.paidAmt / t.total) * 100) : 0}%"></div></div>
+      </div>
+      <div class="months">${bars}</div>
+    </div>`
+}
+
+/* ---------------- badge da parcela do mês ---------------- */
+function monthBadge(inv) {
+  const n = parcelaNoMes(inv, state.month)
+  if (!n) return `<span class="pill none">sem parcela</span>`
+  if (n <= inv.paid) return `<span class="pill pago">paga ✓</span>`
+  if (isOverdue(inv, n)) return `<span class="pill atra">venceu dia ${Number(dueOf(inv, n).slice(8))}</span>`
+  return `<span class="pill pend">vence dia ${Number(dueOf(inv, n).slice(8))}</span>`
+}
+
+/* ---------------- parcelas expandidas ---------------- */
+const chips = (inv) => {
+  let out = ''
+  for (let n = 1; n <= inv.total; n++) {
+    const paga = n <= inv.paid
+    const cls = paga ? 'paga' : isOverdue(inv, n) ? 'atra' : n === inv.paid + 1 ? 'prox' : ''
+    out += `<span class="pchip ${cls}" title="Parcela ${n} · ${dueOf(inv, n)}" onclick="event.stopPropagation();openDialog('${inv.id}',${n},false)">${n}${paga ? '<span class="ck">✓</span>' : ''}</span>`
+  }
+  return out
+}
+const pstatus = (inv, n) => n <= inv.paid
+  ? '<span class="pill pago">paga</span>'
+  : isOverdue(inv, n) ? '<span class="pill atra">em atraso</span>' : '<span class="pill pend">pendente</span>'
+
+const parcelasRows = (inv, mobile) => {
+  let rows = ''
+  for (let n = 1; n <= inv.total; n++) {
+    const paga = n <= inv.paid
+    const prox = n === inv.paid + 1
+    if (mobile) {
+      rows += `<div class="m-prow">
+        <span class="n">P. ${n}</span>
+        <span class="dt num">${ddmm(dueOf(inv, n))}</span>
+        <span class="vl num">${paga ? fmt(inv.per) : '—'}</span>
+        ${pstatus(inv, n)}
+        <a class="plink ${prox ? 'strong' : ''}" onclick="openDialog('${inv.id}',${n},true)">${paga ? 'editar' : 'registrar'}</a>
+      </div>`
+    } else {
+      rows += `<tr>
+        <td class="fg">Parcela ${n}</td>
+        <td class="num">${dueOf(inv, n)}</td>
+        <td class="num">${paga ? fmt(inv.per) : '—'}</td>
+        <td>${pstatus(inv, n)}</td>
+        <td><a class="plink ${prox ? 'strong' : ''}" onclick="event.stopPropagation();openDialog('${inv.id}',${n},false)">${paga ? 'editar' : 'registrar pagamento'}</a></td>
+      </tr>`
+    }
+  }
+  return rows
+}
+const parcelasPanel = (inv) => `
+  <div class="parcelas-panel">
+    <div class="pt">Parcelas · ${inv.paid} de ${inv.total} pagas</div>
+    <div class="chips">${chips(inv)}</div>
+    <table class="ptable">
+      <thead><tr><th>Parcela</th><th>Vencimento</th><th>Valor pago</th><th>Status</th><th></th></tr></thead>
+      <tbody>${parcelasRows(inv, false)}</tbody>
+    </table>
+  </div>`
+
+/* ---------------- web ---------------- */
+const invRowWeb = (inv, cols) => {
+  const open = state.open.has(inv.id)
+  const pct = Math.round((inv.paid / inv.total) * 100)
+  return `
+    <tr class="inv-row" onclick="toggleInv('${inv.id}')">
+      <td class="fg">${inv.d}</td>
+      <td class="num">${inv.paid}/${inv.total}<span class="mini-track"><i style="width:${pct}%"></i></span></td>
+      <td class="num">${fmt(inv.per)}</td>
+      <td class="num">${fmt(restante(inv))}</td>
+      <td>${monthBadge(inv)}</td>
+      <td style="text-align:right">
+        <span class="expander ${open ? 'open' : ''}">parcelas ${chevSvg}</span>
+        <span class="row-acts" style="margin-left:10px"><a onclick="event.stopPropagation()">excluir</a></span>
+      </td>
+    </tr>
+    ${open ? `<tr><td colspan="${cols}" style="padding:4px 8px 10px">${parcelasPanel(inv)}</td></tr>` : ''}`
+}
+
+const closedRowWeb = (inv, showCard) => {
+  const open = state.open.has(inv.id)
+  const card = CARDS.find((c) => c.id === inv.cardId)
+  const endMonth = dueOf(inv, inv.total).slice(0, 7)
+  return `
+    <tr class="inv-row" onclick="toggleInv('${inv.id}')">
+      <td class="fg">${inv.d}</td>
+      ${showCard ? `<td>${card ? `${logo(card.bank, 16)} ${card.name}` : '<span style="color:rgb(var(--muted))">sem cartão</span>'}</td>` : ''}
+      <td class="num">${inv.total}/${inv.total}</td>
+      <td class="num">${fmt(inv.per * inv.total)}</td>
+      <td><span class="pill pago">encerrada em ${mlabel(endMonth)}/${endMonth.slice(2, 4)} ✓</span></td>
+      <td style="text-align:right"><span class="expander ${open ? 'open' : ''}">parcelas ${chevSvg}</span></td>
+    </tr>
+    ${open ? `<tr><td colspan="${showCard ? 6 : 5}" style="padding:4px 8px 10px">${parcelasPanel(inv)}</td></tr>` : ''}`
+}
+
+const groupWeb = (title, bank, rows, head = true) => rows.length ? `
+  <div class="card group-card">
+    ${head ? `<div class="group-head">${bank ? logo(bank, 24) : ''}<b>${title}</b></div>`
+           : `<div class="sem-cartao">${title}</div>`}
+    <table>
+      <thead><tr><th style="width:24%">Descrição</th><th>Progresso</th><th>Parcela</th><th>Restante</th><th>${mlong(state.month)}</th><th></th></tr></thead>
+      <tbody>${rows.map((r) => invRowWeb(r, 6)).join('')}</tbody>
+    </table>
+  </div>` : ''
+
+const closedSectionWeb = (closed, showCard) => closed.length ? `
+  <div class="card group-card closed-card">
+    <div class="closed-head ${state.closed ? 'open' : ''}" onclick="toggleClosed()">
+      Faturas encerradas <span class="count">${closed.length}</span> ${chevSvg}
+    </div>
+    ${state.closed ? `<table style="margin-top:12px">
+      <thead><tr><th style="width:24%">Descrição</th>${showCard ? '<th>Cartão</th>' : ''}<th>Parcelas</th><th>Total pago</th><th>Status</th><th></th></tr></thead>
+      <tbody>${closed.map((r) => closedRowWeb(r, showCard)).join('')}</tbody>
+    </table>` : ''}
+  </div>` : ''
+
+function renderWeb() {
+  const allTx = CARDS.reduce((s, c) => s + c.tx, 0)
+  const active = INVOICES.filter((i) => !isClosed(i))
+  const tiles = `
+    <div class="card-tile ${state.filter === 'all' ? 'sel' : ''}" onclick="setFilter('all')">
+      ${logo('outro', 34)}
+      <span><span class="nm">Todos os cartões</span><br><span class="sub">${allTx} transações · ${active.length} faturas ativas</span></span>
+    </div>
+    ${CARDS.map((c) => `
+      <div class="card-tile ${state.filter === c.id ? 'sel' : ''}" onclick="setFilter('${c.id}')">
+        ${logo(c.bank, 34)}
+        <span><span class="nm">${c.name}</span><br><span class="sub">${BANKS[c.bank].label} · ${c.tx} ${c.tx === 1 ? 'transação' : 'transações'}</span></span>
+        <span class="acts"><a onclick="event.stopPropagation()">editar</a><a onclick="event.stopPropagation()">🗑</a></span>
+      </div>`).join('')}
+    <div class="card-tile add">+ Cartão</div>`
+
+  let groups = ''
+  if (state.filter === 'all') {
+    for (const c of CARDS) groups += groupWeb(c.name, c.bank, active.filter((i) => i.cardId === c.id))
+    groups += groupWeb('Sem cartão', null, active.filter((i) => !i.cardId), false)
+    groups += closedSectionWeb(INVOICES.filter(isClosed), true)
+  } else {
+    const c = CARDS.find((c) => c.id === state.filter)
+    const rows = active.filter((i) => i.cardId === c.id)
+    groups = rows.length ? groupWeb(c.name, c.bank, rows)
+      : `<div class="card group-card"><div class="group-head">${logo(c.bank, 24)}<b>${c.name}</b></div>
+         <div style="font-size:12px;color:rgb(var(--muted))">Nenhuma fatura ativa deste cartão.</div></div>`
+    groups += closedSectionWeb(INVOICES.filter((i) => isClosed(i) && i.cardId === c.id), false)
+  }
+
+  document.getElementById('web').innerHTML = `
+    <div class="page-header"><h1>Faturas <small>· a pagar</small></h1><button class="btn">+ Nova fatura</button></div>
+    ${heroHtml(false)}
+    <div class="strip">${tiles}</div>
+    ${groups}`
+}
+
+/* ---------------- mobile ---------------- */
+const invCardMob = (inv) => {
+  const open = state.mopen.has(inv.id)
+  const pct = Math.round((inv.paid / inv.total) * 100)
+  return `
+    <div class="inv-card">
+      <div class="t" onclick="toggleInvM('${inv.id}')">
+        <b>${inv.d}</b>
+        ${monthBadge(inv)}
+      </div>
+      <div class="d num">${inv.paid}/${inv.total} pagas · parcela de ${fmt(inv.per)} · resta ${fmt(restante(inv))}</div>
+      <div class="mini-track" style="width:100%;margin:7px 0 0"><i style="width:${pct}%"></i></div>
+      <div class="m-expander ${open ? 'open' : ''}" onclick="toggleInvM('${inv.id}')">${open ? 'ocultar' : 'ver'} ${inv.total} parcelas ${chevSvg}</div>
+      ${open ? `<div class="m-parcelas"><div class="chips">${chips(inv)}</div>${parcelasRows(inv, true)}</div>` : ''}
+    </div>`
+}
+const closedCardMob = (inv, showCard) => {
+  const card = CARDS.find((c) => c.id === inv.cardId)
+  const endMonth = dueOf(inv, inv.total).slice(0, 7)
+  return `
+    <div class="inv-card" style="padding:11px 13px">
+      <div class="t" style="margin:0">
+        <b style="color:rgb(var(--body))">${inv.d}</b>
+        <span class="pill pago">encerrada ${mlabel(endMonth)}/${endMonth.slice(2, 4)} ✓</span>
+      </div>
+      <div class="d num">${showCard && card ? card.name + ' · ' : ''}${inv.total}/${inv.total} pagas · total ${fmt(inv.per * inv.total)}</div>
+    </div>`
+}
+
+function renderMob() {
+  const active = INVOICES.filter((i) => !isClosed(i))
+  const tiles = `
+    <div class="m-tile ${state.filter === 'all' ? 'sel' : ''}" onclick="setFilter('all')">${logo('outro', 22, true)}Todos</div>
+    ${CARDS.map((c) => `
+      <div class="m-tile ${state.filter === c.id ? 'sel' : ''}" onclick="setFilter('${c.id}')">${logo(c.bank, 22, true)}${c.name}</div>`).join('')}
+    <div class="m-tile add">+ Cartão</div>`
+
+  let body = ''
+  let closed = []
+  if (state.filter === 'all') {
+    for (const c of CARDS) {
+      const rows = active.filter((i) => i.cardId === c.id)
+      if (!rows.length) continue
+      body += `<div class="m-group-head">${logo(c.bank, 20)}<b>${c.name}</b></div>` + rows.map(invCardMob).join('')
+    }
+    const un = active.filter((i) => !i.cardId)
+    if (un.length) body += `<div class="sem-cartao" style="margin:8px 0 8px">Sem cartão</div>` + un.map(invCardMob).join('')
+    closed = INVOICES.filter(isClosed)
+  } else {
+    const c = CARDS.find((c) => c.id === state.filter)
+    const rows = active.filter((i) => i.cardId === c.id)
+    body = `<div class="m-group-head">${logo(c.bank, 20)}<b>${c.name}</b>
+        <span style="margin-left:auto;font-size:11px;color:rgb(var(--muted))">editar · 🗑</span></div>`
+      + (rows.length ? rows.map(invCardMob).join('')
+        : '<div style="font-size:12px;color:rgb(var(--muted))">Nenhuma fatura ativa deste cartão.</div>')
+    closed = INVOICES.filter((i) => isClosed(i) && i.cardId === c.id)
+  }
+  if (closed.length) {
+    body += `<div class="closed-head ${state.mclosed ? 'open' : ''}" style="margin:14px 2px 10px" onclick="toggleClosedM()">
+      Faturas encerradas <span class="count">${closed.length}</span> ${chevSvg}</div>`
+    if (state.mclosed) body += closed.map((i) => closedCardMob(i, state.filter === 'all')).join('')
+  }
+
+  document.getElementById('mob').innerHTML = `
+    <div class="m-title">Faturas</div>
+    ${heroHtml(true)}
+    <div class="m-strip">${tiles}</div>
+    <button class="btn m-btn">+ Nova fatura</button>
+    ${body}`
+}
+
+/* ---------------- widget Início ---------------- */
+function widgetHtml() {
+  const t = monthTotals(CURRENT, 'all')
+  const ovd = globalOverdue('all')
+  // parcelas não pagas com vencimento até o fim do mês atual, ordenadas
+  const items = []
+  for (const inv of INVOICES) {
+    for (let n = inv.paid + 1; n <= inv.total; n++) {
+      const due = dueOf(inv, n)
+      if (due.slice(0, 7) > CURRENT) break
+      items.push({ d: inv.d, due, v: inv.per, late: due < TODAY })
+    }
+  }
+  items.sort((a, b) => a.due.localeCompare(b.due))
+  return `
+    <div class="w-head"><span class="l">Faturas de ${mlong(CURRENT)}</span><a>ver todas →</a></div>
+    ${t.due === 0
+      ? '<div class="w-amount ok">✓ Faturas do mês em dia</div>'
+      : `<div class="w-amount num">${fmt(t.due)} <small>a pagar · ${t.nPend} ${t.nPend === 1 ? 'parcela' : 'parcelas'}</small></div>`}
+    <div class="w-track"><i style="width:${t.total ? Math.round((t.paidAmt / t.total) * 100) : 0}%"></i></div>
+    <div style="font-size:11px;color:rgb(var(--muted))" class="num">${fmt(t.paidAmt)} pagos de ${fmt(t.total)} no mês</div>
+    ${ovd.count ? `<div class="w-alert">⚠ ${ovd.count} ${ovd.count === 1 ? 'parcela em atraso' : 'parcelas em atraso'} · ${fmt(ovd.amt)}</div>` : ''}
+    <div class="w-list">
+      ${items.map((i) => `
+        <div class="w-item">
+          <span class="nm">${i.d}</span>
+          <span class="dt ${i.late ? 'late' : ''}">${i.late ? 'venceu' : 'vence'} ${ddmm(i.due)}</span>
+          <span class="vl num ${i.late ? 'late' : ''}">${fmt(i.v)}</span>
+        </div>`).join('')}
+    </div>`
+}
+
+/* ---------------- dialog de parcela ---------------- */
+const cardName = (inv) => {
+  const c = CARDS.find((c) => c.id === inv.cardId)
+  return c ? c.name : 'sem cartão'
+}
+const dialogBody = (inv, n) => {
+  const paga = n <= inv.paid
+  return `
+    <h3>Parcela ${n} de ${inv.total} · ${inv.d}</h3>
+    <div class="sub">Vencimento ${dueOf(inv, n)}${isOverdue(inv, n) ? ' · <b style="color:rgb(var(--negative))">em atraso</b>' : ''}</div>
+    <div class="fld">
+      <label>Status</label>
+      <div class="seg"><button class="on">Paga</button><button>Pendente</button></div>
+    </div>
+    <div class="fld">
+      <label>Valor pago (R$)</label>
+      <input value="${inv.per.toFixed(2).replace('.', ',')}" />
+      <div class="note">Sugerido: ${fmt(inv.per)} (valor da parcela). Ajuste se pagou diferente.</div>
+    </div>
+    <div class="fld">
+      <label>Data do pagamento</label>
+      <input value="${TODAY}" />
+    </div>
+    <div class="auto-exp">
+      <span class="ic">↳</span>
+      <span class="tx">Ao salvar, uma <b>despesa de ${fmt(inv.per)}</b> ${paga ? 'será atualizada' : 'será criada'} no Histórico:
+      "${inv.d} — parcela ${n}/${inv.total}" · categoria <span class="cat">${inv.cat}</span> (definida na fatura) · cartão <b>${cardName(inv)}</b>.</span>
+    </div>
+    <div class="dlg-acts">
+      <button class="btn ghost" onclick="closeDialog()">Cancelar</button>
+      <button class="btn" onclick="savePayment('${inv.id}',${n},${paga})">${paga ? 'Salvar' : 'Marcar como paga'}</button>
+    </div>`
+}
+let dlgMobile = false
+function openDialog(invId, n, mobile) {
+  dlgMobile = mobile
+  const inv = INVOICES.find((i) => i.id === invId)
+  if (mobile) {
+    document.getElementById('msheet').innerHTML =
+      `<div class="m-backdrop" onclick="if(event.target===this)closeDialog()"><div class="m-sheet">${dialogBody(inv, n)}</div></div>`
+  } else {
+    document.getElementById('wdialog').innerHTML =
+      `<div class="backdrop" onclick="if(event.target===this)closeDialog()"><div class="dialog">${dialogBody(inv, n)}</div></div>`
+  }
+}
+function closeDialog() {
+  document.getElementById('wdialog').innerHTML = ''
+  document.getElementById('msheet').innerHTML = ''
+}
+
+/* salvar parcela: fecha o dialog e mostra o toast da despesa criada/atualizada */
+let toastTimer = null
+function savePayment(invId, n, wasPaga) {
+  const inv = INVOICES.find((i) => i.id === invId)
+  closeDialog()
+  const target = document.getElementById(dlgMobile ? 'mtoast' : 'wtoast')
+  target.innerHTML = `
+    <div class="toast">
+      <div class="tt"><span class="ok">✓</span> Despesa ${wasPaga ? 'atualizada' : 'criada'} no Histórico</div>
+      <div class="td num">${fmt(inv.per)} · "${inv.d} — parcela ${n}/${inv.total}"<br>
+        ${inv.cat} · ${cardName(inv)} · ${ddmm(TODAY)}/2026</div>
+      <span class="undo" onclick="dismissToast()">desfazer</span>
+    </div>`
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(dismissToast, 5500)
+}
+function dismissToast() {
+  document.getElementById('wtoast').innerHTML = ''
+  document.getElementById('mtoast').innerHTML = ''
+}
+
+function setMonth(m) { state.month = m; render() }
+function setFilter(f) { state.filter = f; render() }
+function toggleInv(id) { state.open.has(id) ? state.open.delete(id) : state.open.add(id); renderWeb() }
+function toggleInvM(id) { state.mopen.has(id) ? state.mopen.delete(id) : state.mopen.add(id); renderMob() }
+function toggleClosed() { state.closed = !state.closed; renderWeb() }
+function toggleClosedM() { state.mclosed = !state.mclosed; renderMob() }
+function render() {
+  renderWeb(); renderMob()
+  document.getElementById('home-widget').innerHTML = widgetHtml()
+  document.getElementById('home-widget-m').innerHTML = widgetHtml()
+}
+render()
+</script>
+</body>
+</html>

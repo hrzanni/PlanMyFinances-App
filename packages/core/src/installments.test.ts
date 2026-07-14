@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
   emptyInstallmentDraft,
+  emptyInvoiceDraft,
   installmentTotals,
   isValidAmountPaid,
   parseInstallmentDraft,
+  parseInvoiceDraft,
   validateInstallmentDraft,
+  validateInvoiceDraft,
 } from './installments'
 
 describe('installmentTotals', () => {
@@ -86,6 +89,64 @@ describe('parseInstallmentDraft', () => {
       amountPaid: 0,
       dueDate: undefined,
       description: undefined,
+    })
+  })
+})
+
+function invoiceDraft(patch: Partial<typeof emptyInvoiceDraft>) {
+  return {
+    ...emptyInvoiceDraft,
+    name: 'Cartão X',
+    amountPerInstallment: '100',
+    firstDueDate: '2026-07-10',
+    ...patch,
+  }
+}
+
+describe('validateInvoiceDraft', () => {
+  it('aceita rascunho válido', () => {
+    expect(validateInvoiceDraft(invoiceDraft({}))).toBeNull()
+  })
+  it('exige valor da parcela', () => {
+    expect(validateInvoiceDraft(invoiceDraft({ amountPerInstallment: '' }))).toMatch(/parcela/)
+    expect(validateInvoiceDraft(invoiceDraft({ amountPerInstallment: '0' }))).toMatch(/parcela/)
+  })
+  it('exige ao menos 1 parcela', () => {
+    expect(validateInvoiceDraft(invoiceDraft({ totalInstallments: '0' }))).toMatch(/ao menos 1/)
+  })
+  it('exige o primeiro vencimento', () => {
+    expect(validateInvoiceDraft(invoiceDraft({ firstDueDate: '' }))).toMatch(/primeiro vencimento/)
+  })
+  it('rejeita vencimento fora do formato AAAA-MM-DD', () => {
+    expect(validateInvoiceDraft(invoiceDraft({ firstDueDate: '10/07/2026' }))).toMatch(
+      /AAAA-MM-DD/,
+    )
+    expect(validateInvoiceDraft(invoiceDraft({ firstDueDate: '2026-07-10' }))).toBeNull()
+  })
+})
+
+describe('parseInvoiceDraft', () => {
+  it('normaliza vírgula e converte números', () => {
+    expect(
+      parseInvoiceDraft(
+        invoiceDraft({ amountPerInstallment: '487,50', totalInstallments: '4' }),
+      ),
+    ).toEqual({
+      description: undefined,
+      amountPerInstallment: 487.5,
+      totalInstallments: 4,
+      firstDueDate: '2026-07-10',
+      categoryId: undefined,
+      cardId: undefined,
+    })
+  })
+  it('campos opcionais vazios viram undefined', () => {
+    expect(
+      parseInvoiceDraft(invoiceDraft({ description: '', categoryId: '', cardId: '' })),
+    ).toMatchObject({
+      description: undefined,
+      categoryId: undefined,
+      cardId: undefined,
     })
   })
 })

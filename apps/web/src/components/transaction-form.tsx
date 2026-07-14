@@ -14,6 +14,7 @@ export function TransactionForm({ open, onOpenChange }: Props) {
   const utils = trpc.useUtils()
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: open })
   const { data: folders } = trpc.folders.list.useQuery(undefined, { enabled: open })
+  const { data: cards } = trpc.cards.list.useQuery(undefined, { enabled: open })
 
   const [type, setType] = useState<'receita' | 'despesa'>('despesa')
   const [value, setValue] = useState('')
@@ -22,6 +23,7 @@ export function TransactionForm({ open, onOpenChange }: Props) {
   const [categoryId, setCategoryId] = useState('')
   const [subcategoryId, setSubcategoryId] = useState('')
   const [folderId, setFolderId] = useState('')
+  const [cardId, setCardId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const typeCategories = useMemo(
@@ -65,6 +67,7 @@ export function TransactionForm({ open, onOpenChange }: Props) {
       categoryId: categoryId || undefined,
       subcategoryId: subcategoryId || undefined,
       folderId: folderId || undefined,
+      cardId: cardId || undefined,
     })
   }
 
@@ -154,18 +157,31 @@ export function TransactionForm({ open, onOpenChange }: Props) {
               </Select>
             </Field>
           </div>
-          <Field>
-            <Label htmlFor="tx-folder">Pasta (opcional)</Label>
-            <Select id="tx-folder" value={folderId} onChange={(e) => setFolderId(e.target.value)}>
-              <option value="">Nenhuma</option>
-              {activeFolders.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.icon ? `${f.icon} ` : ''}
-                  {f.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field>
+              <Label htmlFor="tx-folder">Pasta (opcional)</Label>
+              <Select id="tx-folder" value={folderId} onChange={(e) => setFolderId(e.target.value)}>
+                <option value="">Nenhuma</option>
+                {activeFolders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.icon ? `${f.icon} ` : ''}
+                    {f.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field>
+              <Label htmlFor="tx-card">Cartão (opcional)</Label>
+              <Select id="tx-card" value={cardId} onChange={(e) => setCardId(e.target.value)}>
+                <option value="">Nenhum</option>
+                {(cards ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
           {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
           <Button type="submit" disabled={create.isPending} className="w-full">
             {create.isPending ? 'Salvando…' : 'Salvar transação'}

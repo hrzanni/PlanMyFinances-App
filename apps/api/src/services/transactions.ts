@@ -7,6 +7,7 @@ import type {
 } from '@pmf/schemas'
 import type { DrizzleDB } from '../db/client'
 import { categories, subcategories, transactions } from '../db/schema'
+import { cardBelongsToUser } from './cards'
 
 // Todas as funções recebem userId da identidade e filtram por ele (FR-070).
 
@@ -16,6 +17,7 @@ function listFilters(userId: string, input: ListTransactionsInput): SQL[] {
   if (input.categoryId) filters.push(eq(transactions.categoryId, input.categoryId))
   if (input.subcategoryId) filters.push(eq(transactions.subcategoryId, input.subcategoryId))
   if (input.folderId) filters.push(eq(transactions.folderId, input.folderId))
+  if (input.cardId) filters.push(eq(transactions.cardId, input.cardId))
   if (input.uncategorized) filters.push(isNull(transactions.categoryId))
   if (input.month) {
     const { from, to } = monthRange(new Date(`${input.month}-15T12:00:00Z`))
@@ -63,6 +65,7 @@ export async function createTransaction(
   userId: string,
   input: CreateTransactionInput,
 ) {
+  if (input.cardId && !(await cardBelongsToUser(db, userId, input.cardId))) return null
   const [row] = await db
     .insert(transactions)
     .values({
@@ -73,6 +76,7 @@ export async function createTransaction(
       categoryId: input.categoryId ?? null,
       subcategoryId: input.subcategoryId ?? null,
       folderId: input.folderId ?? null,
+      cardId: input.cardId ?? null,
       date: input.date,
     })
     .returning()
@@ -84,6 +88,7 @@ export async function updateTransaction(
   userId: string,
   input: UpdateTransactionInput,
 ) {
+  if (input.cardId && !(await cardBelongsToUser(db, userId, input.cardId))) return null
   const { id, value, ...rest } = input
   const [row] = await db
     .update(transactions)

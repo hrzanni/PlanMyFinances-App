@@ -11,6 +11,7 @@ import { TxRow } from '@/components/tx-row'
 import { TxFormModal } from '@/components/tx-form-modal'
 import { MonthSelector } from '@/components/month-selector'
 import { MonthChartsSection } from '@/components/month-charts-section'
+import { InvoicesMonthWidget } from '@/components/invoices-month-widget'
 
 export default function HomeScreen() {
   const [month, setMonth] = useState(currentMonth)
@@ -76,6 +77,8 @@ export default function HomeScreen() {
             <EmptyState title="Nenhum gasto fixo" hint="Cadastre na aba Fixos." />
           )}
         </Card>
+
+        <InvoicesMonthWidget />
 
         <MonthChartsSection month={month} />
       </ScrollView>

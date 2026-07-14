@@ -33,22 +33,28 @@ function CategoryCard({ category }: { category: CategoryItem }) {
     <Card>
       <div className="mb-2 flex items-center gap-2">
         <b className="flex-1 text-sm text-foreground">{category.name}</b>
-        <button
-          type="button"
-          aria-label={`Excluir categoria ${category.name}`}
-          className="text-xs text-muted hover:text-negative"
-          onClick={() => {
-            if (
-              window.confirm(
-                `Excluir "${category.name}"? As subcategorias somem e as transações ficam "sem categoria".`,
-              )
-            ) {
-              del.mutate({ id: category.id })
-            }
-          }}
-        >
-          🗑
-        </button>
+        {category.isSystem ? (
+          <span className="rounded-full border border-line px-2 py-0.5 text-[10px] font-bold uppercase text-muted">
+            sistema
+          </span>
+        ) : (
+          <button
+            type="button"
+            aria-label={`Excluir categoria ${category.name}`}
+            className="text-xs text-muted hover:text-negative"
+            onClick={() => {
+              if (
+                window.confirm(
+                  `Excluir "${category.name}"? As subcategorias somem e as transações ficam "sem categoria".`,
+                )
+              ) {
+                del.mutate({ id: category.id })
+              }
+            }}
+          >
+            🗑
+          </button>
+        )}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {category.subcategories.map((sub: CategoryItem['subcategories'][number]) => (
@@ -71,7 +77,7 @@ function CategoryCard({ category }: { category: CategoryItem }) {
             </button>
           </span>
         ))}
-        {adding ? (
+        {category.isSystem ? null : adding ? (
           <form onSubmit={handleAddSub} className="inline-flex items-center gap-1">
             <input
               autoFocus

@@ -26,7 +26,11 @@ import {
 import { trpc } from '@/lib/trpc'
 import { money } from '@/lib/format'
 import { PageHeader } from '@/components/page-header'
-import { InstallmentFormFields } from '@/components/installment-form-fields'
+import { ChargeFormFields } from '@/components/charge-form-fields'
+import {
+  ChargePaymentDialog,
+  type ChargePaymentTarget,
+} from '@/components/charge-payment-dialog'
 
 const statuses = ['pendente', 'cobrado', 'pago'] as const
 
@@ -43,6 +47,10 @@ export default function ChargesPage() {
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState<InstallmentDraft>(emptyInstallmentDraft)
   const [error, setError] = useState<string | null>(null)
+  // guarda só o id: o alvo é derivado da lista para o diálogo refletir o cache atualizado
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const paying: ChargePaymentTarget | null =
+    list.data?.find((r) => r.id === payingId) ?? null
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -139,18 +147,27 @@ export default function ChargesPage() {
                       </Select>
                     </Td>
                     <Td numeric>
-                      <button
-                        type="button"
-                        aria-label={`Excluir cobrança de ${row.debtorName}`}
-                        className="text-muted hover:text-negative"
-                        onClick={() => {
-                          if (window.confirm(`Excluir a cobrança de "${row.debtorName}"?`)) {
-                            del.mutate({ id: row.id })
-                          }
-                        }}
-                      >
-                        🗑
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          className="whitespace-nowrap text-xs font-bold text-positive underline hover:opacity-80"
+                          onClick={() => setPayingId(row.id)}
+                        >
+                          + receber
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Excluir cobrança de ${row.debtorName}`}
+                          className="text-muted hover:text-negative"
+                          onClick={() => {
+                            if (window.confirm(`Excluir a cobrança de "${row.debtorName}"?`)) {
+                              del.mutate({ id: row.id })
+                            }
+                          }}
+                        >
+                          🗑
+                        </button>
+                      </div>
                     </Td>
                   </tr>
                 )
@@ -168,7 +185,7 @@ export default function ChargesPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Nova cobrança">
           <form onSubmit={handleSubmit}>
-            <InstallmentFormFields draft={draft} nameLabel="Devedor" onChange={setDraft} />
+            <ChargeFormFields draft={draft} onChange={setDraft} />
             {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
             <Button type="submit" disabled={create.isPending} className="w-full">
               Salvar cobrança
@@ -176,6 +193,8 @@ export default function ChargesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ChargePaymentDialog charge={paying} onClose={() => setPayingId(null)} />
     </>
   )
 }

@@ -15,6 +15,13 @@
       "when": 1783976894303,
       "tag": "0001_futuristic_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784065129161,
+      "tag": "0002_chubby_darkstar",
+      "breakpoints": true
     }
   ]
 }

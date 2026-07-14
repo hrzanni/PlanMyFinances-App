@@ -31,19 +31,27 @@ export function CategoryBlock({ category }: { category: Category }) {
         <Text className="flex-1 text-sm font-bold text-foreground dark:text-foreground-dark">
           {category.name}
         </Text>
-        <Pressable
-          accessibilityLabel={`Excluir categoria ${category.name}`}
-          hitSlop={8}
-          onPress={() =>
-            confirmDelete(
-              'Excluir categoria',
-              `Excluir "${category.name}"? As subcategorias somem e as transações ficam sem categoria.`,
-              () => del.mutate({ id: category.id }),
-            )
-          }
-        >
-          <Ionicons name="trash-outline" size={16} color="#9C9B9B" />
-        </Pressable>
+        {category.isSystem ? (
+          <View className="rounded-full border border-line px-2 py-0.5 dark:border-line-dark">
+            <Text className="text-[9px] font-bold uppercase text-muted dark:text-muted-dark">
+              sistema
+            </Text>
+          </View>
+        ) : (
+          <Pressable
+            accessibilityLabel={`Excluir categoria ${category.name}`}
+            hitSlop={8}
+            onPress={() =>
+              confirmDelete(
+                'Excluir categoria',
+                `Excluir "${category.name}"? As subcategorias somem e as transações ficam sem categoria.`,
+                () => del.mutate({ id: category.id }),
+              )
+            }
+          >
+            <Ionicons name="trash-outline" size={16} color="#9C9B9B" />
+          </Pressable>
+        )}
       </View>
       <View className="flex-row flex-wrap items-center gap-1.5">
         {category.subcategories.map((sub: Category['subcategories'][number]) => (
@@ -65,7 +73,7 @@ export function CategoryBlock({ category }: { category: Category }) {
             </Pressable>
           </View>
         ))}
-        {adding ? (
+        {category.isSystem ? null : adding ? (
           <TextInput
             autoFocus
             value={subName}

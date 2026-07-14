@@ -13,11 +13,12 @@ export async function createTestDb(): Promise<DrizzleDB> {
 
   await client.exec(`
     create type tx_type as enum ('receita','despesa');
-    create type tx_source as enum ('manual','fixed_expense','pluggy');
+    create type tx_source as enum ('manual','fixed_expense','pluggy','charge','invoice');
     create type charge_status as enum ('pendente','cobrado','pago');
     create type invoice_status as enum ('pendente','pago');
     create type active_status as enum ('active','archived');
     create type connection_status as enum ('connected','error','expired');
+    create type bank_preset as enum ('nubank','inter','banco_do_brasil','santander','caixa','outro');
 
     create table users (
       id text primary key,
@@ -36,7 +37,8 @@ export async function createTestDb(): Promise<DrizzleDB> {
       id uuid primary key default gen_random_uuid(),
       user_id text not null references users(id) on delete cascade,
       name text not null,
-      type tx_type not null
+      type tx_type not null,
+      is_system boolean not null default false
     );
 
     create table subcategories (
@@ -55,6 +57,14 @@ export async function createTestDb(): Promise<DrizzleDB> {
       created_at timestamptz not null default now()
     );
 
+    create table cards (
+      id uuid primary key default gen_random_uuid(),
+      user_id text not null references users(id) on delete cascade,
+      name text not null,
+      bank_preset bank_preset not null default 'outro',
+      created_at timestamptz not null default now()
+    );
+
     create table transactions (
       id uuid primary key default gen_random_uuid(),
       user_id text not null references users(id) on delete cascade,
@@ -64,6 +74,7 @@ export async function createTestDb(): Promise<DrizzleDB> {
       category_id uuid references categories(id) on delete set null,
       subcategory_id uuid references subcategories(id) on delete set null,
       folder_id uuid references folders(id) on delete set null,
+      card_id uuid references cards(id) on delete set null,
       source tx_source not null default 'manual',
       external_id text,
       date date not null,
@@ -114,20 +125,44 @@ export async function createTestDb(): Promise<DrizzleDB> {
       constraint charge_installments_min check (total_installments >= 1)
     );
 
+    create table charge_payments (
+      id uuid primary key default gen_random_uuid(),
+      user_id text not null references users(id) on delete cascade,
+      charge_id uuid not null references charges(id) on delete cascade,
+      amount numeric(12,2) not null,
+      transaction_id uuid references transactions(id) on delete set null,
+      created_at timestamptz not null default now()
+    );
+
     create table invoices (
       id uuid primary key default gen_random_uuid(),
       user_id text not null references users(id) on delete cascade,
       card_name text not null,
+      card_id uuid references cards(id) on delete set null,
       description text,
       amount_per_installment numeric(12,2) not null,
       total_installments integer not null,
       amount_paid numeric(12,2) not null default 0,
-      due_date date,
+      category_id uuid references categories(id) on delete set null,
+      first_due_date date not null,
       status invoice_status not null default 'pendente',
       created_at timestamptz not null default now(),
-      constraint invoice_paid_le_total check (amount_paid <= amount_per_installment * total_installments),
       constraint invoice_installments_min check (total_installments >= 1)
     );
+
+    create table invoice_payments (
+      id uuid primary key default gen_random_uuid(),
+      user_id text not null references users(id) on delete cascade,
+      invoice_id uuid not null references invoices(id) on delete cascade,
+      installment_number integer not null,
+      amount numeric(12,2) not null,
+      paid_on date not null,
+      transaction_id uuid references transactions(id) on delete set null,
+      created_at timestamptz not null default now(),
+      constraint invoice_payment_installment_min check (installment_number >= 1)
+    );
+    create unique index invoice_payment_installment_unique
+      on invoice_payments (invoice_id, installment_number);
 
     create table bank_connections (
       id uuid primary key default gen_random_uuid(),
