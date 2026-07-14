@@ -1,7 +1,9 @@
 import { betterAuth } from 'better-auth'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { bearer } from 'better-auth/plugins'
 import { expo } from '@better-auth/expo'
+import { isAcceptablePassword } from '@pmf/core'
 import { db } from '../db/client'
 import * as schema from '../db/schema'
 import { sendResetPasswordEmail } from './email'
@@ -22,6 +24,25 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       await sendResetPasswordEmail({ to: user.email, url })
     },
+  },
+  // Campos extras do cadastro (validação de formato fica no Zod dos clientes/tRPC)
+  user: {
+    additionalFields: {
+      birthDate: { type: 'string', required: false },
+      gender: { type: 'string', required: false },
+      phone: { type: 'string', required: false },
+    },
+  },
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/sign-up/email' && ctx.path !== '/reset-password') return
+      const password = (ctx.body as { password?: unknown } | undefined)?.password
+      if (typeof password === 'string' && !isAcceptablePassword(password)) {
+        throw new APIError('BAD_REQUEST', {
+          message: 'senha fraca: misture letras, números ou símbolos',
+        })
+      }
+    }),
   },
   // bearer: mobile autentica com token de sessão em Authorization (FR-063); expo: deep links
   plugins: [bearer(), expo()],
