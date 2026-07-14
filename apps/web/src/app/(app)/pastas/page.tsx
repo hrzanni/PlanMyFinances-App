@@ -152,7 +152,6 @@ export default function FoldersPage() {
   const utils = trpc.useUtils()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
-  const [icon, setIcon] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const create = trpc.folders.create.useMutation({
@@ -160,7 +159,6 @@ export default function FoldersPage() {
       utils.folders.invalidate()
       setOpen(false)
       setName('')
-      setIcon('')
     },
     onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
@@ -169,7 +167,7 @@ export default function FoldersPage() {
     e.preventDefault()
     setError(null)
     if (!name.trim()) return setError('Informe o nome')
-    create.mutate({ name: name.trim(), icon: icon || undefined })
+    create.mutate({ name: name.trim() })
   }
 
   return (
@@ -199,28 +197,16 @@ export default function FoldersPage() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Nova pasta">
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-[1fr_5rem] gap-3">
-              <Field>
-                <Label htmlFor="folder-name">Nome</Label>
-                <Input
-                  id="folder-name"
-                  required
-                  placeholder="Viagem Chile"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </Field>
-              <Field>
-                <Label htmlFor="folder-icon">Emoji</Label>
-                <Input
-                  id="folder-icon"
-                  placeholder="✈️"
-                  maxLength={4}
-                  value={icon}
-                  onChange={(e) => setIcon(e.target.value)}
-                />
-              </Field>
-            </div>
+            <Field>
+              <Label htmlFor="folder-name">Nome</Label>
+              <Input
+                id="folder-name"
+                required
+                placeholder="Viagem Chile"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Field>
             {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
             <Button type="submit" disabled={create.isPending} className="w-full">
               {create.isPending ? 'Salvando…' : 'Criar pasta'}

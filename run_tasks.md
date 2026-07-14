@@ -17,6 +17,7 @@
 | 5 | Polimento (edge cases, a11y, E2E) | `[x]` | `plan/05-polimento/` |
 | 6 | Backlog (agente real, iOS) | `[ ]` | `plan/06-backlog/` |
 | 7 | Fusão Início/Dashboard | `[x]` | `plan/07-fusao-inicio-dashboard/` |
+| 8 | Melhorias de julho (cobranças, cartões, pastas, transações, início, perfil) | `[ ]` | `plan/08-melhorias-julho/` |
 
 > Regra: uma fase só começa quando a anterior está com todas as subtarefas `[x]`, salvo dependências explicitamente liberadas.
 
@@ -149,6 +150,19 @@ Entrega: rota `/dashboard` (web) e tab "Dash" (mobile) removidas; conteúdo unif
 
 ---
 
+## Fase 8 — Melhorias de julho · `plan/08-melhorias-julho/`
+
+Pedidos do Hugo em 2026-07-13, mapeados no código e distribuídos por tópico para múltiplos agentes trabalharem em paralelo. Ver `plan/08-melhorias-julho/README.md` para a matriz de conflito entre tópicos (01×02 e 04×05 mexem nos mesmos arquivos, não rodar 100% em paralelo).
+
+- [ ] **8.1 Cobranças** — editar status/recebido, virar receita em categoria especial · `01-cobrancas.md`
+- [ ] **8.2 Faturas → Cartões** — cartão como entidade, transações pendentes associadas a um cartão, bancos pré-selecionados · `02-faturas-cartoes.md` (decisão de modelo pendente do Hugo antes de codar)
+- [x] **8.3 Pastas** — remover campo de emoji · `03-pastas.md`
+- [ ] **8.4 Transações** — subcategoria no form mobile (web já tem) + tags de categoria/subcategoria no Histórico e Início · `04-transacoes-subcategoria-tags.md`
+- [ ] **8.5 Início** — logo na sidebar web + gráfico de pizza por categoria no lugar do saldo acumulado · `05-inicio-logo-grafico.md`
+- [ ] **8.6 Perfil** — redesenho com foto + mudanças no cadastro · `06-perfil.md` (decisão de storage de imagem e escopo do cadastro pendentes do Hugo)
+
+---
+
 ## Changelog do progresso
 
 > Registre aqui marcos concluídos com data ISO.
@@ -169,3 +183,5 @@ Entrega: rota `/dashboard` (web) e tab "Dash" (mobile) removidas; conteúdo unif
 - 2026-07-13: Remodelagem da Início pós-fusão (fase 7) — repetições removidas: seletor de mês único no cabeçalho controlando a tela inteira (KPIs, gastos fixos e gráficos), fim do título "Gráficos por mês", dos 3 KPIs duplicados e do seletor da seção de baixo; no web o gráfico de barras aparece uma vez só (embaixo fica apenas a linha do saldo acumulado, alimentada pelo summary do topo, e month-charts-section.tsx foi removido); no mobile MonthChartsSection recebe month por prop e mantém linha + barras. Emendas registradas no design doc de 2026-07-10 e FR-003 reescrito.
 - 2026-07-13: Identidade visual + safe area — logo (P + barras) em assets/brand/ (arte do Gemini, PNGs achatados de ~935KB para 8KB via 2 tons), aplicada como ícone/adaptive icon do Android (app.json; símbolo já cabe na zona segura do recorte) e favicon do web (apps/web/src/app/icon.png, convenção do Next). Fix 6.7: stack Mais trocou o header nativo por header próprio com SafeAreaView — com edge-to-edge do SDK 53 o header do react-native-screens fica sob a barra de status (expo/expo#36685, sem resolução upstream). Backlog 6.5 (analytics, recomendação PostHog) e 6.6 (cadastro rico + critérios de senha) registrados com notas de spec. Exige novo build EAS para ver ícone e header no aparelho.
 - 2026-07-09: Perfil do usuário (web + mobile) e saudação — router tRPC `users` (me/updateName sobre a tabela users do Better Auth, funciona no bypass), tela /perfil na web (nome editável, email fixo, sair) e Mais → Perfil no mobile, rodapé da sidebar vira link de perfil com nome/email via users.me, "Bem-vindo, {primeiro nome}" nas telas iniciais (`firstName` puro em @pmf/core, com testes). Gates verdes; web verificada em runtime (salvar, erro "Informe o nome", saudação atualiza); bundle Metro compila com os módulos novos.
+- 2026-07-13: CLAUDE.md trocado para modo entrega (sem modo professor); Fase 8 criada e detalhada em `plan/08-melhorias-julho/` (mapeamento de código por tópico, sem implementação ainda) para distribuir 6 pedidos do Hugo a agentes diferentes: cobranças (8.1), faturas→cartões (8.2), pastas sem emoji (8.3), subcategoria+tags em transações (8.4), logo+pizza na Início (8.5), perfil com foto+cadastro (8.6). Conflitos de arquivo identificados entre 8.1×8.2 e 8.4×8.5 (mesmo componente/página) — não rodar esses pares 100% em paralelo. Decisões de produto pendentes do Hugo antes de codar: modelo de "registrar recebimento" em cobranças (8.1), modelo de dados de cartão/fatura (8.2), storage de foto e escopo do cadastro rico (8.6).
+- 2026-07-13: 8.3 Pastas concluída — campo de emoji removido dos forms de criação de pasta (web `pastas/page.tsx`: estado, input e `icon` no payload; mobile `mais/pastas.tsx`: idem), conforme decisão do tópico: só a entrada sai, a exibição legada fica (pastas antigas seguem mostrando o emoji que já tinham; os 6 pontos de exibição já toleram ausência). Nenhuma mudança em schema/Zod/router/service. Gates verdes; web verificada em runtime (dialog só com Nome, criar pasta ok, pasta legada com emoji criada via tRPC continua exibindo ✈️); bundle Metro compila com "Emoji (opcional)" ausente e a tela de pastas presente.

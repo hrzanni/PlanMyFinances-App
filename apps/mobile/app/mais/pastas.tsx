@@ -88,7 +88,6 @@ export default function FoldersScreen() {
   const utils = trpc.useUtils()
   const [formOpen, setFormOpen] = useState(false)
   const [name, setName] = useState('')
-  const [icon, setIcon] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const create = trpc.folders.create.useMutation({
@@ -96,7 +95,6 @@ export default function FoldersScreen() {
       utils.folders.invalidate()
       setFormOpen(false)
       setName('')
-      setIcon('')
     },
     onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
@@ -104,7 +102,7 @@ export default function FoldersScreen() {
   function submit() {
     setError(null)
     if (!name.trim()) return setError('Informe o nome')
-    create.mutate({ name: name.trim(), icon: icon || undefined })
+    create.mutate({ name: name.trim() })
   }
 
   return (
@@ -129,7 +127,6 @@ export default function FoldersScreen() {
         {formOpen ? (
           <Card>
             <Input label="Nome" value={name} onChangeText={setName} />
-            <Input label="Emoji (opcional)" value={icon} onChangeText={setIcon} maxLength={4} />
             {error ? (
               <Text className="mb-2 text-xs font-bold text-negative dark:text-negative-dark">
                 {error}
