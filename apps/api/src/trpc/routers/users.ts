@@ -1,5 +1,5 @@
 import { TRPCError } from '@trpc/server'
-import { updateUserNameInput } from '@pmf/schemas'
+import { updateUserNameInput, updateUserProfileInput } from '@pmf/schemas'
 import { router, protectedProcedure } from '../trpc'
 import * as service from '../../services/users'
 
@@ -12,9 +12,18 @@ export const usersRouter = router({
     return row
   }),
 
+  // mantido por compatibilidade com builds mobile antigos; clientes novos usam updateProfile
   updateName: protectedProcedure.input(updateUserNameInput).mutation(async ({ ctx, input }) => {
     const row = await service.updateUserName(ctx.db, ctx.userId, input.name)
     if (!row) throw notFound()
     return row
   }),
+
+  updateProfile: protectedProcedure
+    .input(updateUserProfileInput)
+    .mutation(async ({ ctx, input }) => {
+      const row = await service.updateUserProfile(ctx.db, ctx.userId, input)
+      if (!row) throw notFound()
+      return row
+    }),
 })

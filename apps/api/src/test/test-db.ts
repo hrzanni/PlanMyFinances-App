@@ -25,6 +25,9 @@ export async function createTestDb(): Promise<DrizzleDB> {
       email text not null unique,
       email_verified boolean not null default false,
       image text,
+      birth_date date,
+      gender text,
+      phone text,
       created_at timestamptz not null default now(),
       updated_at timestamptz not null default now()
     );
