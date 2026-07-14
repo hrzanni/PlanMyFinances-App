@@ -1,6 +1,7 @@
 export * from './money'
 export * from './date'
 export * from './balance'
+export * from './category-breakdown'
 export * from './installments'
 export * from './fixed-expenses'
 export * from './folders'

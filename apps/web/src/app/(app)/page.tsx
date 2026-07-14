@@ -9,9 +9,9 @@ import { currentMonth, money, monthLabel } from '@/lib/format'
 import { useMonthSummary } from '@/hooks/use-month-summary'
 import { PageHeader } from '@/components/page-header'
 import { TransactionForm } from '@/components/transaction-form'
-import { SourceBadge } from '@/components/tx-badges'
+import { SourceBadge, CategoryBadge } from '@/components/tx-badges'
 import { IncomeExpenseChart } from '@/components/income-expense-chart'
-import { BalanceLineChart } from '@/components/balance-line-chart'
+import { PieChartByCategory } from '@/components/pie-chart-by-category'
 import { MonthSelector } from '@/components/month-selector'
 
 export default function HomePage() {
@@ -66,8 +66,12 @@ export default function HomePage() {
                     <div className="truncate text-sm font-bold text-foreground">
                       {tx.description || (tx.type === 'receita' ? 'Receita' : 'Despesa')}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-xs text-muted">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted">
                       {formatDate(tx.date)}
+                      <CategoryBadge
+                        categoryName={tx.categoryName}
+                        subcategoryName={tx.subcategoryName}
+                      />
                       <SourceBadge tx={tx} />
                     </div>
                   </div>
@@ -142,13 +146,13 @@ export default function HomePage() {
       </div>
 
       <Card className="mt-4">
-        <CardTitle>Saldo acumulado por dia</CardTitle>
-        {(summary.data?.incomeCount ?? 0) + (summary.data?.expenseCount ?? 0) > 0 ? (
-          <BalanceLineChart daily={summary.data?.daily ?? []} />
+        <CardTitle>Despesas por categoria — {monthLabel(month)}</CardTitle>
+        {(summary.data?.byCategory.length ?? 0) > 0 ? (
+          <PieChartByCategory byCategory={summary.data?.byCategory ?? []} />
         ) : (
           <EmptyState
-            title={`Sem transações em ${monthLabel(month)}`}
-            hint="O gráfico aparece quando houver lançamentos no mês."
+            title={`Sem despesas em ${monthLabel(month)}`}
+            hint="O gráfico aparece quando houver despesas no mês."
           />
         )}
       </Card>

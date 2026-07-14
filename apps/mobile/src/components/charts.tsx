@@ -1,12 +1,19 @@
-import { View, useColorScheme } from 'react-native'
-import Svg, { Line, Polyline, Rect, Text as SvgText } from 'react-native-svg'
+import { Text, View, useColorScheme } from 'react-native'
+import Svg, { Circle, Line, Path, Rect, Text as SvgText } from 'react-native-svg'
+import { OTHER_SLICE_ID, foldCategorySlices, type CategorySlice } from '@pmf/core'
+import { money } from '@/lib/format'
 
 const palette = (dark: boolean) => ({
   positive: dark ? '#5CBF8B' : '#2D6E44',
   negative: dark ? '#F0707A' : '#BA1925',
   navy: dark ? '#8FA3D1' : '#303F63',
   line: dark ? '#292D2D' : '#E4E4E2',
+  surface: dark ? '#161919' : '#FFFFFF',
   muted: '#9C9B9B',
+  // Mesma série categórica do web (chart-colors.ts): ordem fixa validada p/ daltonismo.
+  categorical: dark
+    ? ['#3987E5', '#199E70', '#C98500', '#008300', '#9085E9', '#D55181']
+    : ['#2A78D6', '#1BAF7A', '#EDA100', '#008300', '#4A3AA7', '#E87BA4'],
 })
 
 /** Barras receitas × despesas (FR-003) em SVG puro — sem lib pesada (ME-004). */
@@ -35,29 +42,100 @@ export function BarsChart({ income, expense }: { income: number; expense: number
   )
 }
 
-/** Linha do saldo acumulado por dia (FR-006), navy conforme o tema. */
-export function BalanceLineChart({ daily }: { daily: Array<{ date: string; balance: number }> }) {
+const MAX_NAMED = 5
+
+function sliceName(s: CategorySlice) {
+  if (s.categoryId === null) return 'Sem categoria'
+  if (s.categoryId === OTHER_SLICE_ID) return 'Outras'
+  return s.categoryName ?? 'Sem categoria'
+}
+
+/** Arco de donut entre os ângulos a0→a1 (radianos), raio externo R e interno r. */
+function arcPath(cx: number, cy: number, R: number, r: number, a0: number, a1: number) {
+  const large = a1 - a0 > Math.PI ? 1 : 0
+  const pt = (rad: number, radius: number) =>
+    `${cx + radius * Math.cos(rad)} ${cy + radius * Math.sin(rad)}`
+  return [
+    `M ${pt(a0, R)}`,
+    `A ${R} ${R} 0 ${large} 1 ${pt(a1, R)}`,
+    `L ${pt(a1, r)}`,
+    `A ${r} ${r} 0 ${large} 0 ${pt(a0, r)}`,
+    'Z',
+  ].join(' ')
+}
+
+/** Pizza de despesas do mês por categoria (FR-003), com fatia "sem categoria". */
+export function PieChart({ byCategory }: { byCategory: CategorySlice[] }) {
   const dark = useColorScheme() === 'dark'
   const c = palette(dark)
-  const w = 320
-  const h = 150
-  if (daily.length === 0) return null
+  const size = 180
+  const R = 84
+  const r = 50
+  const cx = size / 2
 
-  const values = daily.map((d) => d.balance)
-  const min = Math.min(...values, 0)
-  const max = Math.max(...values, 1)
-  const range = max - min || 1
-  const step = daily.length > 1 ? (w - 24) / (daily.length - 1) : 0
-  const points = daily
-    .map((d, i) => `${12 + i * step},${12 + (1 - (d.balance - min) / range) * (h - 24)}`)
-    .join(' ')
+  const slices = foldCategorySlices(byCategory, MAX_NAMED)
+  if (slices.length === 0) return null
+  const sliceColor = (s: CategorySlice, i: number) => {
+    if (s.categoryId === null) return c.muted
+    if (s.categoryId === OTHER_SLICE_ID) return c.categorical[MAX_NAMED]!
+    return c.categorical[i]!
+  }
+  const grand = slices.reduce((acc, s) => acc + s.total, 0)
+
+  let angle = -Math.PI / 2
+  const arcs = slices.map((s, i) => {
+    const a0 = angle
+    angle += (s.total / grand) * 2 * Math.PI
+    return { key: s.categoryId ?? 'none', color: sliceColor(s, i), a0, a1: angle }
+  })
 
   return (
-    <View className="items-center">
-      <Svg width={w} height={h}>
-        <Line x1={0} y1={h - 12} x2={w} y2={h - 12} stroke={c.line} strokeWidth={1} />
-        <Polyline points={points} fill="none" stroke={c.navy} strokeWidth={2.5} strokeLinecap="round" />
-      </Svg>
+    <View>
+      <View className="items-center">
+        <Svg width={size} height={size}>
+          {slices.length === 1 ? (
+            <>
+              <Circle cx={cx} cy={cx} r={R} fill={arcs[0]!.color} />
+              <Circle cx={cx} cy={cx} r={r} fill={c.surface} />
+            </>
+          ) : (
+            arcs.map((a) => (
+              <Path
+                key={a.key}
+                d={arcPath(cx, cx, R, r, a.a0, a.a1)}
+                fill={a.color}
+                stroke={c.surface}
+                strokeWidth={2}
+              />
+            ))
+          )}
+        </Svg>
+      </View>
+      <View className="mt-2">
+        {slices.map((s, i) => (
+          <View
+            key={s.categoryId ?? 'none'}
+            className="flex-row items-center gap-2 border-b border-line py-1.5 last:border-0 dark:border-line-dark"
+          >
+            <View
+              className="h-2.5 w-2.5 rounded-sm"
+              style={{ backgroundColor: sliceColor(s, i) }}
+            />
+            <Text
+              numberOfLines={1}
+              className="min-w-0 flex-1 text-xs text-body dark:text-body-dark"
+            >
+              {sliceName(s)}
+            </Text>
+            <Text className="text-xs font-bold text-foreground dark:text-foreground-dark">
+              {s.percent}%
+            </Text>
+            <Text className="w-24 text-right text-xs tabular-nums text-muted dark:text-muted-dark">
+              {money(s.total)}
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
   )
 }
