@@ -15,6 +15,7 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [description, setDescription] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const [subcategoryId, setSubcategoryId] = useState('')
   const [folderId, setFolderId] = useState('')
   const [cardId, setCardId] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -22,6 +23,10 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
   const typeCategories = useMemo(
     () => (categories ?? []).filter((c) => c.type === type),
     [categories, type],
+  )
+  const subcategories = useMemo(
+    () => typeCategories.find((c) => c.id === categoryId)?.subcategories ?? [],
+    [typeCategories, categoryId],
   )
   const activeFolders = useMemo(
     () => (folders ?? []).filter((f) => f.status === 'active'),
@@ -40,6 +45,17 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
     onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
 
+  function selectType(next: 'receita' | 'despesa') {
+    setType(next)
+    setCategoryId('')
+    setSubcategoryId('')
+  }
+
+  function selectCategory(id: string) {
+    setCategoryId(id)
+    setSubcategoryId('')
+  }
+
   function submit() {
     setError(null)
     const parsed = Number(value.replace(',', '.'))
@@ -51,6 +67,7 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
       date,
       description: description || undefined,
       categoryId: categoryId || undefined,
+      subcategoryId: subcategoryId || undefined,
       folderId: folderId || undefined,
       cardId: cardId || undefined,
     })
@@ -96,8 +113,8 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
               Nova transação
             </Text>
             <View className="mb-3 flex-row gap-2">
-              <Chip active={type === 'despesa'} label="Despesa" onPress={() => setType('despesa')} />
-              <Chip active={type === 'receita'} label="Receita" onPress={() => setType('receita')} />
+              <Chip active={type === 'despesa'} label="Despesa" onPress={() => selectType('despesa')} />
+              <Chip active={type === 'receita'} label="Receita" onPress={() => selectType('receita')} />
             </View>
             <Input label="Valor (R$)" keyboardType="decimal-pad" value={value} onChangeText={setValue} />
             <Input label="Data (AAAA-MM-DD)" value={date} onChangeText={setDate} />
@@ -107,16 +124,39 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
               Categoria
             </Text>
             <View className="mb-3 flex-row flex-wrap gap-2">
-              <Chip active={categoryId === ''} label="Sem categoria" onPress={() => setCategoryId('')} />
+              <Chip active={categoryId === ''} label="Sem categoria" onPress={() => selectCategory('')} />
               {typeCategories.map((c) => (
                 <Chip
                   key={c.id}
                   active={categoryId === c.id}
                   label={c.name}
-                  onPress={() => setCategoryId(c.id)}
+                  onPress={() => selectCategory(c.id)}
                 />
               ))}
             </View>
+
+            {subcategories.length > 0 ? (
+              <>
+                <Text className="mb-1 text-xs font-bold text-foreground dark:text-foreground-dark">
+                  Subcategoria
+                </Text>
+                <View className="mb-3 flex-row flex-wrap gap-2">
+                  <Chip
+                    active={subcategoryId === ''}
+                    label="Nenhuma"
+                    onPress={() => setSubcategoryId('')}
+                  />
+                  {subcategories.map((s) => (
+                    <Chip
+                      key={s.id}
+                      active={subcategoryId === s.id}
+                      label={s.name}
+                      onPress={() => setSubcategoryId(s.id)}
+                    />
+                  ))}
+                </View>
+              </>
+            ) : null}
 
             {activeFolders.length > 0 ? (
               <>

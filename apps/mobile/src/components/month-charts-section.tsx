@@ -2,7 +2,7 @@ import { Text, View } from 'react-native'
 import { useMonthSummary } from '@/hooks/use-month-summary'
 import { monthLabel } from '@/lib/format'
 import { Card, EmptyState } from '@/components/ui'
-import { BalanceLineChart, BarsChart } from '@/components/charts'
+import { BarsChart, PieChart } from '@/components/charts'
 
 /** Gráficos do mês da Início (FR-003). Segue o mês do seletor do topo. */
 export function MonthChartsSection({ month }: { month: string }) {
@@ -13,12 +13,14 @@ export function MonthChartsSection({ month }: { month: string }) {
     <View className="mt-2">
       {hasData ? (
         <>
-          <Card className="mb-4">
-            <Text className="mb-2 text-xs font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
-              Saldo acumulado por dia
-            </Text>
-            <BalanceLineChart daily={summary.data?.daily ?? []} />
-          </Card>
+          {(summary.data?.byCategory.length ?? 0) > 0 ? (
+            <Card className="mb-4">
+              <Text className="mb-2 text-xs font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
+                Despesas por categoria
+              </Text>
+              <PieChart byCategory={summary.data?.byCategory ?? []} />
+            </Card>
+          ) : null}
           <Card className="mb-8">
             <Text className="mb-2 text-xs font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
               Receitas × Despesas

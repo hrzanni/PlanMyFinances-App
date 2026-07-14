@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createTestDb, seedTestUsers } from '../test/test-db'
 import type { DrizzleDB } from '../db/client'
+import { createCategory, createSubcategory } from './categories'
 import {
   createTransaction,
   deleteTransaction,
@@ -60,6 +61,21 @@ describe('transactions service — CRUD', () => {
       type: 'despesa',
     })
     expect(expenses.items).toHaveLength(1)
+  })
+
+  it('lista com nome de categoria e subcategoria resolvidos (nullable)', async () => {
+    const cat = await createCategory(db, userA, { name: 'Alimentação', type: 'despesa' })
+    const sub = await createSubcategory(db, userA, { categoryId: cat!.id, name: 'Mercado' })
+    await createTransaction(db, userA, { ...base, categoryId: cat!.id, subcategoryId: sub!.id })
+    await createTransaction(db, userA, { ...base, date: '2026-07-06' })
+
+    const { items } = await listTransactions(db, userA, listInput)
+    const withCat = items.find((i) => i.categoryId === cat!.id)
+    const withoutCat = items.find((i) => i.categoryId === null)
+    expect(withCat?.categoryName).toBe('Alimentação')
+    expect(withCat?.subcategoryName).toBe('Mercado')
+    expect(withoutCat?.categoryName).toBeNull()
+    expect(withoutCat?.subcategoryName).toBeNull()
   })
 
   it('pagina com cursor por data', async () => {

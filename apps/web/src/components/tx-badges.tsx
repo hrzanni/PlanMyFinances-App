@@ -16,6 +16,21 @@ export function SourceBadge({ tx, institution }: { tx: TxLike; institution?: str
   return null
 }
 
+export function CategoryBadge({
+  categoryName,
+  subcategoryName,
+}: {
+  categoryName?: string | null
+  subcategoryName?: string | null
+}) {
+  if (!categoryName) return null
+  return (
+    <Badge tone="neutral" className="normal-case">
+      {subcategoryName ? `${categoryName} › ${subcategoryName}` : categoryName}
+    </Badge>
+  )
+}
+
 export function FolderBadge({ name, icon }: { name: string; icon?: string | null }) {
   return (
     <Badge tone="info" className="normal-case">

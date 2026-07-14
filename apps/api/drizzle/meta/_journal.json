@@ -12,29 +12,15 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1783958243765,
-      "tag": "0001_useful_frog_thor",
+      "when": 1783976894303,
+      "tag": "0001_futuristic_gressill",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "7",
-      "when": 1783977915393,
-      "tag": "0002_supreme_vampiro",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1784000579567,
-      "tag": "0003_lazy_ulik",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1784050788685,
-      "tag": "0004_awesome_wong",
+      "when": 1784065129161,
+      "tag": "0002_chubby_darkstar",
       "breakpoints": true
     }
   ]

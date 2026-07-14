@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, lte, lt, or, type SQL } from 'drizzle-orm'
+import { and, desc, eq, getTableColumns, gte, isNull, lte, lt, or, type SQL } from 'drizzle-orm'
 import { monthRange } from '@pmf/core'
 import type {
   CreateTransactionInput,
@@ -6,7 +6,7 @@ import type {
   UpdateTransactionInput,
 } from '@pmf/schemas'
 import type { DrizzleDB } from '../db/client'
-import { transactions } from '../db/schema'
+import { categories, subcategories, transactions } from '../db/schema'
 import { cardBelongsToUser } from './cards'
 
 // Todas as funções recebem userId da identidade e filtram por ele (FR-070).
@@ -39,8 +39,14 @@ export async function listTransactions(db: DrizzleDB, userId: string, input: Lis
     }
   }
   const rows = await db
-    .select()
+    .select({
+      ...getTableColumns(transactions),
+      categoryName: categories.name,
+      subcategoryName: subcategories.name,
+    })
     .from(transactions)
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .leftJoin(subcategories, eq(transactions.subcategoryId, subcategories.id))
     .where(and(...filters))
     .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
     .limit(input.limit + 1)

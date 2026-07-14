@@ -8,7 +8,7 @@ import { trpc } from '@/lib/trpc'
 import { money } from '@/lib/format'
 import { PageHeader } from '@/components/page-header'
 import { TransactionForm } from '@/components/transaction-form'
-import { SourceBadge, FolderBadge } from '@/components/tx-badges'
+import { SourceBadge, FolderBadge, CategoryBadge } from '@/components/tx-badges'
 
 /** Filtros persistidos na URL (FR-005): a query string é a fonte da verdade. */
 function HistoryContent() {
@@ -162,6 +162,14 @@ function HistoryContent() {
                       <span className="font-bold text-foreground">
                         {tx.description || (tx.type === 'receita' ? 'Receita' : 'Despesa')}
                       </span>
+                      {tx.categoryName ? (
+                        <span className="ml-2">
+                          <CategoryBadge
+                            categoryName={tx.categoryName}
+                            subcategoryName={tx.subcategoryName}
+                          />
+                        </span>
+                      ) : null}
                       {folder ? (
                         <span className="ml-2">
                           <FolderBadge name={folder.name} icon={folder.icon} />

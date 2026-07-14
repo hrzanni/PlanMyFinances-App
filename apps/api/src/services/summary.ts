@@ -1,9 +1,9 @@
 import { and, eq, gte, lte } from 'drizzle-orm'
-import { accumulatedBalanceByDay, monthRange, monthlyBalance } from '@pmf/core'
+import { accumulatedBalanceByDay, expenseByCategory, monthRange, monthlyBalance } from '@pmf/core'
 import type { DrizzleDB } from '../db/client'
-import { transactions } from '../db/schema'
+import { categories, transactions } from '../db/schema'
 
-/** Cards e gráficos do mês (FR-003/006): saldo em RN-001, acumulado por dia. */
+/** Cards e gráficos do mês (FR-003): saldo em RN-001, acumulado por dia, despesas por categoria. */
 export async function monthSummary(db: DrizzleDB, userId: string, month: string) {
   const { from, to } = monthRange(new Date(`${month}-15T12:00:00Z`))
   const rows = await db
@@ -11,8 +11,11 @@ export async function monthSummary(db: DrizzleDB, userId: string, month: string)
       type: transactions.type,
       value: transactions.value,
       date: transactions.date,
+      categoryId: transactions.categoryId,
+      categoryName: categories.name,
     })
     .from(transactions)
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .where(
       and(
         eq(transactions.userId, userId),
@@ -26,5 +29,6 @@ export async function monthSummary(db: DrizzleDB, userId: string, month: string)
     incomeCount: rows.filter((r) => r.type === 'receita').length,
     expenseCount: rows.filter((r) => r.type === 'despesa').length,
     daily: accumulatedBalanceByDay(rows),
+    byCategory: expenseByCategory(rows),
   }
 }

@@ -1,6 +1,6 @@
 {
-  "id": "77a9ab4d-8d2f-4823-ae28-2b9a6a570800",
-  "prevId": "38339281-1fff-4652-8ebd-00791d92b41a",
+  "id": "e4109be8-6c51-4032-87e5-481f4d7906ac",
+  "prevId": "e14b57c2-9583-4647-a2bf-57904cf9f89a",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -227,6 +227,24 @@
         },
         "image": {
           "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birth_date": {
+          "name": "birth_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gender": {
+          "name": "gender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -948,6 +966,123 @@
       },
       "isRLSEnabled": false
     },
+    "public.invoice_payments": {
+      "name": "invoice_payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "installment_number": {
+          "name": "installment_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "paid_on": {
+          "name": "paid_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "transaction_id": {
+          "name": "transaction_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "invoice_payments_user_id_users_id_fk": {
+          "name": "invoice_payments_user_id_users_id_fk",
+          "tableFrom": "invoice_payments",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "invoice_payments_invoice_id_invoices_id_fk": {
+          "name": "invoice_payments_invoice_id_invoices_id_fk",
+          "tableFrom": "invoice_payments",
+          "tableTo": "invoices",
+          "columnsFrom": [
+            "invoice_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "invoice_payments_transaction_id_transactions_id_fk": {
+          "name": "invoice_payments_transaction_id_transactions_id_fk",
+          "tableFrom": "invoice_payments",
+          "tableTo": "transactions",
+          "columnsFrom": [
+            "transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "invoice_payment_installment_unique": {
+          "name": "invoice_payment_installment_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "invoice_id",
+            "installment_number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "invoice_payment_installment_min": {
+          "name": "invoice_payment_installment_min",
+          "value": "\"invoice_payments\".\"installment_number\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.invoices": {
       "name": "invoices",
       "schema": "",
@@ -1002,11 +1137,17 @@
           "notNull": true,
           "default": "'0'"
         },
-        "due_date": {
-          "name": "due_date",
-          "type": "date",
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
+        },
+        "first_due_date": {
+          "name": "first_due_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
         },
         "status": {
           "name": "status",
@@ -1051,16 +1192,25 @@
           ],
           "onDelete": "set null",
           "onUpdate": "no action"
+        },
+        "invoices_category_id_categories_id_fk": {
+          "name": "invoices_category_id_categories_id_fk",
+          "tableFrom": "invoices",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "invoice_paid_le_total": {
-          "name": "invoice_paid_le_total",
-          "value": "\"invoices\".\"amount_paid\" <= \"invoices\".\"amount_per_installment\" * \"invoices\".\"total_installments\""
-        },
         "invoice_installments_min": {
           "name": "invoice_installments_min",
           "value": "\"invoices\".\"total_installments\" >= 1"
@@ -1428,7 +1578,8 @@
         "manual",
         "fixed_expense",
         "pluggy",
-        "charge"
+        "charge",
+        "invoice"
       ]
     },
     "public.tx_type": {

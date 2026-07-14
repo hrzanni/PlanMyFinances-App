@@ -1,5 +1,5 @@
 {
-  "id": "38339281-1fff-4652-8ebd-00791d92b41a",
+  "id": "e14b57c2-9583-4647-a2bf-57904cf9f89a",
   "prevId": "7a879a1d-721e-4a53-8337-345e9e28c133",
   "version": "7",
   "dialect": "postgresql",
@@ -231,6 +231,24 @@
           "primaryKey": false,
           "notNull": false
         },
+        "birth_date": {
+          "name": "birth_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gender": {
+          "name": "gender",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -342,13 +360,6 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
-        },
-        "is_system": {
-          "name": "is_system",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {},
@@ -674,97 +685,6 @@
           "value": "\"transactions\".\"value\" > 0"
         }
       },
-      "isRLSEnabled": false
-    },
-    "public.charge_payments": {
-      "name": "charge_payments",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "charge_id": {
-          "name": "charge_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "numeric(12, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "transaction_id": {
-          "name": "transaction_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "charge_payments_user_id_users_id_fk": {
-          "name": "charge_payments_user_id_users_id_fk",
-          "tableFrom": "charge_payments",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "charge_payments_charge_id_charges_id_fk": {
-          "name": "charge_payments_charge_id_charges_id_fk",
-          "tableFrom": "charge_payments",
-          "tableTo": "charges",
-          "columnsFrom": [
-            "charge_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "charge_payments_transaction_id_transactions_id_fk": {
-          "name": "charge_payments_transaction_id_transactions_id_fk",
-          "tableFrom": "charge_payments",
-          "tableTo": "transactions",
-          "columnsFrom": [
-            "transaction_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.charges": {
@@ -1316,8 +1236,7 @@
       "values": [
         "manual",
         "fixed_expense",
-        "pluggy",
-        "charge"
+        "pluggy"
       ]
     },
     "public.tx_type": {
