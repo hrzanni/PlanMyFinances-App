@@ -19,8 +19,18 @@ export function TxRow({ tx, onDelete }: { tx: Tx; onDelete?: () => void }) {
         >
           {tx.description || (positive ? 'Receita' : 'Despesa')}
         </Text>
-        <View className="mt-0.5 flex-row items-center gap-2">
+        <View className="mt-0.5 flex-row flex-wrap items-center gap-2">
           <Text className="text-[11px] text-muted dark:text-muted-dark">{formatDate(tx.date)}</Text>
+          {tx.categoryName ? (
+            <Badge
+              tone="neutral"
+              label={
+                tx.subcategoryName
+                  ? `${tx.categoryName} › ${tx.subcategoryName}`
+                  : tx.categoryName
+              }
+            />
+          ) : null}
           {tx.source === 'fixed_expense' ? <Badge tone="info" label="gasto fixo" /> : null}
           {tx.source === 'pluggy' ? <Badge tone="info" label="banco" /> : null}
         </View>
