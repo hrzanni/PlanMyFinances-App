@@ -3,28 +3,50 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button, Field, Input, Label } from '@pmf/ui-web'
+import { isAcceptablePassword } from '@pmf/core'
+import { phoneSchema } from '@pmf/schemas'
+import { Button, Field, Input, Label, Select } from '@pmf/ui-web'
 import { signUp } from '@/lib/auth-client'
 import { AuthCard } from '@/components/auth-card'
+import { PasswordStrengthMeter } from '@/components/password-strength'
+import { GENDER_OPTIONS } from '@/lib/profile-fields'
+
+const today = () => new Date().toISOString().slice(0, 10)
 
 export default function SignupPage() {
   const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [birthDate, setBirthDate] = useState('')
+  const [gender, setGender] = useState('')
+  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  function validate(): string | null {
+    if (!isAcceptablePassword(password))
+      return 'Senha fraca: use ao menos 8 caracteres misturando letras, números ou símbolos'
+    if (phone && !phoneSchema.safeParse(phone).success) return 'Telefone inválido'
+    if (birthDate && birthDate > today()) return 'Data de nascimento não pode ser no futuro'
+    return null
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (password.length < 8) {
-      setError('A senha precisa ter ao menos 8 caracteres')
-      return
-    }
+    const validationError = validate()
+    if (validationError) return setError(validationError)
     setLoading(true)
     try {
-      const { error: err } = await signUp.email({ name, email, password })
+      const { error: err } = await signUp.email({
+        name,
+        email,
+        password,
+        ...(birthDate && { birthDate }),
+        ...(gender && { gender }),
+        ...(phone && { phone: phone.trim() }),
+      })
       if (err) {
         setError(err.message === 'User already exists' ? 'Este email já está cadastrado' : 'Não foi possível criar a conta')
         return
@@ -56,7 +78,40 @@ export default function SignupPage() {
           />
         </Field>
         <Field>
-          <Label htmlFor="password">Senha (mínimo 8 caracteres)</Label>
+          <Label htmlFor="birth-date">Data de nascimento (opcional)</Label>
+          <Input
+            id="birth-date"
+            type="date"
+            min="1900-01-01"
+            max={today()}
+            value={birthDate}
+            onChange={(e) => setBirthDate(e.target.value)}
+          />
+        </Field>
+        <Field>
+          <Label htmlFor="gender">Gênero (opcional)</Label>
+          <Select id="gender" value={gender} onChange={(e) => setGender(e.target.value)}>
+            <option value="">Selecione…</option>
+            {GENDER_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field>
+          <Label htmlFor="phone">Telefone (opcional)</Label>
+          <Input
+            id="phone"
+            type="tel"
+            placeholder="+55 11 91234-5678"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            autoComplete="tel"
+          />
+        </Field>
+        <Field>
+          <Label htmlFor="password">Senha</Label>
           <Input
             id="password"
             type="password"
@@ -67,6 +122,7 @@ export default function SignupPage() {
             autoComplete="new-password"
           />
         </Field>
+        <PasswordStrengthMeter password={password} />
         {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? 'Criando…' : 'Criar conta'}

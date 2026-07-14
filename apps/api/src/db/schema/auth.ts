@@ -1,12 +1,16 @@
-import { pgTable, text, timestamp, boolean } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, boolean, date } from 'drizzle-orm/pg-core'
 
 // Tabelas do Better Auth (adapter Drizzle). IDs em text — padrão do Better Auth.
+// gender em text (não pg enum) validado por Zod em @pmf/schemas — evita migração de enum.
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
+  birthDate: date('birth_date'),
+  gender: text('gender'),
+  phone: text('phone'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
