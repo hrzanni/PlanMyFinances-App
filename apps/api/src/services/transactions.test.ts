@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { createTestDb, seedTestUsers } from '../test/test-db'
 import type { DrizzleDB } from '../db/client'
 import { createCategory, createSubcategory } from './categories'
+import { createCard } from './cards'
+import { createFolder } from './folders'
 import {
   createTransaction,
   deleteTransaction,
@@ -76,6 +78,21 @@ describe('transactions service — CRUD', () => {
     expect(withCat?.subcategoryName).toBe('Mercado')
     expect(withoutCat?.categoryName).toBeNull()
     expect(withoutCat?.subcategoryName).toBeNull()
+  })
+
+  it('lista com nome de cartão e pasta resolvidos (nullable)', async () => {
+    const card = await createCard(db, userA, { name: 'Roxinho', bankPreset: 'nubank' })
+    const folder = await createFolder(db, userA, { name: 'Viagem' })
+    await createTransaction(db, userA, { ...base, cardId: card!.id, folderId: folder!.id })
+    await createTransaction(db, userA, { ...base, date: '2026-07-06' })
+
+    const { items } = await listTransactions(db, userA, listInput)
+    const withLink = items.find((i) => i.cardId === card!.id)
+    const withoutLink = items.find((i) => i.cardId === null)
+    expect(withLink?.cardName).toBe('Roxinho')
+    expect(withLink?.folderName).toBe('Viagem')
+    expect(withoutLink?.cardName).toBeNull()
+    expect(withoutLink?.folderName).toBeNull()
   })
 
   it('pagina com cursor por data', async () => {

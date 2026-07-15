@@ -2,11 +2,13 @@ import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { FlashList } from '@shopify/flash-list'
-import { trpc } from '@/lib/trpc'
+import { trpc, type RouterOutputs } from '@/lib/trpc'
 import { confirmDelete } from '@/lib/confirm'
 import { Button, EmptyState, ScreenTitle } from '@/components/ui'
 import { TxRow } from '@/components/tx-row'
 import { TxFormModal } from '@/components/tx-form-modal'
+
+type TransactionItem = RouterOutputs['transactions']['list']['items'][number]
 
 type TypeFilter = 'todas' | 'receita' | 'despesa'
 
@@ -17,6 +19,7 @@ type TypeFilter = 'todas' | 'receita' | 'despesa'
 export default function HistoryScreen() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('todas')
   const [formOpen, setFormOpen] = useState(false)
+  const [editingTx, setEditingTx] = useState<TransactionItem | null>(null)
 
   const query = trpc.transactions.list.useInfiniteQuery(
     { limit: 30, type: typeFilter === 'todas' ? undefined : typeFilter },
@@ -61,7 +64,13 @@ export default function HistoryScreen() {
       <View className="flex-1 px-4 pt-3">
         <View className="mb-2 flex-row items-center justify-between">
           <ScreenTitle>Histórico</ScreenTitle>
-          <Button title="+ Nova" onPress={() => setFormOpen(true)} />
+          <Button
+            title="+ Nova"
+            onPress={() => {
+              setEditingTx(null)
+              setFormOpen(true)
+            }}
+          />
         </View>
         <View className="mb-3 flex-row gap-2">
           <FilterChip value="todas" label="Todas" />
@@ -79,6 +88,10 @@ export default function HistoryScreen() {
             renderItem={({ item }) => (
               <TxRow
                 tx={item}
+                onEdit={() => {
+                  setEditingTx(item)
+                  setFormOpen(true)
+                }}
                 onDelete={() =>
                   confirmDelete('Excluir transação', 'Excluir esta transação?', () =>
                     del.mutate({ id: item.id }),
@@ -93,7 +106,14 @@ export default function HistoryScreen() {
           />
         )}
       </View>
-      <TxFormModal open={formOpen} onClose={() => setFormOpen(false)} />
+      <TxFormModal
+        open={formOpen}
+        editing={editingTx}
+        onClose={() => {
+          setFormOpen(false)
+          setEditingTx(null)
+        }}
+      />
     </SafeAreaView>
   )
 }

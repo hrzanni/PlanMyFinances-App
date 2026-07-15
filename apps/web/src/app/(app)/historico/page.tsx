@@ -2,13 +2,11 @@
 
 import { Suspense, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { formatDate } from '@pmf/core'
-import { Button, Card, EmptyState, ErrorState, LoadingState, Select, Input, Table, Td, Th } from '@pmf/ui-web'
+import { Button, Card, EmptyState, ErrorState, LoadingState, Select, Input, Table, Th } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
-import { money } from '@/lib/format'
 import { PageHeader } from '@/components/page-header'
-import { TransactionForm } from '@/components/transaction-form'
-import { SourceBadge, FolderBadge, CategoryBadge } from '@/components/tx-badges'
+import { TransactionForm, type TransactionItem } from '@/components/transaction-form'
+import { TransactionTableRow } from '@/components/transaction-table-row'
 
 /** Filtros persistidos na URL (FR-005): a query string é a fonte da verdade. */
 function HistoryContent() {
@@ -16,6 +14,7 @@ function HistoryContent() {
   const pathname = usePathname()
   const params = useSearchParams()
   const [formOpen, setFormOpen] = useState(false)
+  const [editingTx, setEditingTx] = useState<TransactionItem | null>(null)
 
   const filters = {
     type: (params.get('tipo') as 'receita' | 'despesa') || undefined,
@@ -47,12 +46,18 @@ function HistoryContent() {
   })
 
   const category = categories?.find((c) => c.id === filters.categoryId)
-  const folderOf = (id: string | null) => folders?.find((f) => f.id === id)
 
   return (
     <>
       <PageHeader title="Histórico" subtitle="Filtros combinam entre si e ficam salvos na URL.">
-        <Button onClick={() => setFormOpen(true)}>+ Nova transação</Button>
+        <Button
+          onClick={() => {
+            setEditingTx(null)
+            setFormOpen(true)
+          }}
+        >
+          + Nova transação
+        </Button>
       </PageHeader>
 
       <div className="mb-4 flex flex-wrap items-end gap-2">
@@ -153,55 +158,19 @@ function HistoryContent() {
               </tr>
             </thead>
             <tbody>
-              {list.data.items.map((tx) => {
-                const folder = folderOf(tx.folderId)
-                return (
-                  <tr key={tx.id}>
-                    <Td className="whitespace-nowrap">{formatDate(tx.date)}</Td>
-                    <Td>
-                      <span className="font-bold text-foreground">
-                        {tx.description || (tx.type === 'receita' ? 'Receita' : 'Despesa')}
-                      </span>
-                      {tx.categoryName ? (
-                        <span className="ml-2">
-                          <CategoryBadge
-                            categoryName={tx.categoryName}
-                            subcategoryName={tx.subcategoryName}
-                          />
-                        </span>
-                      ) : null}
-                      {folder ? (
-                        <span className="ml-2">
-                          <FolderBadge name={folder.name} icon={folder.icon} />
-                        </span>
-                      ) : null}
-                    </Td>
-                    <Td>
-                      <SourceBadge tx={tx} />
-                    </Td>
-                    <Td numeric>
-                      <span
-                        className={`font-bold ${tx.type === 'receita' ? 'text-positive' : 'text-negative'}`}
-                      >
-                        {tx.type === 'receita' ? '+ ' : '− '}
-                        {money(tx.value)}
-                      </span>
-                    </Td>
-                    <Td numeric>
-                      <button
-                        type="button"
-                        aria-label="Excluir transação"
-                        onClick={() => {
-                          if (window.confirm('Excluir esta transação?')) del.mutate({ id: tx.id })
-                        }}
-                        className="text-muted hover:text-negative"
-                      >
-                        🗑
-                      </button>
-                    </Td>
-                  </tr>
-                )
-              })}
+              {list.data.items.map((tx) => (
+                <TransactionTableRow
+                  key={tx.id}
+                  tx={tx}
+                  onEdit={() => {
+                    setEditingTx(tx)
+                    setFormOpen(true)
+                  }}
+                  onDelete={() => {
+                    if (window.confirm('Excluir esta transação?')) del.mutate({ id: tx.id })
+                  }}
+                />
+              ))}
             </tbody>
           </Table>
         ) : (
@@ -212,7 +181,14 @@ function HistoryContent() {
         )}
       </Card>
 
-      <TransactionForm open={formOpen} onOpenChange={setFormOpen} />
+      <TransactionForm
+        open={formOpen}
+        editing={editingTx}
+        onOpenChange={(next) => {
+          setFormOpen(next)
+          if (!next) setEditingTx(null)
+        }}
+      />
     </>
   )
 }

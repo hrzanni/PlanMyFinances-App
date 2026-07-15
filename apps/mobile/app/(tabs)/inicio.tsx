@@ -82,7 +82,7 @@ export default function HomeScreen() {
 
         <MonthChartsSection month={month} />
       </ScrollView>
-      <TxFormModal open={formOpen} onClose={() => setFormOpen(false)} />
+      <TxFormModal open={formOpen} editing={null} onClose={() => setFormOpen(false)} />
     </SafeAreaView>
   )
 }

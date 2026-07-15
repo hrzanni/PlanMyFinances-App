@@ -1,16 +1,19 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Dialog, DialogContent, Field, Input, Label, Select } from '@pmf/ui-web'
-import { trpc } from '@/lib/trpc'
+import { trpc, type RouterOutputs } from '@/lib/trpc'
+
+export type TransactionItem = RouterOutputs['transactions']['list']['items'][number]
 
 interface Props {
   open: boolean
+  editing: TransactionItem | null
   onOpenChange: (open: boolean) => void
 }
 
 /** Formulário de transação (FR-001/002/111): categoria filtrada por tipo, pasta opcional. */
-export function TransactionForm({ open, onOpenChange }: Props) {
+export function TransactionForm({ open, editing, onOpenChange }: Props) {
   const utils = trpc.useUtils()
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: open })
   const { data: folders } = trpc.folders.list.useQuery(undefined, { enabled: open })
@@ -26,6 +29,20 @@ export function TransactionForm({ open, onOpenChange }: Props) {
   const [cardId, setCardId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (open) {
+      setType(editing?.type ?? 'despesa')
+      setValue(editing?.value ?? '')
+      setDate(editing?.date ?? new Date().toISOString().slice(0, 10))
+      setDescription(editing?.description ?? '')
+      setCategoryId(editing?.categoryId ?? '')
+      setSubcategoryId(editing?.subcategoryId ?? '')
+      setFolderId(editing?.folderId ?? '')
+      setCardId(editing?.cardId ?? '')
+      setError(null)
+    }
+  }, [open, editing])
+
   const typeCategories = useMemo(
     () => (categories ?? []).filter((c) => c.type === type),
     [categories, type],
@@ -39,17 +56,18 @@ export function TransactionForm({ open, onOpenChange }: Props) {
     [folders],
   )
 
-  const create = trpc.transactions.create.useMutation({
-    onSuccess: () => {
-      utils.transactions.invalidate()
-      utils.dashboard.invalidate()
-      utils.folders.invalidate()
-      onOpenChange(false)
-      setValue('')
-      setDescription('')
-    },
-    onError: () => setError('Erro ao salvar. Tente novamente.'),
-  })
+  const onSuccess = () => {
+    utils.transactions.invalidate()
+    utils.dashboard.invalidate()
+    utils.folders.invalidate()
+    onOpenChange(false)
+    setValue('')
+    setDescription('')
+  }
+  const onError = () => setError('Erro ao salvar. Tente novamente.')
+  const create = trpc.transactions.create.useMutation({ onSuccess, onError })
+  const update = trpc.transactions.update.useMutation({ onSuccess, onError })
+  const isPending = create.isPending || update.isPending
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -59,7 +77,7 @@ export function TransactionForm({ open, onOpenChange }: Props) {
       setError('Informe um valor maior que zero')
       return
     }
-    create.mutate({
+    const fields = {
       type,
       value: parsed,
       date,
@@ -68,12 +86,17 @@ export function TransactionForm({ open, onOpenChange }: Props) {
       subcategoryId: subcategoryId || undefined,
       folderId: folderId || undefined,
       cardId: cardId || undefined,
-    })
+    }
+    if (editing) {
+      update.mutate({ id: editing.id, ...fields })
+    } else {
+      create.mutate(fields)
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent title="Nova transação">
+      <DialogContent title={editing ? 'Editar transação' : 'Nova transação'}>
         <form onSubmit={handleSubmit}>
           <Field>
             <Label htmlFor="tx-type">Tipo</Label>
@@ -183,8 +206,8 @@ export function TransactionForm({ open, onOpenChange }: Props) {
             </Field>
           </div>
           {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
-          <Button type="submit" disabled={create.isPending} className="w-full">
-            {create.isPending ? 'Salvando…' : 'Salvar transação'}
+          <Button type="submit" disabled={isPending} className="w-full">
+            {isPending ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar transação'}
           </Button>
         </form>
       </DialogContent>

@@ -8,7 +8,15 @@ import { Badge } from './ui'
 type Tx = RouterOutputs['transactions']['list']['items'][number]
 
 /** Linha de transação reutilizada em Início, Histórico e Pastas. */
-export function TxRow({ tx, onDelete }: { tx: Tx; onDelete?: () => void }) {
+export function TxRow({
+  tx,
+  onEdit,
+  onDelete,
+}: {
+  tx: Tx
+  onEdit?: () => void
+  onDelete?: () => void
+}) {
   const positive = tx.type === 'receita'
   return (
     <View className="flex-row items-center gap-3 border-b border-line py-2.5 dark:border-line-dark">
@@ -47,6 +55,11 @@ export function TxRow({ tx, onDelete }: { tx: Tx; onDelete?: () => void }) {
         {positive ? '+ ' : '− '}
         {money(tx.value)}
       </Text>
+      {onEdit ? (
+        <Pressable accessibilityLabel="Editar transação" hitSlop={8} onPress={onEdit}>
+          <Ionicons name="create-outline" size={16} color="#9C9B9B" />
+        </Pressable>
+      ) : null}
       {onDelete ? (
         <Pressable accessibilityLabel="Excluir transação" hitSlop={8} onPress={onDelete}>
           <Ionicons name="trash-outline" size={16} color="#9C9B9B" />

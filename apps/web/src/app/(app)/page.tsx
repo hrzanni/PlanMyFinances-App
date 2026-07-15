@@ -160,7 +160,7 @@ export default function HomePage() {
         )}
       </Card>
 
-      <TransactionForm open={formOpen} onOpenChange={setFormOpen} />
+      <TransactionForm open={formOpen} editing={null} onOpenChange={setFormOpen} />
     </>
   )
 }

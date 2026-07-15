@@ -1,10 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
 import { Button, Input } from './ui'
-import { trpc } from '@/lib/trpc'
+import { trpc, type RouterOutputs } from '@/lib/trpc'
 
-/** Formulário de nova transação (FR-001/002/111) como modal nativo. */
-export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+type TransactionItem = RouterOutputs['transactions']['list']['items'][number]
+
+interface Props {
+  open: boolean
+  editing: TransactionItem | null
+  onClose: () => void
+}
+
+/** Formulário de transação (FR-001/002/111) como modal nativo, criação e edição. */
+export function TxFormModal({ open, editing, onClose }: Props) {
   const utils = trpc.useUtils()
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: open })
   const { data: folders } = trpc.folders.list.useQuery(undefined, { enabled: open })
@@ -20,6 +28,20 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
   const [cardId, setCardId] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (open) {
+      setType(editing?.type ?? 'despesa')
+      setValue(editing?.value ?? '')
+      setDate(editing?.date ?? new Date().toISOString().slice(0, 10))
+      setDescription(editing?.description ?? '')
+      setCategoryId(editing?.categoryId ?? '')
+      setSubcategoryId(editing?.subcategoryId ?? '')
+      setFolderId(editing?.folderId ?? '')
+      setCardId(editing?.cardId ?? '')
+      setError(null)
+    }
+  }, [open, editing])
+
   const typeCategories = useMemo(
     () => (categories ?? []).filter((c) => c.type === type),
     [categories, type],
@@ -33,17 +55,18 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
     [folders],
   )
 
-  const create = trpc.transactions.create.useMutation({
-    onSuccess: () => {
-      utils.transactions.invalidate()
-      utils.dashboard.invalidate()
-      utils.folders.invalidate()
-      setValue('')
-      setDescription('')
-      onClose()
-    },
-    onError: () => setError('Erro ao salvar. Tente novamente.'),
-  })
+  const onSuccess = () => {
+    utils.transactions.invalidate()
+    utils.dashboard.invalidate()
+    utils.folders.invalidate()
+    setValue('')
+    setDescription('')
+    onClose()
+  }
+  const onError = () => setError('Erro ao salvar. Tente novamente.')
+  const create = trpc.transactions.create.useMutation({ onSuccess, onError })
+  const update = trpc.transactions.update.useMutation({ onSuccess, onError })
+  const isPending = create.isPending || update.isPending
 
   function selectType(next: 'receita' | 'despesa') {
     setType(next)
@@ -61,7 +84,7 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
     const parsed = Number(value.replace(',', '.'))
     if (!parsed || parsed <= 0) return setError('Informe um valor maior que zero')
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return setError('Data no formato AAAA-MM-DD')
-    create.mutate({
+    const fields = {
       type,
       value: parsed,
       date,
@@ -70,7 +93,12 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
       subcategoryId: subcategoryId || undefined,
       folderId: folderId || undefined,
       cardId: cardId || undefined,
-    })
+    }
+    if (editing) {
+      update.mutate({ id: editing.id, ...fields })
+    } else {
+      create.mutate(fields)
+    }
   }
 
   function Chip({
@@ -110,7 +138,7 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
         <View className="max-h-[88%] rounded-t-2xl bg-background p-5 dark:bg-background-dark">
           <ScrollView keyboardShouldPersistTaps="handled">
             <Text className="mb-4 text-base font-black text-foreground dark:text-foreground-dark">
-              Nova transação
+              {editing ? 'Editar transação' : 'Nova transação'}
             </Text>
             <View className="mb-3 flex-row gap-2">
               <Chip active={type === 'despesa'} label="Despesa" onPress={() => selectType('despesa')} />
@@ -202,9 +230,9 @@ export function TxFormModal({ open, onClose }: { open: boolean; onClose: () => v
               </Text>
             ) : null}
             <Button
-              title={create.isPending ? 'Salvando…' : 'Salvar transação'}
+              title={isPending ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar transação'}
               onPress={submit}
-              disabled={create.isPending}
+              disabled={isPending}
             />
             <View className="h-2" />
             <Button title="Cancelar" variant="ghost" onPress={onClose} />

@@ -6,7 +6,7 @@ import type {
   UpdateTransactionInput,
 } from '@pmf/schemas'
 import type { DrizzleDB } from '../db/client'
-import { categories, subcategories, transactions } from '../db/schema'
+import { cards, categories, folders, subcategories, transactions } from '../db/schema'
 import { cardBelongsToUser } from './cards'
 
 // Todas as funções recebem userId da identidade e filtram por ele (FR-070).
@@ -43,10 +43,14 @@ export async function listTransactions(db: DrizzleDB, userId: string, input: Lis
       ...getTableColumns(transactions),
       categoryName: categories.name,
       subcategoryName: subcategories.name,
+      cardName: cards.name,
+      folderName: folders.name,
     })
     .from(transactions)
     .leftJoin(categories, eq(transactions.categoryId, categories.id))
     .leftJoin(subcategories, eq(transactions.subcategoryId, subcategories.id))
+    .leftJoin(cards, eq(transactions.cardId, cards.id))
+    .leftJoin(folders, eq(transactions.folderId, folders.id))
     .where(and(...filters))
     .orderBy(desc(transactions.date), desc(transactions.createdAt), desc(transactions.id))
     .limit(input.limit + 1)
