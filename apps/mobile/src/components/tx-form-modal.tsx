@@ -84,20 +84,31 @@ export function TxFormModal({ open, editing, onClose }: Props) {
     const parsed = Number(value.replace(',', '.'))
     if (!parsed || parsed <= 0) return setError('Informe um valor maior que zero')
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return setError('Data no formato AAAA-MM-DD')
-    const fields = {
-      type,
-      value: parsed,
-      date,
-      description: description || undefined,
-      categoryId: categoryId || undefined,
-      subcategoryId: subcategoryId || undefined,
-      folderId: folderId || undefined,
-      cardId: cardId || undefined,
-    }
     if (editing) {
-      update.mutate({ id: editing.id, ...fields })
+      // No update, string vazia precisa virar `null` explícito para limpar o campo no
+      // servidor: `undefined` é removido pelo JSON.stringify e o valor antigo persiste.
+      update.mutate({
+        id: editing.id,
+        type,
+        value: parsed,
+        date,
+        description: description || null,
+        categoryId: categoryId || null,
+        subcategoryId: subcategoryId || null,
+        folderId: folderId || null,
+        cardId: cardId || null,
+      })
     } else {
-      create.mutate(fields)
+      create.mutate({
+        type,
+        value: parsed,
+        date,
+        description: description || undefined,
+        categoryId: categoryId || undefined,
+        subcategoryId: subcategoryId || undefined,
+        folderId: folderId || undefined,
+        cardId: cardId || undefined,
+      })
     }
   }
 

@@ -41,6 +41,36 @@ describe('transactions service — CRUD', () => {
     expect(updated?.value).toBe('75.50')
   })
 
+  it('limpa categoria/subcategoria/pasta/cartão/descrição ao enviar null explícito', async () => {
+    const cat = await createCategory(db, userA, { name: 'Alimentação', type: 'despesa' })
+    const sub = await createSubcategory(db, userA, { categoryId: cat!.id, name: 'Mercado' })
+    const card = await createCard(db, userA, { name: 'Roxinho', bankPreset: 'nubank' })
+    const folder = await createFolder(db, userA, { name: 'Viagem' })
+    const tx = await createTransaction(db, userA, {
+      ...base,
+      description: 'Compra',
+      categoryId: cat!.id,
+      subcategoryId: sub!.id,
+      cardId: card!.id,
+      folderId: folder!.id,
+    })
+
+    const updated = await updateTransaction(db, userA, {
+      id: tx!.id,
+      description: null,
+      categoryId: null,
+      subcategoryId: null,
+      folderId: null,
+      cardId: null,
+    })
+
+    expect(updated?.description).toBeNull()
+    expect(updated?.categoryId).toBeNull()
+    expect(updated?.subcategoryId).toBeNull()
+    expect(updated?.folderId).toBeNull()
+    expect(updated?.cardId).toBeNull()
+  })
+
   it('exclui transação própria', async () => {
     const tx = await createTransaction(db, userA, base)
     const deleted = await deleteTransaction(db, userA, tx!.id)

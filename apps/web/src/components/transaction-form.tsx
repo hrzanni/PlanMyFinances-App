@@ -77,20 +77,31 @@ export function TransactionForm({ open, editing, onOpenChange }: Props) {
       setError('Informe um valor maior que zero')
       return
     }
-    const fields = {
-      type,
-      value: parsed,
-      date,
-      description: description || undefined,
-      categoryId: categoryId || undefined,
-      subcategoryId: subcategoryId || undefined,
-      folderId: folderId || undefined,
-      cardId: cardId || undefined,
-    }
     if (editing) {
-      update.mutate({ id: editing.id, ...fields })
+      // No update, string vazia precisa virar `null` explícito para limpar o campo no
+      // servidor: `undefined` é removido pelo JSON.stringify e o valor antigo persiste.
+      update.mutate({
+        id: editing.id,
+        type,
+        value: parsed,
+        date,
+        description: description || null,
+        categoryId: categoryId || null,
+        subcategoryId: subcategoryId || null,
+        folderId: folderId || null,
+        cardId: cardId || null,
+      })
     } else {
-      create.mutate(fields)
+      create.mutate({
+        type,
+        value: parsed,
+        date,
+        description: description || undefined,
+        categoryId: categoryId || undefined,
+        subcategoryId: subcategoryId || undefined,
+        folderId: folderId || undefined,
+        cardId: cardId || undefined,
+      })
     }
   }
 
