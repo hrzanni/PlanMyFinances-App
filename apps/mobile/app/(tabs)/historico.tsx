@@ -88,6 +88,7 @@ export default function HistoryScreen() {
             renderItem={({ item }) => (
               <TxRow
                 tx={item}
+                showDetails
                 onEdit={() => {
                   setEditingTx(item)
                   setFormOpen(true)

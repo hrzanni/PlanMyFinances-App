@@ -12,10 +12,12 @@ export function TxRow({
   tx,
   onEdit,
   onDelete,
+  showDetails = false,
 }: {
   tx: Tx
   onEdit?: () => void
   onDelete?: () => void
+  showDetails?: boolean
 }) {
   const positive = tx.type === 'receita'
   return (
@@ -43,6 +45,8 @@ export function TxRow({
           {tx.source === 'pluggy' ? <Badge tone="info" label="banco" /> : null}
           {tx.source === 'charge' ? <Badge tone="info" label="cobrança" /> : null}
           {tx.source === 'invoice' ? <Badge tone="info" label="fatura" /> : null}
+          {showDetails && tx.cardName ? <Badge tone="neutral" label={tx.cardName} /> : null}
+          {showDetails && tx.folderName ? <Badge tone="info" label={tx.folderName} /> : null}
         </View>
       </View>
       <Text

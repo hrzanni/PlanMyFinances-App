@@ -2,9 +2,8 @@
 
 import { formatDate } from '@pmf/core'
 import { Td } from '@pmf/ui-web'
-import { trpc } from '@/lib/trpc'
 import { money } from '@/lib/format'
-import { SourceBadge, FolderBadge, CategoryBadge } from '@/components/tx-badges'
+import { SourceBadge } from '@/components/tx-badges'
 import type { TransactionItem } from '@/components/transaction-form'
 
 interface Props {
@@ -15,9 +14,6 @@ interface Props {
 
 /** Linha da tabela de Histórico (extraída para manter page.tsx sob o limite de linhas). */
 export function TransactionTableRow({ tx, onEdit, onDelete }: Props) {
-  const { data: folders } = trpc.folders.list.useQuery()
-  const folder = folders?.find((f) => f.id === tx.folderId)
-
   return (
     <tr>
       <Td className="whitespace-nowrap">{formatDate(tx.date)}</Td>
@@ -25,17 +21,11 @@ export function TransactionTableRow({ tx, onEdit, onDelete }: Props) {
         <span className="font-bold text-foreground">
           {tx.description || (tx.type === 'receita' ? 'Receita' : 'Despesa')}
         </span>
-        {tx.categoryName ? (
-          <span className="ml-2">
-            <CategoryBadge categoryName={tx.categoryName} subcategoryName={tx.subcategoryName} />
-          </span>
-        ) : null}
-        {folder ? (
-          <span className="ml-2">
-            <FolderBadge name={folder.name} icon={folder.icon} />
-          </span>
-        ) : null}
       </Td>
+      <Td className="text-xs">{tx.categoryName ?? '—'}</Td>
+      <Td className="text-xs">{tx.subcategoryName ?? '—'}</Td>
+      <Td className="text-xs">{tx.cardName ?? '—'}</Td>
+      <Td className="text-xs">{tx.folderName ?? '—'}</Td>
       <Td>
         <SourceBadge tx={tx} />
       </Td>

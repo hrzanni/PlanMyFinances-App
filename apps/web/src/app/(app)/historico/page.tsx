@@ -152,6 +152,10 @@ function HistoryContent() {
               <tr>
                 <Th>Data</Th>
                 <Th>Descrição</Th>
+                <Th>Categoria</Th>
+                <Th>Subcategoria</Th>
+                <Th>Cartão</Th>
+                <Th>Pasta</Th>
                 <Th>Origem</Th>
                 <Th numeric>Valor</Th>
                 <Th aria-label="Ações" />
