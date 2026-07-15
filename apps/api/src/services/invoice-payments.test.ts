@@ -34,9 +34,11 @@ async function createTestInvoice(
   userId: string,
   overrides: { categoryId?: string; cardId?: string; totalInstallments?: number } = {},
 ) {
+  const cardId =
+    overrides.cardId ??
+    (await createCard(db, userId, { name: 'Roxinho', bankPreset: 'nubank' }))!.id
   const created = await createInvoice(db, userId, {
-    cardName: 'Roxinho',
-    cardId: overrides.cardId,
+    cardId,
     amountPerInstallment: 100,
     totalInstallments: overrides.totalInstallments ?? 3,
     firstDueDate: '2026-08-10',

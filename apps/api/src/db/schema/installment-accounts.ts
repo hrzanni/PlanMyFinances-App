@@ -68,7 +68,9 @@ export const invoices = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     cardName: text('card_name').notNull(),
-    cardId: uuid('card_id').references(() => cards.id, { onDelete: 'set null' }),
+    cardId: uuid('card_id')
+      .notNull()
+      .references(() => cards.id),
     description: text('description'),
     amountPerInstallment: numeric('amount_per_installment', { precision: 12, scale: 2 }).notNull(),
     totalInstallments: integer('total_installments').notNull(),

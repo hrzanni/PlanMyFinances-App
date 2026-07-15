@@ -67,16 +67,16 @@ export async function listInvoices(db: DrizzleDB, userId: string) {
 }
 
 export async function createInvoice(db: DrizzleDB, userId: string, input: CreateInvoiceInput) {
-  if (input.cardId && !(await cardBelongsToUser(db, userId, input.cardId)))
-    return 'card_not_found' as const
+  const card = await cardBelongsToUser(db, userId, input.cardId)
+  if (!card) return 'card_not_found' as const
   if (input.categoryId && !(await categoryBelongsToUser(db, userId, input.categoryId)))
     return 'category_not_found' as const
   const [row] = await db
     .insert(invoices)
     .values({
       userId,
-      cardName: input.cardName,
-      cardId: input.cardId ?? null,
+      cardName: card.name,
+      cardId: input.cardId,
       description: input.description ?? null,
       amountPerInstallment: input.amountPerInstallment.toFixed(2),
       totalInstallments: input.totalInstallments,
@@ -90,15 +90,15 @@ export async function createInvoice(db: DrizzleDB, userId: string, input: Create
 }
 
 export async function updateInvoice(db: DrizzleDB, userId: string, input: UpdateInvoiceInput) {
-  if (input.cardId && !(await cardBelongsToUser(db, userId, input.cardId)))
-    return 'card_not_found' as const
+  const card = await cardBelongsToUser(db, userId, input.cardId)
+  if (!card) return 'card_not_found' as const
   if (input.categoryId && !(await categoryBelongsToUser(db, userId, input.categoryId)))
     return 'category_not_found' as const
   const [row] = await db
     .update(invoices)
     .set({
-      cardName: input.cardName,
-      cardId: input.cardId ?? null,
+      cardName: card.name,
+      cardId: input.cardId,
       description: input.description ?? null,
       amountPerInstallment: input.amountPerInstallment.toFixed(2),
       totalInstallments: input.totalInstallments,

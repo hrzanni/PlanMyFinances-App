@@ -56,7 +56,7 @@ describe('cards — CRUD (fase 8.2)', () => {
     expect(row?.txCount).toBe(2)
   })
 
-  it('excluir cartão desvincula transações e faturas sem apagá-las (SET NULL)', async () => {
+  it('sem fatura vinculada: exclui o cartão e desvincula transações (SET NULL)', async () => {
     const card = await createCard(db, userA, { name: 'Roxinho', bankPreset: 'nubank' })
     await createTransaction(db, userA, {
       type: 'despesa',
@@ -64,8 +64,19 @@ describe('cards — CRUD (fase 8.2)', () => {
       date: '2026-07-10',
       cardId: card!.id,
     })
+
+    const result = await deleteCard(db, userA, card!.id)
+    expect(result).toMatchObject({ id: card!.id })
+
+    const { items } = await listTransactions(db, userA, { limit: 10 })
+    expect(items).toHaveLength(1)
+    expect(items[0]?.cardId).toBeNull()
+    expect(await listCards(db, userA)).toHaveLength(0)
+  })
+
+  it('com fatura vinculada: exclusão é bloqueada (card_in_use)', async () => {
+    const card = await createCard(db, userA, { name: 'Roxinho', bankPreset: 'nubank' })
     await createInvoice(db, userA, {
-      cardName: 'Roxinho',
       cardId: card!.id,
       amountPerInstallment: 100,
       totalInstallments: 2,
@@ -73,14 +84,13 @@ describe('cards — CRUD (fase 8.2)', () => {
       status: 'pendente',
     })
 
-    await deleteCard(db, userA, card!.id)
+    const result = await deleteCard(db, userA, card!.id)
+    expect(result).toBe('card_in_use')
 
-    const { items } = await listTransactions(db, userA, { limit: 10 })
-    expect(items).toHaveLength(1)
-    expect(items[0]?.cardId).toBeNull()
+    expect(await listCards(db, userA)).toHaveLength(1)
     const invoicesList = await listInvoices(db, userA)
     expect(invoicesList).toHaveLength(1)
-    expect(invoicesList[0]?.cardId).toBeNull()
+    expect(invoicesList[0]?.cardId).toBe(card!.id)
   })
 })
 
@@ -106,7 +116,6 @@ describe('cards — isolamento por usuário', () => {
     ).toBeNull()
     expect(
       await createInvoice(db, userA, {
-        cardName: 'De B',
         cardId: cardB!.id,
         amountPerInstallment: 100,
         totalInstallments: 1,

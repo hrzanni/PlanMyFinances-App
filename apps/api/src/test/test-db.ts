@@ -139,7 +139,7 @@ export async function createTestDb(): Promise<DrizzleDB> {
       id uuid primary key default gen_random_uuid(),
       user_id text not null references users(id) on delete cascade,
       card_name text not null,
-      card_id uuid references cards(id) on delete set null,
+      card_id uuid not null references cards(id),
       description text,
       amount_per_installment numeric(12,2) not null,
       total_installments integer not null,

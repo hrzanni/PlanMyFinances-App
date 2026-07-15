@@ -20,6 +20,8 @@ export const cardsRouter = router({
 
   delete: protectedProcedure.input(deleteByIdInput).mutation(async ({ ctx, input }) => {
     const row = await service.deleteCard(ctx.db, ctx.userId, input.id)
+    if (row === 'card_in_use')
+      throw new TRPCError({ code: 'CONFLICT', message: 'Cartão possui faturas vinculadas' })
     if (!row) throw notFound()
     return row
   }),

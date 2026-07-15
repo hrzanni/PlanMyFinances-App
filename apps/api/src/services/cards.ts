@@ -1,7 +1,7 @@
 import { and, asc, count, eq } from 'drizzle-orm'
 import type { CreateCardInput, UpdateCardInput } from '@pmf/schemas'
 import type { DrizzleDB } from '../db/client'
-import { cards, transactions } from '../db/schema'
+import { cards, invoices, transactions } from '../db/schema'
 
 /** Lista com contagem de transações vinculadas (mostra qual cartão é mais usado). */
 export async function listCards(db: DrizzleDB, userId: string) {
@@ -40,8 +40,21 @@ export async function updateCard(db: DrizzleDB, userId: string, input: UpdateCar
   return row ?? null
 }
 
-/** Faturas e transações vinculadas ficam com card_id nulo (SET NULL), nada é apagado junto. */
+/**
+ * Bloqueia a exclusão se existir fatura vinculada (cardId agora é NOT NULL/RESTRICT em invoices).
+ * Transações vinculadas continuam sendo desvinculadas normalmente (SET NULL).
+ */
 export async function deleteCard(db: DrizzleDB, userId: string, id: string) {
+  const card = await cardBelongsToUser(db, userId, id)
+  if (!card) return null
+
+  const [linkedInvoice] = await db
+    .select({ id: invoices.id })
+    .from(invoices)
+    .where(and(eq(invoices.cardId, id), eq(invoices.userId, userId)))
+    .limit(1)
+  if (linkedInvoice) return 'card_in_use' as const
+
   const [row] = await db
     .delete(cards)
     .where(and(eq(cards.id, id), eq(cards.userId, userId)))
@@ -54,10 +67,10 @@ export async function cardBelongsToUser(
   db: DrizzleDB,
   userId: string,
   cardId: string,
-): Promise<boolean> {
+): Promise<{ id: string; name: string } | null> {
   const [row] = await db
-    .select({ id: cards.id })
+    .select({ id: cards.id, name: cards.name })
     .from(cards)
     .where(and(eq(cards.id, cardId), eq(cards.userId, userId)))
-  return Boolean(row)
+  return row ?? null
 }

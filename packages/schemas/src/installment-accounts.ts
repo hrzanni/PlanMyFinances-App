@@ -40,9 +40,9 @@ export const updateChargeInput = installmentBase
   .refine(paidWithinTotal, paidRefine)
 export type UpdateChargeInput = z.infer<typeof updateChargeInput>
 
-/** Base de fatura (Faturas v2): sem amountPaid/dueDate — pagamento é por parcela (charge-payments). */
+/** Base de fatura (Faturas v2): sem amountPaid/dueDate — pagamento é por parcela (charge-payments).
+ *  cardName não faz parte do input: o backend deriva do cartão selecionado (cardId). */
 const invoiceBase = z.object({
-  cardName: z.string().min(1).max(120),
   description: z.string().max(500).optional(),
   amountPerInstallment: money,
   totalInstallments: z.number().int().min(1),
@@ -51,14 +51,14 @@ const invoiceBase = z.object({
 })
 
 export const createInvoiceInput = invoiceBase.extend({
-  cardId: uuid.optional(),
+  cardId: uuid,
   status: z.enum(['pendente', 'pago']).default('pendente'),
 })
 export type CreateInvoiceInput = z.infer<typeof createInvoiceInput>
 
 export const updateInvoiceInput = invoiceBase.extend({
   id: uuid,
-  cardId: uuid.nullable().optional(),
+  cardId: uuid,
   categoryId: uuid.nullable().optional(),
   description: z.string().max(500).nullable().optional(),
   status: z.enum(['pendente', 'pago']),
