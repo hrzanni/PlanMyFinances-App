@@ -1,43 +1,54 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import { fixedPendingSummary } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
-import { addMonths, currentMonth, money, monthLabel } from '@/lib/format'
+import { addMonths, currentMonth, monthLabel } from '@/lib/format'
 import { confirmDelete } from '@/lib/confirm'
-import { Badge, Button, Card, EmptyState, Kpi, ScreenTitle, Toggle } from '@/components/ui'
+import { Button, EmptyState, ScreenTitle } from '@/components/ui'
 import { FixedExpenseFormCard, type EditableFixedExpense } from '@/components/fixed-expense-form'
-
-const toneOf = { pago: 'paid', pendente: 'pending', vencido: 'late' } as const
+import { FixedKpis } from '@/components/fixed-kpis'
+import { FixedTimeline, type FixedTimelineItemData } from '@/components/fixed-timeline'
 
 type TypeFilter = 'todos' | 'despesa' | 'receita'
 
-function FilterChip({
-  active,
-  label,
-  onPress,
+function TypeFilterPills({
+  value,
+  onChange,
+  counts,
 }: {
-  active: boolean
-  label: string
-  onPress: () => void
+  value: TypeFilter
+  onChange: (next: TypeFilter) => void
+  counts: Record<TypeFilter, number>
 }) {
+  const options: Array<{ key: TypeFilter; label: string }> = [
+    { key: 'todos', label: 'Todos' },
+    { key: 'despesa', label: 'Despesas' },
+    { key: 'receita', label: 'Receitas' },
+  ]
   return (
-    <Pressable
-      onPress={onPress}
-      className={`rounded-full border px-3 py-1.5 ${
-        active
-          ? 'border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark'
-          : 'border-line dark:border-line-dark'
-      }`}
-    >
-      <Text
-        className={`text-xs font-bold ${
-          active ? 'text-background dark:text-background-dark' : 'text-body dark:text-body-dark'
-        }`}
-      >
-        {label}
-      </Text>
-    </Pressable>
+    <View className="mb-3 flex-row self-start rounded-full border border-line bg-surface p-1 dark:border-line-dark dark:bg-surface-dark">
+      {options.map((option) => {
+        const active = value === option.key
+        return (
+          <Pressable
+            key={option.key}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            onPress={() => onChange(option.key)}
+            className={active ? 'rounded-full bg-foreground px-3.5 py-1.5 dark:bg-foreground-dark' : 'px-3.5 py-1.5'}
+          >
+            <Text
+              className={`text-xs font-bold ${
+                active ? 'text-background dark:text-background-dark' : 'text-body dark:text-body-dark'
+              }`}
+            >
+              {option.label} {counts[option.key]}
+            </Text>
+          </Pressable>
+        )
+      })}
+    </View>
   )
 }
 
@@ -46,9 +57,11 @@ export default function FixedExpensesScreen() {
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<EditableFixedExpense | null>(null)
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('todos')
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
   const utils = trpc.useUtils()
   const list = trpc.fixedExpenses.list.useQuery({ month })
+  const categories = trpc.categories.list.useQuery()
   const invalidate = () => {
     utils.fixedExpenses.invalidate()
     utils.transactions.invalidate()
@@ -59,7 +72,18 @@ export default function FixedExpensesScreen() {
   const del = trpc.fixedExpenses.delete.useMutation({ onSuccess: invalidate })
 
   const items = list.data?.items ?? []
+  const counts = {
+    todos: items.length,
+    despesa: items.filter((i) => i.type === 'despesa').length,
+    receita: items.filter((i) => i.type === 'receita').length,
+  }
   const filteredItems = items.filter((i) => typeFilter === 'todos' || i.type === typeFilter)
+  const pending = fixedPendingSummary(items)
+  const categoryNames = useMemo(
+    () => new Map((categories.data ?? []).map((c) => [c.id, c.name])),
+    [categories.data],
+  )
+  const monthAbbr = monthLabel(month).slice(0, 3).toLowerCase()
 
   function closeForm() {
     setFormOpen(false)
@@ -83,117 +107,43 @@ export default function FixedExpensesScreen() {
           </Pressable>
         </View>
 
-        <Text className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
-          Despesas fixas
-        </Text>
-        <View className="mb-3 flex-row gap-2">
-          <Kpi label="Pago" value={money(list.data?.totals.expense.paid ?? 0)} tone="positive" />
-          <Kpi label="Pendente" value={money(list.data?.totals.expense.pending ?? 0)} tone="negative" />
-        </View>
+        <FixedKpis totals={list.data?.totals} pending={pending} />
 
-        <Text className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
-          Receitas fixas
-        </Text>
-        <View className="mb-4 flex-row gap-2">
-          <Kpi label="Recebido" value={money(list.data?.totals.income.paid ?? 0)} tone="positive" />
-          <Kpi label="Pendente" value={money(list.data?.totals.income.pending ?? 0)} tone="negative" />
-        </View>
+        <TypeFilterPills value={typeFilter} onChange={setTypeFilter} counts={counts} />
 
-        <View className="mb-3 flex-row flex-wrap items-center gap-2">
-          <FilterChip active={typeFilter === 'todos'} label="Todos" onPress={() => setTypeFilter('todos')} />
-          <FilterChip
-            active={typeFilter === 'despesa'}
-            label="Despesas"
-            onPress={() => setTypeFilter('despesa')}
-          />
-          <FilterChip
-            active={typeFilter === 'receita'}
-            label="Receitas"
-            onPress={() => setTypeFilter('receita')}
-          />
+        <View className="mt-3">
+          {items.length === 0 ? (
+            <EmptyState
+              title="Nenhum fixo cadastrado"
+              hint="Cadastre aluguel, contas, assinaturas e salário abaixo."
+            />
+          ) : filteredItems.length === 0 ? (
+            <EmptyState title="Nenhum item para esse filtro" hint="Troque o filtro acima." />
+          ) : (
+            <FixedTimeline
+              items={filteredItems as FixedTimelineItemData[]}
+              month={month}
+              today={today}
+              monthAbbr={monthAbbr}
+              categoryNames={categoryNames}
+              mutating={pay.isPending || unpay.isPending}
+              onToggle={(item, next) =>
+                next ? pay.mutate({ id: item.id, month }) : unpay.mutate({ id: item.id, month })
+              }
+              onEdit={(item) => {
+                setEditing(item as EditableFixedExpense)
+                setFormOpen(true)
+              }}
+              onDelete={(item) =>
+                confirmDelete(
+                  'Excluir fixo',
+                  `Excluir "${item.name}"? O histórico de pagamentos deste item será removido; as transações já criadas permanecem.`,
+                  () => del.mutate({ id: item.id }),
+                )
+              }
+            />
+          )}
         </View>
-
-        {items.length === 0 ? (
-          <EmptyState
-            title="Nenhum fixo cadastrado"
-            hint="Cadastre aluguel, contas, assinaturas e salário abaixo."
-          />
-        ) : filteredItems.length === 0 ? (
-          <EmptyState title="Nenhum item para esse filtro" hint="Troque o filtro acima." />
-        ) : (
-          <Card>
-            {filteredItems.map((item) => {
-              const paid = item.monthlyStatus === 'pago'
-              return (
-                <View
-                  key={item.id}
-                  className="flex-row items-center gap-3 border-b border-line py-3 last:border-0 dark:border-line-dark"
-                >
-                  <View className="min-w-0 flex-1">
-                    <Text className="text-sm font-bold text-foreground dark:text-foreground-dark">
-                      {item.name}
-                    </Text>
-                    <View className="mt-0.5 flex-row flex-wrap items-center gap-2">
-                      <Text
-                        className={`text-[11px] font-bold ${
-                          item.type === 'receita'
-                            ? 'text-positive dark:text-positive-dark'
-                            : 'text-negative dark:text-negative-dark'
-                        }`}
-                      >
-                        {item.type === 'receita' ? 'Receita' : 'Despesa'}
-                      </Text>
-                      <Text className="text-[11px] text-muted dark:text-muted-dark">
-                        dia {item.dueDay} ·{' '}
-                        {money(paid && item.payment ? item.payment.amount : item.amount)}
-                      </Text>
-                      <Badge tone={toneOf[item.monthlyStatus]} label={item.monthlyStatus} />
-                    </View>
-                  </View>
-                  <Pressable
-                    accessibilityLabel={`Editar ${item.name}`}
-                    hitSlop={8}
-                    onPress={() => {
-                      setEditing({
-                        id: item.id,
-                        name: item.name,
-                        amount: item.amount,
-                        dueDay: item.dueDay,
-                        categoryId: item.categoryId,
-                        type: item.type,
-                      })
-                      setFormOpen(true)
-                    }}
-                  >
-                    <Ionicons name="create-outline" size={18} color="#9C9B9B" />
-                  </Pressable>
-                  <Pressable
-                    accessibilityLabel={`Excluir ${item.name}`}
-                    hitSlop={8}
-                    onPress={() =>
-                      confirmDelete(
-                        'Excluir fixo',
-                        `Excluir "${item.name}"? O histórico de pagamentos deste item será removido; as transações já criadas permanecem.`,
-                        () => del.mutate({ id: item.id }),
-                      )
-                    }
-                  >
-                    <Ionicons name="trash-outline" size={18} color="#9C9B9B" />
-                  </Pressable>
-                  <Toggle
-                    checked={paid}
-                    disabled={pay.isPending || unpay.isPending}
-                    onChange={(next) =>
-                      next
-                        ? pay.mutate({ id: item.id, month })
-                        : unpay.mutate({ id: item.id, month })
-                    }
-                  />
-                </View>
-              )
-            })}
-          </Card>
-        )}
 
         <View className="my-4">
           {formOpen ? (
