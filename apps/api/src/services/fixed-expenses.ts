@@ -52,9 +52,13 @@ export async function listFixedExpenses(db: DrizzleDB, userId: string, month: st
     }
   })
 
-  const totals = fixedExpenseTotals(
-    items.map((i) => ({ amount: i.amount, paidAmount: i.payment?.amount ?? null })),
-  )
+  const toTotalsInput = (rows: typeof items) =>
+    rows.map((i) => ({ amount: i.amount, paidAmount: i.payment?.amount ?? null }))
+
+  const totals = {
+    expense: fixedExpenseTotals(toTotalsInput(items.filter((i) => i.type === 'despesa'))),
+    income: fixedExpenseTotals(toTotalsInput(items.filter((i) => i.type === 'receita'))),
+  }
 
   return { items, totals }
 }
@@ -128,7 +132,7 @@ export async function payFixedExpense(db: DrizzleDB, userId: string, input: PayF
       .insert(transactions)
       .values({
         userId,
-        type: 'despesa',
+        type: expense.type,
         value: expense.amount,
         description: expense.name,
         categoryId: expense.categoryId,

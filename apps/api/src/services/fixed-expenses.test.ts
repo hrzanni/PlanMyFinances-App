@@ -24,7 +24,18 @@ beforeEach(async () => {
 async function createRent(userId: string) {
   const expense = await createFixedExpense(db, userId, {
     name: 'Aluguel',
+    type: 'despesa',
     amount: 1850,
+    dueDay: 5,
+  })
+  return expense!
+}
+
+async function createSalary(userId: string, amount = 5000) {
+  const expense = await createFixedExpense(db, userId, {
+    name: 'Salário',
+    type: 'receita',
+    amount,
     dueDay: 5,
   })
   return expense!
@@ -76,11 +87,11 @@ describe('fixed expenses — pagar/despagar (FR-103/104, SC-100)', () => {
 
     const july = await listFixedExpenses(db, userA, '2026-07')
     expect(july.items[0]?.payment?.amount).toBe('1850.00')
-    expect(july.totals.paid).toBe(1850)
+    expect(july.totals.expense.paid).toBe(1850)
 
     const august = await listFixedExpenses(db, userA, '2026-08')
     expect(august.items[0]?.payment).toBeNull()
-    expect(august.totals.pending).toBe(1980)
+    expect(august.totals.expense.pending).toBe(1980)
   })
 
   it('status derivado por mês: pago / pendente (mês futuro nunca vencido)', async () => {
@@ -109,5 +120,40 @@ describe('fixed expenses — isolamento por usuário', () => {
     await createRent(userB)
     const listA = await listFixedExpenses(db, userA, '2026-07')
     expect(listA.items).toHaveLength(0)
+  })
+})
+
+describe('fixed expenses — receita fixa', () => {
+  it('pagar receita fixa cria transação do tipo receita', async () => {
+    const salary = await createSalary(userA)
+    const payment = await payFixedExpense(db, userA, { id: salary.id, month: '2026-07' })
+
+    expect(payment?.amount).toBe('5000.00')
+
+    const { items } = await listTransactions(db, userA, { limit: 10 })
+    expect(items).toHaveLength(1)
+    expect(items[0]?.type).toBe('receita')
+    expect(items[0]?.description).toBe('Salário')
+  })
+
+  it('totals separa despesa e receita sem misturar somas', async () => {
+    const rent = await createRent(userA)
+    const salary = await createSalary(userA)
+    await payFixedExpense(db, userA, { id: rent.id, month: '2026-07' })
+
+    const july = await listFixedExpenses(db, userA, '2026-07')
+
+    expect(july.totals.expense.paid).toBe(1850)
+    expect(july.totals.expense.pending).toBe(0)
+    expect(july.totals.income.paid).toBe(0)
+    expect(july.totals.income.pending).toBe(5000)
+
+    await payFixedExpense(db, userA, { id: salary.id, month: '2026-07' })
+    const julyAfter = await listFixedExpenses(db, userA, '2026-07')
+
+    expect(julyAfter.totals.expense.paid).toBe(1850)
+    expect(julyAfter.totals.income.paid).toBe(5000)
+    expect(julyAfter.totals.expense.total).toBe(1850)
+    expect(julyAfter.totals.income.total).toBe(5000)
   })
 })

@@ -41,7 +41,9 @@ export function TxRow({
               }
             />
           ) : null}
-          {tx.source === 'fixed_expense' ? <Badge tone="info" label="gasto fixo" /> : null}
+          {tx.source === 'fixed_expense' ? (
+            <Badge tone="info" label={positive ? 'receita fixa' : 'gasto fixo'} />
+          ) : null}
           {tx.source === 'pluggy' ? <Badge tone="info" label="banco" /> : null}
           {tx.source === 'charge' ? <Badge tone="info" label="cobrança" /> : null}
           {tx.source === 'invoice' ? <Badge tone="info" label="fatura" /> : null}

@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { isoDate, isoMonth, money, uuid } from './shared'
+import { isoDate, isoMonth, money, transactionType, uuid } from './shared'
 
 export const createFixedExpenseInput = z.object({
   name: z.string().min(1).max(120),
+  type: transactionType.default('despesa'),
   amount: money,
   dueDay: z.number().int().min(1).max(31),
   categoryId: uuid.optional(),

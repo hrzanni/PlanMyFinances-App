@@ -67,6 +67,7 @@ export interface FixedExpense {
   id: string
   userId: string
   name: string
+  type: TransactionType
   amount: string
   dueDay: number
   categoryId: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE "fixed_expenses" ADD COLUMN "type" "tx_type" DEFAULT 'despesa' NOT NULL;

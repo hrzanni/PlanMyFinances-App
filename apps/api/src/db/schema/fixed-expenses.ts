@@ -13,7 +13,7 @@ import { sql } from 'drizzle-orm'
 import { users } from './auth'
 import { categories } from './categories'
 import { transactions } from './transactions'
-import { activeStatus } from './enums'
+import { activeStatus, txType } from './enums'
 
 // Gastos fixos mensais (spec amendment 2026-07-06, FR-100..107)
 export const fixedExpenses = pgTable(
@@ -24,6 +24,7 @@ export const fixedExpenses = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
+    type: txType('type').notNull().default('despesa'),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     dueDay: integer('due_day').notNull(),
     categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),

@@ -22,6 +22,13 @@
       "when": 1784065129161,
       "tag": "0002_chubby_darkstar",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1784117120922,
+      "tag": "0003_tricky_silverclaw",
+      "breakpoints": true
     }
   ]
 }
