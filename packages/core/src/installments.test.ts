@@ -96,9 +96,9 @@ describe('parseInstallmentDraft', () => {
 function invoiceDraft(patch: Partial<typeof emptyInvoiceDraft>) {
   return {
     ...emptyInvoiceDraft,
-    name: 'Cartão X',
     amountPerInstallment: '100',
     firstDueDate: '2026-07-10',
+    cardId: 'card-1',
     ...patch,
   }
 }
@@ -123,6 +123,9 @@ describe('validateInvoiceDraft', () => {
     )
     expect(validateInvoiceDraft(invoiceDraft({ firstDueDate: '2026-07-10' }))).toBeNull()
   })
+  it('exige cartão selecionado', () => {
+    expect(validateInvoiceDraft(invoiceDraft({ cardId: '' }))).toMatch(/cartão/)
+  })
 })
 
 describe('parseInvoiceDraft', () => {
@@ -137,16 +140,16 @@ describe('parseInvoiceDraft', () => {
       totalInstallments: 4,
       firstDueDate: '2026-07-10',
       categoryId: undefined,
-      cardId: undefined,
+      cardId: 'card-1',
     })
   })
   it('campos opcionais vazios viram undefined', () => {
     expect(
-      parseInvoiceDraft(invoiceDraft({ description: '', categoryId: '', cardId: '' })),
+      parseInvoiceDraft(invoiceDraft({ description: '', categoryId: '' })),
     ).toMatchObject({
       description: undefined,
       categoryId: undefined,
-      cardId: undefined,
+      cardId: 'card-1',
     })
   })
 })

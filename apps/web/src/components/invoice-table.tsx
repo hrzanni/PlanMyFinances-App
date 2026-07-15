@@ -20,7 +20,7 @@ function MonthBadge({ row, month, today }: { row: InvoiceRow; month: string; tod
   return <span className="rounded-full bg-attention/10 px-2.5 py-1 text-[10px] font-bold text-attention">vence dia {day}</span>
 }
 
-/** Tabela de faturas ativas de um grupo (cartão ou "sem cartão"), com parcelas expansíveis. */
+/** Tabela de faturas ativas de um cartão, com parcelas expansíveis. */
 export function InvoiceTable({
   rows,
   month,

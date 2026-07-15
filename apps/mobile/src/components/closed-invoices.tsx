@@ -46,7 +46,7 @@ export function ClosedInvoices({
                 <Badge tone="paid" label={`encerrada ${endLabel(row)} ✓`} />
               </View>
               <Text className="mt-1 text-[11px] tabular-nums text-muted dark:text-muted-dark">
-                {showCard && row.cardId ? `${row.cardName} · ` : ''}
+                {showCard ? `${row.cardName} · ` : ''}
                 {row.totalInstallments}/{row.totalInstallments} pagas · total{' '}
                 {money(Number(row.amountPerInstallment) * row.totalInstallments)}
               </Text>

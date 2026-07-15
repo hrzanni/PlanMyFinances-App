@@ -43,7 +43,9 @@ function Chip({
 /** Formulário de nova fatura v2 (parcela + primeiro vencimento + categoria) como modal nativo. */
 export function InvoiceFormModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const utils = trpc.useUtils()
-  const { data: cards } = trpc.cards.list.useQuery(undefined, { enabled: open })
+  const { data: cards, isLoading: cardsLoading } = trpc.cards.list.useQuery(undefined, {
+    enabled: open,
+  })
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: open })
   const expenseCats = useMemo(
     () => (categories ?? []).filter((c) => c.type === 'despesa'),
@@ -62,17 +64,11 @@ export function InvoiceFormModal({ open, onClose }: { open: boolean; onClose: ()
     onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
 
-  function selectCard(id: string) {
-    const card = (cards ?? []).find((c) => c.id === id)
-    set({ cardId: id, name: card ? card.name : draft.name })
-  }
-
   function submit() {
     setError(null)
-    if (!draft.name.trim()) return setError('Informe o campo cartão')
     const err = validateInvoiceDraft(draft)
     if (err) return setError(err)
-    create.mutate({ cardName: draft.name.trim(), status: 'pendente', ...parseInvoiceDraft(draft) })
+    create.mutate({ status: 'pendente', ...parseInvoiceDraft(draft) })
   }
 
   return (
@@ -84,26 +80,30 @@ export function InvoiceFormModal({ open, onClose }: { open: boolean; onClose: ()
               Nova fatura
             </Text>
 
-            {(cards ?? []).length > 0 ? (
-              <>
-                <Text className="mb-1 text-xs font-bold text-foreground dark:text-foreground-dark">
-                  Cartão cadastrado (opcional)
-                </Text>
-                <View className="mb-3 flex-row flex-wrap gap-2">
-                  <Chip active={draft.cardId === ''} label="Nenhum" onPress={() => set({ cardId: '' })} />
-                  {(cards ?? []).map((c) => (
-                    <Chip
-                      key={c.id}
-                      active={draft.cardId === c.id}
-                      label={c.name}
-                      onPress={() => selectCard(c.id)}
-                    />
-                  ))}
-                </View>
-              </>
-            ) : null}
+            <Text className="mb-1 text-xs font-bold text-foreground dark:text-foreground-dark">
+              Cartão cadastrado
+            </Text>
+            {cardsLoading ? (
+              <Text className="mb-3 text-xs text-muted dark:text-muted-dark">
+                Carregando cartões…
+              </Text>
+            ) : (cards ?? []).length === 0 ? (
+              <Text className="mb-3 text-xs text-muted dark:text-muted-dark">
+                Nenhum cartão cadastrado. Cadastre um cartão antes de criar uma fatura.
+              </Text>
+            ) : (
+              <View className="mb-3 flex-row flex-wrap gap-2">
+                {(cards ?? []).map((c) => (
+                  <Chip
+                    key={c.id}
+                    active={draft.cardId === c.id}
+                    label={c.name}
+                    onPress={() => set({ cardId: c.id })}
+                  />
+                ))}
+              </View>
+            )}
 
-            <Input label="Cartão" value={draft.name} onChangeText={(name) => set({ name })} />
             <Input
               label="Descrição (opcional)"
               value={draft.description}

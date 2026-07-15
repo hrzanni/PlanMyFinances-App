@@ -55,9 +55,7 @@ export function ClosedInvoices({ rows, showCard }: { rows: InvoiceRow[]; showCar
                   {row.description || row.cardName}
                 </td>
                 {showCard ? (
-                  <td className="border-b border-line px-2 py-2.5 text-body">
-                    {row.cardId ? row.cardName : <span className="text-muted">sem cartão</span>}
-                  </td>
+                  <td className="border-b border-line px-2 py-2.5 text-body">{row.cardName}</td>
                 ) : null}
                 <td className="border-b border-line px-2 py-2.5 tabular-nums text-body">
                   {row.totalInstallments}/{row.totalInstallments}

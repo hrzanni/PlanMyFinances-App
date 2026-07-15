@@ -75,7 +75,6 @@ export function parseInstallmentDraft(d: InstallmentDraft) {
 
 /** Rascunho de fatura (Faturas v2) como digitado no formulário (strings cruas). */
 export interface InvoiceDraft {
-  name: string
   description: string
   amountPerInstallment: string
   totalInstallments: string
@@ -85,7 +84,6 @@ export interface InvoiceDraft {
 }
 
 export const emptyInvoiceDraft: InvoiceDraft = {
-  name: '',
   description: '',
   amountPerInstallment: '',
   totalInstallments: '1',
@@ -102,6 +100,7 @@ export function validateInvoiceDraft(d: InvoiceDraft): string | null {
   if (!count || count < 1) return 'Quantidade de parcelas deve ser ao menos 1'
   if (!d.firstDueDate) return 'Informe o primeiro vencimento'
   if (!ISO_DATE.test(d.firstDueDate)) return 'Data no formato AAAA-MM-DD'
+  if (!d.cardId) return 'Selecione um cartão'
   return null
 }
 
@@ -113,6 +112,6 @@ export function parseInvoiceDraft(d: InvoiceDraft) {
     totalInstallments: Number(d.totalInstallments),
     firstDueDate: d.firstDueDate,
     categoryId: d.categoryId || undefined,
-    cardId: d.cardId || undefined,
+    cardId: d.cardId,
   }
 }

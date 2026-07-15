@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { isInvoiceClosed } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
@@ -26,7 +26,18 @@ export default function InvoicesScreen() {
   const list = trpc.invoices.list.useQuery()
   const cards = trpc.cards.list.useQuery()
   const del = trpc.invoices.delete.useMutation({ onSuccess: () => utils.invoices.invalidate() })
-  const cardDel = trpc.cards.delete.useMutation({ onSuccess: () => utils.cards.invalidate() })
+  const cardDel = trpc.cards.delete.useMutation({
+    onSuccess: () => {
+      utils.cards.invalidate()
+      setCardFilter('all')
+    },
+    onError: (error) => {
+      Alert.alert(
+        'Não foi possível excluir',
+        error.data?.code === 'CONFLICT' ? error.message : 'Tente novamente.',
+      )
+    },
+  })
   const unregister = trpc.invoices.unregisterPayment.useMutation({
     onSuccess: () => {
       utils.invoices.invalidate()
@@ -79,7 +90,6 @@ export default function InvoicesScreen() {
     .filter((c) => cardFilter === 'all' || c.id === cardFilter)
     .map((card) => ({ card, rows: active.filter((r) => r.cardId === card.id) }))
     .filter((g) => cardFilter !== 'all' || g.rows.length > 0)
-  const unlinked = cardFilter === 'all' ? active.filter((r) => !r.cardId) : []
 
   const cardProps = (row: InvoiceRow) => ({
     row,
@@ -137,11 +147,8 @@ export default function InvoicesScreen() {
                     onPress={() =>
                       confirmDelete(
                         'Excluir cartão',
-                        `Excluir o cartão "${card.name}"? Faturas e transações dele ficam sem cartão.`,
-                        () => {
-                          cardDel.mutate({ id: card.id })
-                          setCardFilter('all')
-                        },
+                        `Excluir o cartão "${card.name}"? Transações dele ficam sem cartão. Não é possível excluir um cartão com faturas vinculadas.`,
+                        () => cardDel.mutate({ id: card.id }),
                       )
                     }
                   >
@@ -160,25 +167,12 @@ export default function InvoicesScreen() {
           </View>
         ))}
 
-        {unlinked.length > 0 ? (
-          <View className="mb-2">
-            {activeGroups.length > 0 ? (
-              <Text className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted dark:text-muted-dark">
-                Sem cartão
-              </Text>
-            ) : null}
-            {unlinked.map((row) => (
-              <InvoiceCard key={row.id} {...cardProps(row)} />
-            ))}
-          </View>
-        ) : null}
-
         {rows.length === 0 ? (
           <EmptyState
             title="Nenhuma fatura"
             hint="Registre parcelamentos de cartão com valor, parcelas e primeiro vencimento."
           />
-        ) : activeGroups.length === 0 && unlinked.length === 0 ? (
+        ) : activeGroups.length === 0 ? (
           <Text className="text-xs text-muted dark:text-muted-dark">
             Nenhuma fatura ativa neste filtro.
           </Text>

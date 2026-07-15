@@ -69,7 +69,7 @@ export default function InvoicesPage() {
     if (err) return setError(err)
     setError(null)
     create.mutate(
-      { cardName: draft.name, status: 'pendente', ...parseInvoiceDraft(draft) },
+      { status: 'pendente', ...parseInvoiceDraft(draft) },
       {
         onSuccess: () => {
           setFormOpen(false)
@@ -89,8 +89,7 @@ export default function InvoicesPage() {
           .filter((c) => c.id === cardFilter)
           .map((card) => ({ card, rows: active.filter((r) => r.cardId === card.id) }))
           .filter((g) => g.rows.length > 0)
-  const unlinked = cardFilter === 'all' ? active.filter((r) => !r.cardId) : []
-  const hasActive = activeGroups.length > 0 || unlinked.length > 0
+  const hasActive = activeGroups.length > 0
 
   return (
     <>
@@ -129,14 +128,6 @@ export default function InvoicesPage() {
                 <InvoiceTable rows={groupRows} {...tableProps} />
               </Card>
             ))}
-            {unlinked.length > 0 ? (
-              <Card>
-                <div className="mb-2.5 text-[10px] font-black uppercase tracking-[2.5px] text-muted">
-                  Sem cartão
-                </div>
-                <InvoiceTable rows={unlinked} {...tableProps} />
-              </Card>
-            ) : null}
             {rows.length === 0 ? (
               <Card>
                 <EmptyState

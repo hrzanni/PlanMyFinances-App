@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { bankPresetInfo } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
+import { showErrorToast } from '@/lib/toast'
 import { BankLogo } from '@/components/bank-logo'
 import { CardFormDialog, type CardItem } from '@/components/card-form-dialog'
 
@@ -21,7 +22,16 @@ export function CardStrip({
 }) {
   const utils = trpc.useUtils()
   const cards = trpc.cards.list.useQuery()
-  const del = trpc.cards.delete.useMutation({ onSuccess: () => utils.cards.invalidate() })
+  const del = trpc.cards.delete.useMutation({
+    onSuccess: () => utils.cards.invalidate(),
+    onError: (error) => {
+      showErrorToast(
+        error.data?.code === 'CONFLICT'
+          ? error.message
+          : 'Não foi possível excluir o cartão. Tente novamente.',
+      )
+    },
+  })
 
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<CardItem | null>(null)
@@ -89,11 +99,13 @@ export function CardStrip({
                   e.stopPropagation()
                   if (
                     window.confirm(
-                      `Excluir o cartão "${card.name}"? Faturas e transações dele ficam sem cartão.`,
+                      `Excluir o cartão "${card.name}"? Transações dele ficam sem cartão. Não é possível excluir um cartão com faturas vinculadas.`,
                     )
                   ) {
-                    del.mutate({ id: card.id })
-                    if (selected === card.id) onSelect('all')
+                    del.mutate(
+                      { id: card.id },
+                      { onSuccess: () => selected === card.id && onSelect('all') },
+                    )
                   }
                 }}
               >

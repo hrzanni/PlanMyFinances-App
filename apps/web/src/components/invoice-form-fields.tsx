@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import type { InvoiceDraft } from '@pmf/core'
 import { Field, Input, Label, Select } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
@@ -14,35 +15,41 @@ export function InvoiceFormFields({
 }) {
   const cards = trpc.cards.list.useQuery()
   const categories = trpc.categories.list.useQuery()
+  const cardList = cards.data ?? []
   const expenseCats = (categories.data ?? []).filter((c) => c.type === 'despesa')
   const set = (patch: Partial<InvoiceDraft>) => onChange({ ...draft, ...patch })
 
-  function selectCard(id: string) {
-    const card = (cards.data ?? []).find((c) => c.id === id)
-    set({ cardId: id, name: card ? card.name : draft.name })
-  }
+  // Sem opção vazia no select, o navegador exibe o primeiro cartão selecionado
+  // por padrão: manter o estado em sincronia evita divergir da UI (RN select).
+  useEffect(() => {
+    const first = cardList[0]
+    if (!draft.cardId && first) set({ cardId: first.id })
+  }, [cardList])
 
   return (
     <>
       <Field>
-        <Label htmlFor="invoice-card">Cartão cadastrado (opcional)</Label>
-        <Select id="invoice-card" value={draft.cardId} onChange={(e) => selectCard(e.target.value)}>
-          <option value="">Nenhum</option>
-          {(cards.data ?? []).map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Field>
-        <Label htmlFor="invoice-name">Cartão</Label>
-        <Input
-          id="invoice-name"
-          required
-          value={draft.name}
-          onChange={(e) => set({ name: e.target.value })}
-        />
+        <Label htmlFor="invoice-card">Cartão cadastrado</Label>
+        {cards.isLoading ? (
+          <p className="text-xs text-muted">Carregando cartões…</p>
+        ) : cardList.length === 0 ? (
+          <p className="text-xs text-muted">
+            Nenhum cartão cadastrado. Cadastre um cartão antes de criar uma fatura.
+          </p>
+        ) : (
+          <Select
+            id="invoice-card"
+            required
+            value={draft.cardId}
+            onChange={(e) => set({ cardId: e.target.value })}
+          >
+            {cardList.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        )}
       </Field>
       <Field>
         <Label htmlFor="invoice-desc">Descrição (opcional)</Label>
