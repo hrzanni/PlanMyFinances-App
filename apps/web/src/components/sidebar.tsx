@@ -10,7 +10,7 @@ export function Sidebar() {
   const path = usePathname()
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col bg-sidebar pb-4 pt-5 max-md:hidden">
+    <aside className="sticky top-0 flex h-screen w-56 shrink-0 flex-col bg-sidebar pb-4 pt-5 max-md:hidden">
       <div className="flex items-center gap-2.5 px-5 pb-4">
         <Image src="/logo-p.png" alt="" width={28} height={28} className="rounded-md" />
         <span className="text-base font-black text-white">
