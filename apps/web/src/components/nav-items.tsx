@@ -16,7 +16,7 @@ export const mainItems: NavItem[] = [
 ]
 
 export const accountItems: NavItem[] = [
-  { href: '/gastos-fixos', label: 'Gastos Fixos' },
+  { href: '/gastos-fixos', label: 'Fixos' },
   { href: '/cobrancas', label: 'Cobranças' },
   { href: '/faturas', label: 'Faturas' },
 ]

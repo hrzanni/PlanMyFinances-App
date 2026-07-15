@@ -25,8 +25,12 @@ export default function HomePage() {
   const me = trpc.users.me.useQuery()
   const greeting = me.data ? `Bem-vindo, ${firstName(me.data.name)}` : 'Bem-vindo'
 
-  const paidCount = fixed.data?.items.filter((i) => i.monthlyStatus === 'pago').length ?? 0
-  const nextPending = fixed.data?.items.find((i) => i.monthlyStatus !== 'pago')
+  const fixedItems = fixed.data?.items ?? []
+  const fixedExpenseItems = fixedItems.filter((i) => i.type === 'despesa')
+  const fixedIncomeItems = fixedItems.filter((i) => i.type === 'receita')
+  const paidExpenseCount = fixedExpenseItems.filter((i) => i.monthlyStatus === 'pago').length
+  const paidIncomeCount = fixedIncomeItems.filter((i) => i.monthlyStatus === 'pago').length
+  const nextPending = fixedItems.find((i) => i.monthlyStatus !== 'pago')
 
   return (
     <>
@@ -115,14 +119,20 @@ export default function HomePage() {
           </Card>
 
           <Card>
-            <CardTitle>Gastos fixos do mês</CardTitle>
-            {fixed.data && fixed.data.items.length > 0 ? (
+            <CardTitle>Fixos do mês</CardTitle>
+            {fixedItems.length > 0 ? (
               <>
                 <div className="text-sm text-body">
                   <b className="text-foreground">
-                    {paidCount} de {fixed.data.items.length} pagos
+                    Despesas: {paidExpenseCount} de {fixedExpenseItems.length} pagas
                   </b>{' '}
-                  · {money(fixed.data.totals.pending)} pendentes
+                  · {money(fixed.data?.totals.expense.pending ?? 0)} pendente
+                </div>
+                <div className="mt-1 text-sm text-body">
+                  <b className="text-foreground">
+                    Receitas: {paidIncomeCount} de {fixedIncomeItems.length} recebidas
+                  </b>{' '}
+                  · {money(fixed.data?.totals.income.pending ?? 0)} pendente
                 </div>
                 {nextPending ? (
                   <div className="mt-1.5 flex items-center gap-2 text-xs text-muted">
@@ -140,7 +150,10 @@ export default function HomePage() {
                 </Link>
               </>
             ) : (
-              <EmptyState title="Nenhum gasto fixo" hint="Cadastre aluguel, contas e assinaturas." />
+              <EmptyState
+                title="Nenhum fixo cadastrado"
+                hint="Cadastre aluguel, contas, assinaturas e salário."
+              />
             )}
           </Card>
 

@@ -22,7 +22,11 @@ export default function HomeScreen() {
   const me = trpc.users.me.useQuery()
   const greeting = me.data ? `Bem-vindo, ${firstName(me.data.name)}` : 'Bem-vindo'
 
-  const paidCount = fixed.data?.items.filter((i) => i.monthlyStatus === 'pago').length ?? 0
+  const fixedItems = fixed.data?.items ?? []
+  const fixedExpenseItems = fixedItems.filter((i) => i.type === 'despesa')
+  const fixedIncomeItems = fixedItems.filter((i) => i.type === 'receita')
+  const paidExpenseCount = fixedExpenseItems.filter((i) => i.monthlyStatus === 'pago').length
+  const paidIncomeCount = fixedIncomeItems.filter((i) => i.monthlyStatus === 'pago').length
 
   return (
     <SafeAreaView className="flex-1 bg-background dark:bg-background-dark" edges={['top']}>
@@ -56,15 +60,21 @@ export default function HomeScreen() {
 
         <Card className="mb-8 mt-4">
           <Text className="mb-2 text-xs font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
-            Gastos fixos do mês
+            Fixos do mês
           </Text>
-          {fixed.data && fixed.data.items.length > 0 ? (
+          {fixedItems.length > 0 ? (
             <>
               <Text className="text-sm text-body dark:text-body-dark">
                 <Text className="font-bold text-foreground dark:text-foreground-dark">
-                  {paidCount} de {fixed.data.items.length} pagos
+                  Despesas: {paidExpenseCount} de {fixedExpenseItems.length} pagas
                 </Text>{' '}
-                · {money(fixed.data.totals.pending)} pendentes
+                · {money(fixed.data?.totals.expense.pending ?? 0)} pendente
+              </Text>
+              <Text className="mt-1 text-sm text-body dark:text-body-dark">
+                <Text className="font-bold text-foreground dark:text-foreground-dark">
+                  Receitas: {paidIncomeCount} de {fixedIncomeItems.length} recebidas
+                </Text>{' '}
+                · {money(fixed.data?.totals.income.pending ?? 0)} pendente
               </Text>
               <Link
                 href="/(tabs)/fixos"
@@ -74,7 +84,10 @@ export default function HomeScreen() {
               </Link>
             </>
           ) : (
-            <EmptyState title="Nenhum gasto fixo" hint="Cadastre na aba Fixos." />
+            <EmptyState
+              title="Nenhum fixo cadastrado"
+              hint="Cadastre aluguel, contas, assinaturas e salário na aba Fixos."
+            />
           )}
         </Card>
 
