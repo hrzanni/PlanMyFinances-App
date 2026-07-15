@@ -33,12 +33,3 @@ export function CategoryBadge({
     </Badge>
   )
 }
-
-export function FolderBadge({ name, icon }: { name: string; icon?: string | null }) {
-  return (
-    <Badge tone="info" className="normal-case">
-      {icon ? `${icon} ` : ''}
-      {name}
-    </Badge>
-  )
-}
