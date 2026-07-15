@@ -2,8 +2,9 @@
 
 import { useMemo } from 'react'
 import Link from 'next/link'
+import type { MonthlyExpenseStatus } from '@pmf/types'
 import type { FixedExpenseTotals } from '@pmf/core'
-import { fixedBalance, fixedDueBadge, fixedDueInfo, nextPendingFixed } from '@pmf/core'
+import { fixedBalance, fixedDueBadge, fixedDueInfo, fixedProgress, nextPendingFixed } from '@pmf/core'
 import { Badge, Card, EmptyState, LoadingState } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
 import { money, monthLabel } from '@/lib/format'
@@ -122,17 +123,11 @@ function ProgressRow({
   totals,
 }: {
   kind: 'despesa' | 'receita'
-  items: Array<{ type: string; monthlyStatus: string; amount: string }>
+  items: Array<{ type: 'despesa' | 'receita'; monthlyStatus: MonthlyExpenseStatus; amount: string }>
   totals: { expense: FixedExpenseTotals; income: FixedExpenseTotals }
 }) {
   const t = kind === 'despesa' ? totals.expense : totals.income
-  const ofType = items.filter((i) => i.type === kind)
-  const paidCount = ofType.filter((i) => i.monthlyStatus === 'pago').length
-  const lateAmount = ofType
-    .filter((i) => i.monthlyStatus === 'vencido')
-    .reduce((acc, i) => acc + Number(i.amount), 0)
-  const paidPct = t.total ? Math.round((t.paid / t.total) * 100) : 0
-  const latePct = t.total ? Math.round((lateAmount / t.total) * 100) : 0
+  const { paidCount, totalCount, paidPct, latePct } = fixedProgress(items, kind, t)
   const noun = kind === 'despesa' ? 'pagas' : 'recebidas'
   const pendingLabel = kind === 'despesa' ? 'pend.' : 'a receber'
   return (
@@ -142,7 +137,7 @@ function ProgressRow({
           {kind === 'despesa' ? 'Despesas' : 'Receitas'}
         </span>
         <span className="text-muted">
-          {paidCount} de {ofType.length} {noun}
+          {paidCount} de {totalCount} {noun}
         </span>
         <span className="ml-auto tabular-nums text-muted">
           {money(t.pending)} {pendingLabel}

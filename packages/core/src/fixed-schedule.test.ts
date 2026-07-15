@@ -4,6 +4,7 @@ import {
   fixedDueBadge,
   fixedDueInfo,
   fixedPendingSummary,
+  fixedProgress,
   groupFixedByDueDay,
   nextPendingFixed,
 } from './fixed-schedule'
@@ -33,6 +34,40 @@ describe('fixedPendingSummary', () => {
   })
   it('zero pendências', () => {
     expect(fixedPendingSummary([{ monthlyStatus: 'pago' as const, amount: '10.00' }])).toEqual({ count: 0, amount: 0 })
+  })
+})
+
+describe('fixedProgress', () => {
+  const items = [
+    { type: 'despesa' as const, monthlyStatus: 'pago' as const, amount: '500.00' },
+    { type: 'despesa' as const, monthlyStatus: 'vencido' as const, amount: '89.90' },
+    { type: 'despesa' as const, monthlyStatus: 'pendente' as const, amount: '235.10' },
+    { type: 'receita' as const, monthlyStatus: 'pago' as const, amount: '9450.00' },
+    { type: 'receita' as const, monthlyStatus: 'pendente' as const, amount: '1200.00' },
+  ]
+  it('conta pagos e total por tipo, e calcula percentuais com valores conhecidos', () => {
+    expect(fixedProgress(items, 'despesa', { total: 825, paid: 500, pending: 325 })).toEqual({
+      paidCount: 1,
+      totalCount: 3,
+      paidPct: 61,
+      latePct: 11,
+    })
+  })
+  it('receita sem vencidos: latePct zero', () => {
+    expect(fixedProgress(items, 'receita', { total: 10650, paid: 9450, pending: 1200 })).toEqual({
+      paidCount: 1,
+      totalCount: 2,
+      paidPct: 89,
+      latePct: 0,
+    })
+  })
+  it('total zero não divide por zero, retorna percentuais zerados', () => {
+    expect(fixedProgress([], 'despesa', { total: 0, paid: 0, pending: 0 })).toEqual({
+      paidCount: 0,
+      totalCount: 0,
+      paidPct: 0,
+      latePct: 0,
+    })
   })
 })
 

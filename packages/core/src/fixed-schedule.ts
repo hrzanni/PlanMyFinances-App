@@ -26,6 +26,29 @@ export function fixedPendingSummary(
   return { count: pending.length, amount: sumAmounts(pending.map((i) => i.amount)) }
 }
 
+export interface FixedProgress {
+  paidCount: number
+  totalCount: number
+  paidPct: number
+  latePct: number
+}
+
+/** Progresso do mês por tipo (despesa/receita): contagem de pagos e percentuais para a barra de progresso. */
+export function fixedProgress(
+  items: Array<{ type: 'despesa' | 'receita'; monthlyStatus: MonthlyExpenseStatus; amount: string }>,
+  kind: 'despesa' | 'receita',
+  totals: FixedExpenseTotals,
+): FixedProgress {
+  const ofType = items.filter((i) => i.type === kind)
+  const paidCount = ofType.filter((i) => i.monthlyStatus === 'pago').length
+  const lateAmount = sumAmounts(
+    ofType.filter((i) => i.monthlyStatus === 'vencido').map((i) => i.amount),
+  )
+  const paidPct = totals.total ? Math.round((totals.paid / totals.total) * 100) : 0
+  const latePct = totals.total ? Math.round((lateAmount / totals.total) * 100) : 0
+  return { paidCount, totalCount: ofType.length, paidPct, latePct }
+}
+
 /** Agrupa itens por dia de vencimento crescente (linha do tempo), estável dentro do dia. */
 export function groupFixedByDueDay<T extends { dueDay: number }>(
   items: T[],
