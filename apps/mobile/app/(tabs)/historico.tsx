@@ -7,22 +7,27 @@ import { confirmDelete } from '@/lib/confirm'
 import { Button, EmptyState, ScreenTitle } from '@/components/ui'
 import { TxRow } from '@/components/tx-row'
 import { TxFormModal } from '@/components/tx-form-modal'
+import { TxFilterSheet, type HistoryFilters } from '@/components/tx-filter-sheet'
 
 type TransactionItem = RouterOutputs['transactions']['list']['items'][number]
 
 type TypeFilter = 'todas' | 'receita' | 'despesa'
 
+const EXTRA_FILTER_KEYS = ['categoryId', 'subcategoryId', 'folderId', 'dateFrom', 'dateTo'] as const
+
 /**
  * Histórico com FlashList virtualizada (ME-001) e paginação por cursor (ME-002).
- * Filtros vivem no estado da tela (FR-005, equivalente mobile).
+ * Filtros vivem no estado da tela (FR-005, equivalente mobile): tipo como chips de
+ * atalho rápido, demais campos (categoria/subcategoria/pasta/período) no filter sheet.
  */
 export default function HistoryScreen() {
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('todas')
+  const [filters, setFilters] = useState<HistoryFilters>({})
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [editingTx, setEditingTx] = useState<TransactionItem | null>(null)
 
   const query = trpc.transactions.list.useInfiniteQuery(
-    { limit: 30, type: typeFilter === 'todas' ? undefined : typeFilter },
+    { limit: 30, ...filters },
     { getNextPageParam: (last) => last.nextCursor ?? undefined },
   )
 
@@ -36,12 +41,13 @@ export default function HistoryScreen() {
   })
 
   const items = query.data?.pages.flatMap((p) => p.items) ?? []
+  const extraFilterCount = EXTRA_FILTER_KEYS.filter((key) => Boolean(filters[key])).length
 
   function FilterChip({ value, label }: { value: TypeFilter; label: string }) {
-    const active = typeFilter === value
+    const active = (filters.type ?? 'todas') === value
     return (
       <Pressable
-        onPress={() => setTypeFilter(value)}
+        onPress={() => setFilters((prev) => ({ ...prev, type: value === 'todas' ? undefined : value }))}
         className={`rounded-full border px-3 py-1.5 ${
           active
             ? 'border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark'
@@ -72,10 +78,18 @@ export default function HistoryScreen() {
             }}
           />
         </View>
-        <View className="mb-3 flex-row gap-2">
+        <View className="mb-3 flex-row flex-wrap items-center gap-2">
           <FilterChip value="todas" label="Todas" />
           <FilterChip value="receita" label="Receitas" />
           <FilterChip value="despesa" label="Despesas" />
+          <Pressable
+            onPress={() => setFilterSheetOpen(true)}
+            className="rounded-full border border-line px-3 py-1.5 dark:border-line-dark"
+          >
+            <Text className="text-xs font-bold text-body dark:text-body-dark">
+              {extraFilterCount > 0 ? `Filtros (${extraFilterCount})` : 'Filtros'}
+            </Text>
+          </Pressable>
         </View>
 
         {items.length === 0 && !query.isLoading ? (
@@ -114,6 +128,12 @@ export default function HistoryScreen() {
           setFormOpen(false)
           setEditingTx(null)
         }}
+      />
+      <TxFilterSheet
+        open={filterSheetOpen}
+        onClose={() => setFilterSheetOpen(false)}
+        filters={filters}
+        onApply={setFilters}
       />
     </SafeAreaView>
   )
