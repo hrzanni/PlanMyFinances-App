@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { firstName, formatDate } from '@pmf/core'
-import { Badge, Button, Card, CardTitle, EmptyState, Kpi, LoadingState } from '@pmf/ui-web'
+import { Button, Card, CardTitle, EmptyState, Kpi, LoadingState } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
 import { currentMonth, money, monthLabel } from '@/lib/format'
 import { useMonthSummary } from '@/hooks/use-month-summary'
@@ -14,6 +13,7 @@ import { IncomeExpenseChart } from '@/components/income-expense-chart'
 import { PieChartByCategory } from '@/components/pie-chart-by-category'
 import { MonthSelector } from '@/components/month-selector'
 import { InvoicesMonthWidget } from '@/components/invoices-month-widget'
+import { FixedMonthWidget } from '@/components/fixed/fixed-month-widget'
 
 export default function HomePage() {
   const [month, setMonth] = useState(currentMonth)
@@ -21,16 +21,8 @@ export default function HomePage() {
 
   const summary = useMonthSummary(month)
   const recent = trpc.transactions.list.useQuery({ limit: 5 })
-  const fixed = trpc.fixedExpenses.list.useQuery({ month })
   const me = trpc.users.me.useQuery()
   const greeting = me.data ? `Bem-vindo, ${firstName(me.data.name)}` : 'Bem-vindo'
-
-  const fixedItems = fixed.data?.items ?? []
-  const fixedExpenseItems = fixedItems.filter((i) => i.type === 'despesa')
-  const fixedIncomeItems = fixedItems.filter((i) => i.type === 'receita')
-  const paidExpenseCount = fixedExpenseItems.filter((i) => i.monthlyStatus === 'pago').length
-  const paidIncomeCount = fixedIncomeItems.filter((i) => i.monthlyStatus === 'pago').length
-  const nextPending = fixedItems.find((i) => i.monthlyStatus !== 'pago')
 
   return (
     <>
@@ -118,44 +110,7 @@ export default function HomePage() {
             </div>
           </Card>
 
-          <Card>
-            <CardTitle>Fixos do mês</CardTitle>
-            {fixedItems.length > 0 ? (
-              <>
-                <div className="text-sm text-body">
-                  <b className="text-foreground">
-                    Despesas: {paidExpenseCount} de {fixedExpenseItems.length} pagas
-                  </b>{' '}
-                  · {money(fixed.data?.totals.expense.pending ?? 0)} pendente
-                </div>
-                <div className="mt-1 text-sm text-body">
-                  <b className="text-foreground">
-                    Receitas: {paidIncomeCount} de {fixedIncomeItems.length} recebidas
-                  </b>{' '}
-                  · {money(fixed.data?.totals.income.pending ?? 0)} pendente
-                </div>
-                {nextPending ? (
-                  <div className="mt-1.5 flex items-center gap-2 text-xs text-muted">
-                    Próximo: {nextPending.name} — dia {nextPending.dueDay}
-                    <Badge tone={nextPending.monthlyStatus === 'vencido' ? 'late' : 'pending'}>
-                      {nextPending.monthlyStatus}
-                    </Badge>
-                  </div>
-                ) : null}
-                <Link
-                  href="/gastos-fixos"
-                  className="mt-2 inline-block text-xs font-bold text-info hover:underline"
-                >
-                  Ver todos →
-                </Link>
-              </>
-            ) : (
-              <EmptyState
-                title="Nenhum fixo cadastrado"
-                hint="Cadastre aluguel, contas, assinaturas e salário."
-              />
-            )}
-          </Card>
+          <FixedMonthWidget month={month} />
 
           <InvoicesMonthWidget />
         </div>
