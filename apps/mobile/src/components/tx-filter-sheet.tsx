@@ -84,7 +84,7 @@ export function TxFilterSheet({ open, onClose, filters, onApply }: Props) {
     setDateFrom('')
     setDateTo('')
     setError(null)
-    onApply({})
+    onApply({ type: filters.type })
     onClose()
   }
 
