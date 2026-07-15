@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, Dialog, DialogContent, Field, Input, Label, Select } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
 
@@ -10,6 +10,7 @@ export interface EditableFixedExpense {
   amount: string
   dueDay: number
   categoryId: string | null
+  type: 'despesa' | 'receita'
 }
 
 interface Props {
@@ -18,27 +19,38 @@ interface Props {
   editing?: EditableFixedExpense | null
 }
 
-/** Criar/editar gasto fixo. Ao editar valor, vale do mês vigente em diante (FR-105). */
+/** Criar/editar fixo (despesa ou receita). Ao editar valor, vale do mês vigente em diante (FR-105). */
 export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
   const utils = trpc.useUtils()
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: open })
-  const expenseCategories = (categories ?? []).filter((c) => c.type === 'despesa')
 
   const [name, setName] = useState('')
   const [amount, setAmount] = useState('')
   const [dueDay, setDueDay] = useState('5')
+  const [type, setType] = useState<'despesa' | 'receita'>('despesa')
   const [categoryId, setCategoryId] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  const filteredCategories = useMemo(
+    () => (categories ?? []).filter((c) => c.type === type),
+    [categories, type],
+  )
 
   useEffect(() => {
     if (open) {
       setName(editing?.name ?? '')
       setAmount(editing ? String(Number(editing.amount)).replace('.', ',') : '')
       setDueDay(String(editing?.dueDay ?? 5))
+      setType(editing?.type ?? 'despesa')
       setCategoryId(editing?.categoryId ?? '')
       setError(null)
     }
   }, [open, editing])
+
+  function selectType(next: 'despesa' | 'receita') {
+    setType(next)
+    setCategoryId('')
+  }
 
   const onDone = () => {
     utils.fixedExpenses.invalidate()
@@ -65,6 +77,7 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
       name,
       amount: parsed,
       dueDay: day,
+      type,
       categoryId: categoryId || undefined,
     }
     if (editing) update.mutate({ id: editing.id, ...payload })
@@ -74,7 +87,7 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        title={editing ? 'Editar gasto fixo' : 'Novo gasto fixo'}
+        title={editing ? 'Editar fixo' : 'Novo fixo'}
         description={
           editing
             ? 'Mudança de valor vale do mês vigente em diante; meses já pagos guardam o valor da época.'
@@ -91,6 +104,17 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+          </Field>
+          <Field>
+            <Label htmlFor="fe-type">Tipo</Label>
+            <Select
+              id="fe-type"
+              value={type}
+              onChange={(e) => selectType(e.target.value as 'despesa' | 'receita')}
+            >
+              <option value="despesa">Despesa</option>
+              <option value="receita">Receita</option>
+            </Select>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field>
@@ -118,14 +142,16 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
             </Field>
           </div>
           <Field>
-            <Label htmlFor="fe-cat">Categoria (para a despesa gerada)</Label>
+            <Label htmlFor="fe-cat">
+              Categoria (para a {type === 'receita' ? 'receita' : 'despesa'} gerada)
+            </Label>
             <Select
               id="fe-cat"
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
             >
               <option value="">Sem categoria</option>
-              {expenseCategories.map((c) => (
+              {filteredCategories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>

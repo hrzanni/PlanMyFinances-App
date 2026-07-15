@@ -9,9 +9,10 @@ export interface EditableFixedExpense {
   amount: string
   dueDay: number
   categoryId: string | null
+  type: 'despesa' | 'receita'
 }
 
-/** Criar/editar gasto fixo. Ao editar valor, vale do mês vigente em diante (FR-105). */
+/** Criar/editar fixo (despesa ou receita). Ao editar valor, vale do mês vigente em diante (FR-105). */
 export function FixedExpenseFormCard({
   editing,
   onClose,
@@ -21,15 +22,22 @@ export function FixedExpenseFormCard({
 }) {
   const utils = trpc.useUtils()
   const { data: categories } = trpc.categories.list.useQuery()
-  const expenseCategories = (categories ?? []).filter((c) => c.type === 'despesa')
 
   const [name, setName] = useState(editing?.name ?? '')
   const [amount, setAmount] = useState(
     editing ? String(Number(editing.amount)).replace('.', ',') : '',
   )
   const [dueDay, setDueDay] = useState(String(editing?.dueDay ?? 5))
+  const [type, setType] = useState<'despesa' | 'receita'>(editing?.type ?? 'despesa')
   const [categoryId, setCategoryId] = useState(editing?.categoryId ?? '')
   const [error, setError] = useState<string | null>(null)
+
+  const filteredCategories = (categories ?? []).filter((c) => c.type === type)
+
+  function selectType(next: 'despesa' | 'receita') {
+    setType(next)
+    setCategoryId('')
+  }
 
   const onDone = () => {
     utils.fixedExpenses.invalidate()
@@ -54,16 +62,38 @@ export function FixedExpenseFormCard({
       name: name.trim(),
       amount: parsed,
       dueDay: day,
+      type,
       categoryId: categoryId || undefined,
     }
     if (editing) update.mutate({ id: editing.id, ...payload })
     else create.mutate(payload)
   }
 
+  function Chip({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
+    return (
+      <Pressable
+        onPress={onPress}
+        className={`rounded-full border px-3 py-1.5 ${
+          active
+            ? 'border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark'
+            : 'border-line dark:border-line-dark'
+        }`}
+      >
+        <Text
+          className={`text-xs font-bold ${
+            active ? 'text-background dark:text-background-dark' : 'text-body dark:text-body-dark'
+          }`}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    )
+  }
+
   return (
     <Card>
       <Text className="mb-3 text-sm font-black text-foreground dark:text-foreground-dark">
-        {editing ? 'Editar gasto fixo' : 'Novo gasto fixo'}
+        {editing ? 'Editar fixo' : 'Novo fixo'}
       </Text>
       {editing ? (
         <Text className="mb-3 text-[11px] leading-4 text-muted dark:text-muted-dark">
@@ -71,6 +101,10 @@ export function FixedExpenseFormCard({
         </Text>
       ) : null}
       <Input label="Nome" value={name} onChangeText={setName} />
+      <View className="mb-3 flex-row gap-2">
+        <Chip active={type === 'despesa'} label="Despesa" onPress={() => selectType('despesa')} />
+        <Chip active={type === 'receita'} label="Receita" onPress={() => selectType('receita')} />
+      </View>
       <Input
         label="Valor mensal (R$)"
         keyboardType="decimal-pad"
@@ -84,33 +118,17 @@ export function FixedExpenseFormCard({
         onChangeText={setDueDay}
       />
       <Text className="mb-1 text-xs font-bold text-foreground dark:text-foreground-dark">
-        Categoria (para a despesa gerada)
+        Categoria (para a {type === 'receita' ? 'receita' : 'despesa'} gerada)
       </Text>
       <View className="mb-3 flex-row flex-wrap gap-2">
-        {[{ id: '', name: 'Sem categoria' }, ...expenseCategories].map((c) => {
-          const active = categoryId === c.id
-          return (
-            <Pressable
-              key={c.id || 'none'}
-              onPress={() => setCategoryId(c.id)}
-              className={`rounded-full border px-3 py-1.5 ${
-                active
-                  ? 'border-foreground bg-foreground dark:border-foreground-dark dark:bg-foreground-dark'
-                  : 'border-line dark:border-line-dark'
-              }`}
-            >
-              <Text
-                className={`text-xs font-bold ${
-                  active
-                    ? 'text-background dark:text-background-dark'
-                    : 'text-body dark:text-body-dark'
-                }`}
-              >
-                {c.name}
-              </Text>
-            </Pressable>
-          )
-        })}
+        {[{ id: '', name: 'Sem categoria' }, ...filteredCategories].map((c) => (
+          <Chip
+            key={c.id || 'none'}
+            active={categoryId === c.id}
+            label={c.name}
+            onPress={() => setCategoryId(c.id)}
+          />
+        ))}
       </View>
       {error ? (
         <Text className="mb-2 text-xs font-bold text-negative dark:text-negative-dark">
