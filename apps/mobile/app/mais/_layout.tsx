@@ -8,7 +8,6 @@ const titles: Record<string, string> = {
   pastas: 'Pastas',
   categorias: 'Categorias',
   cobrancas: 'Cobranças',
-  faturas: 'Faturas',
   conexoes: 'Conexões',
   agente: 'Agente',
 }

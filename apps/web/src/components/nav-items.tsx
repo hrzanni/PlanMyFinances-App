@@ -22,7 +22,7 @@ export const accountItems: NavItem[] = [
 ]
 
 export const automationItems: NavItem[] = [
-  { href: '/conexoes', label: 'Conexões' },
+  { href: '/conexoes', label: 'Conexões', soon: true },
   { href: '/agente', label: 'Agente', soon: true },
 ]
 
