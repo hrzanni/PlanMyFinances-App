@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { isInvoiceClosed } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
 import { currentMonth } from '@/lib/format'
 import { confirmDelete } from '@/lib/confirm'
-import { Button, EmptyState } from '@/components/ui'
+import { Button, EmptyState, ScreenTitle } from '@/components/ui'
 import { BankLogo } from '@/components/bank-logo'
 import { CardStrip } from '@/components/card-strip'
 import { CardFormModal, type CardItem } from '@/components/card-form-modal'
@@ -105,9 +106,10 @@ export default function InvoicesScreen() {
   })
 
   return (
-    <View className="flex-1">
+    <SafeAreaView className="flex-1 bg-background dark:bg-background-dark" edges={['top']}>
       <ScrollView className="flex-1 px-4 pt-3">
-        <View className="mb-4">
+        <View className="mb-2 flex-row items-center justify-between">
+          <ScreenTitle>Faturas</ScreenTitle>
           <Button title="+ Nova fatura" onPress={() => setFormOpen(true)} />
         </View>
 
@@ -214,6 +216,6 @@ export default function InvoicesScreen() {
         onClose={() => setPayingTarget(null)}
         onPaid={showToast}
       />
-    </View>
+    </SafeAreaView>
   )
 }
