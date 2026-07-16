@@ -6,6 +6,7 @@ import { expo } from '@better-auth/expo'
 import { isAcceptablePassword } from '@pmf/core'
 import { db } from '../db/client'
 import * as schema from '../db/schema'
+import { seedDefaultCategoriesForUser } from '../services/default-categories'
 import { sendResetPasswordEmail } from './email'
 
 export const auth = betterAuth({
@@ -43,6 +44,16 @@ export const auth = betterAuth({
         })
       }
     }),
+  },
+  // Todo usuário novo já nasce com categorias/subcategorias padrão + "Salário" (sistema)
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          await seedDefaultCategoriesForUser(db, user.id)
+        },
+      },
+    },
   },
   // bearer: mobile autentica com token de sessão em Authorization (FR-063); expo: deep links
   plugins: [bearer(), expo()],
