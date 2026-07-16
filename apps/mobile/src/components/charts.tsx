@@ -3,7 +3,7 @@ import Svg, { Circle, Line, Path, Rect, Text as SvgText } from 'react-native-svg
 import { OTHER_SLICE_ID, foldCategorySlices, type CategorySlice } from '@pmf/core'
 import { money } from '@/lib/format'
 
-const palette = (dark: boolean) => ({
+export const palette = (dark: boolean) => ({
   positive: dark ? '#5CBF8B' : '#2D6E44',
   negative: dark ? '#F0707A' : '#BA1925',
   navy: dark ? '#8FA3D1' : '#303F63',
@@ -44,7 +44,7 @@ export function BarsChart({ income, expense }: { income: number; expense: number
 
 const MAX_NAMED = 5
 
-function sliceName(s: CategorySlice) {
+export function sliceName(s: CategorySlice) {
   if (s.categoryId === null) return 'Sem categoria'
   if (s.categoryId === OTHER_SLICE_ID) return 'Outras'
   return s.categoryName ?? 'Sem categoria'

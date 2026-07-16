@@ -41,3 +41,18 @@ body {
   background-color: rgb(var(--background));
   color: rgb(var(--body));
 }
+
+/* Entrada com stagger dos cards de pasta (grid da tela Pastas). */
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade-slide-up {
+  animation: fade-slide-up 0.35s ease both;
+}

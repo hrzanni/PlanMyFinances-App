@@ -1,149 +1,111 @@
-import { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import { useMemo, useState } from 'react'
+import { ScrollView, View } from 'react-native'
 import { trpc } from '@/lib/trpc'
-import { money } from '@/lib/format'
-import { confirmDelete } from '@/lib/confirm'
-import { Badge, Button, Card, EmptyState, Input } from '@/components/ui'
-import { TxRow } from '@/components/tx-row'
+import { Button } from '@/components/ui'
+import { FolderKpis } from '@/components/folders/folder-kpis'
+import {
+  FolderStatusPills,
+  type FolderStatusFilter,
+} from '@/components/folders/folder-status-pills'
+import { FolderGrid } from '@/components/folders/folder-grid'
+import { FolderFormSheet } from '@/components/folders/folder-form-sheet'
+import { FolderDetailSheet } from '@/components/folders/folder-detail-sheet'
+import type { FolderRow } from '@/components/folders/folder-card'
 
-function FolderCard({ id, name, icon, status, totalSpent, txCount }: {
-  id: string
-  name: string
-  icon: string | null
-  status: 'active' | 'archived'
-  totalSpent: string
-  txCount: number
-}) {
-  const [expanded, setExpanded] = useState(false)
-  const txs = trpc.transactions.list.useQuery({ folderId: id, limit: 10 }, { enabled: expanded })
-  const utils = trpc.useUtils()
-  const invalidate = () => utils.folders.invalidate()
-  const archive = trpc.folders.update.useMutation({ onSuccess: invalidate })
-  const del = trpc.folders.delete.useMutation({ onSuccess: invalidate })
-  const archived = status === 'archived'
-
-  return (
-    <Card className="mb-3">
-      <Pressable onPress={() => setExpanded((v) => !v)} accessibilityRole="button">
-        <View className="flex-row items-center gap-2">
-          <Text className="flex-1 text-sm font-bold text-foreground dark:text-foreground-dark">
-            {icon ? `${icon} ` : ''}
-            {name}
-          </Text>
-          <Badge tone={status === 'active' ? 'info' : 'neutral'} label={status === 'active' ? 'ativa' : 'arquivada'} />
-          <Text className="text-xs text-muted dark:text-muted-dark">{expanded ? '▴' : '▾'}</Text>
-        </View>
-        <View className="mt-1 flex-row items-baseline gap-2">
-          <Text className="text-lg font-black tabular-nums text-foreground dark:text-foreground-dark">
-            {money(totalSpent)}
-          </Text>
-          <Text className="text-[11px] text-muted dark:text-muted-dark">
-            total gasto · {txCount} transaç{txCount === 1 ? 'ão' : 'ões'}
-          </Text>
-        </View>
-      </Pressable>
-      {expanded ? (
-        <View className="mt-2 border-t border-line pt-1 dark:border-line-dark">
-          {txs.data && txs.data.items.length > 0 ? (
-            txs.data.items.map((tx) => <TxRow key={tx.id} tx={tx} />)
-          ) : (
-            <Text className="py-3 text-xs text-muted dark:text-muted-dark">
-              Nenhuma transação nesta pasta.
-            </Text>
-          )}
-          <View className="mt-2 flex-row items-center gap-3">
-            <Pressable
-              accessibilityRole="button"
-              disabled={archive.isPending}
-              onPress={() => archive.mutate({ id, status: archived ? 'active' : 'archived' })}
-              className="rounded-full border border-line px-3 py-1.5 dark:border-line-dark"
-            >
-              <Text className="text-xs font-bold text-body dark:text-body-dark">
-                {archived ? 'Reativar' : 'Arquivar'}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel={`Excluir pasta ${name}`}
-              hitSlop={8}
-              onPress={() =>
-                confirmDelete(
-                  'Excluir pasta',
-                  `Excluir a pasta "${name}"? As transações continuam existindo, apenas sem pasta.`,
-                  () => del.mutate({ id }),
-                )
-              }
-            >
-              <Ionicons name="trash-outline" size={16} color="#9C9B9B" />
-            </Pressable>
-          </View>
-        </View>
-      ) : null}
-    </Card>
-  )
-}
+type FormState = { mode: 'create' } | { mode: 'edit'; folder: FolderRow } | null
 
 export default function FoldersScreen() {
   const { data: folders } = trpc.folders.list.useQuery()
   const utils = trpc.useUtils()
-  const [formOpen, setFormOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [error, setError] = useState<string | null>(null)
+
+  const [statusFilter, setStatusFilter] = useState<FolderStatusFilter>('todas')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [form, setForm] = useState<FormState>(null)
+
+  const invalidateFolders = () => utils.folders.invalidate()
 
   const create = trpc.folders.create.useMutation({
     onSuccess: () => {
-      utils.folders.invalidate()
-      setFormOpen(false)
-      setName('')
+      invalidateFolders()
+      setForm(null)
     },
-    onError: () => setError('Erro ao salvar. Tente novamente.'),
+  })
+  const update = trpc.folders.update.useMutation({ onSuccess: invalidateFolders })
+  const del = trpc.folders.delete.useMutation({
+    onSuccess: () => {
+      invalidateFolders()
+      utils.transactions.invalidate()
+      setSelectedId(null)
+    },
   })
 
-  function submit() {
-    setError(null)
-    if (!name.trim()) return setError('Informe o nome')
-    create.mutate({ name: name.trim() })
+  const active = useMemo(() => (folders ?? []).filter((f) => f.status === 'active'), [folders])
+  const archived = useMemo(() => (folders ?? []).filter((f) => f.status === 'archived'), [folders])
+
+  const visible =
+    statusFilter === 'ativas' ? active : statusFilter === 'arquivadas' ? archived : (folders ?? [])
+
+  const selectedFolder = folders?.find((f) => f.id === selectedId) ?? null
+
+  function handleFormSubmit(name: string) {
+    if (form?.mode === 'edit') {
+      update.mutate({ id: form.folder.id, name })
+      setForm(null)
+    } else {
+      create.mutate({ name })
+    }
   }
 
   return (
     <ScrollView className="flex-1 px-4 pt-3" keyboardShouldPersistTaps="handled">
-      {folders && folders.length > 0 ? (
-        folders.map((f) => (
-          <FolderCard
-            key={f.id}
-            id={f.id}
-            name={f.name}
-            icon={f.icon}
-            status={f.status}
-            totalSpent={f.totalSpent}
-            txCount={f.txCount}
-          />
-        ))
-      ) : (
-        <EmptyState title="Nenhuma pasta" hint='Crie "Viagem Chile" e associe despesas.' />
-      )}
+      <FolderKpis
+        total={(folders ?? []).length}
+        active={active.length}
+        archived={archived.length}
+      />
+      <FolderStatusPills
+        value={statusFilter}
+        onChange={setStatusFilter}
+        counts={{
+          todas: (folders ?? []).length,
+          ativas: active.length,
+          arquivadas: archived.length,
+        }}
+      />
+      <FolderGrid
+        folders={visible}
+        emptyTitle={statusFilter === 'arquivadas' ? 'Nenhuma pasta arquivada' : 'Nenhuma pasta'}
+        emptyHint={statusFilter === 'arquivadas' ? undefined : 'Crie "Viagem Chile" e associe despesas.'}
+        onOpen={(folder) => setSelectedId(folder.id)}
+      />
 
       <View className="my-4">
-        {formOpen ? (
-          <Card>
-            <Input label="Nome" value={name} onChangeText={setName} />
-            {error ? (
-              <Text className="mb-2 text-xs font-bold text-negative dark:text-negative-dark">
-                {error}
-              </Text>
-            ) : null}
-            <Button
-              title={create.isPending ? 'Salvando…' : 'Criar pasta'}
-              onPress={submit}
-              disabled={create.isPending}
-            />
-            <View className="h-2" />
-            <Button title="Cancelar" variant="ghost" onPress={() => setFormOpen(false)} />
-          </Card>
-        ) : (
-          <Button title="+ Nova pasta" onPress={() => setFormOpen(true)} />
-        )}
+        <Button title="+ Nova pasta" onPress={() => setForm({ mode: 'create' })} />
       </View>
+
+      <FolderFormSheet
+        open={form !== null}
+        onClose={() => setForm(null)}
+        initialName={form?.mode === 'edit' ? form.folder.name : ''}
+        saving={create.isPending || update.isPending}
+        onSubmit={handleFormSubmit}
+      />
+
+      <FolderDetailSheet
+        folder={selectedFolder}
+        onClose={() => setSelectedId(null)}
+        onEdit={(folder) => {
+          setSelectedId(null)
+          setForm({ mode: 'edit', folder })
+        }}
+        onArchiveToggle={(folder) =>
+          update.mutate({
+            id: folder.id,
+            status: folder.status === 'archived' ? 'active' : 'archived',
+          })
+        }
+        onDelete={(folder) => del.mutate({ id: folder.id })}
+      />
     </ScrollView>
   )
 }

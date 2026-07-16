@@ -198,7 +198,6 @@ export function TransactionForm({ open, editing, onOpenChange }: Props) {
                 <option value="">Nenhuma</option>
                 {activeFolders.map((f) => (
                   <option key={f.id} value={f.id}>
-                    {f.icon ? `${f.icon} ` : ''}
                     {f.name}
                   </option>
                 ))}

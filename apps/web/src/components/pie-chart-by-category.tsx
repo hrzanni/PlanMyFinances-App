@@ -6,7 +6,7 @@ import { useChartColors } from '@/lib/chart-colors'
 
 const MAX_NAMED = 5
 
-function sliceName(s: CategorySlice) {
+export function sliceName(s: CategorySlice) {
   if (s.categoryId === null) return 'Sem categoria'
   if (s.categoryId === OTHER_SLICE_ID) return 'Outras'
   return s.categoryName ?? 'Sem categoria'

@@ -127,7 +127,6 @@ function HistoryContent() {
               <option value="">Todas as pastas</option>
               {folders.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.icon ? `${f.icon} ` : ''}
                   {f.name}
                 </option>
               ))}

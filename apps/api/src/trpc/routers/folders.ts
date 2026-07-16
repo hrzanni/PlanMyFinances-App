@@ -1,5 +1,10 @@
 import { TRPCError } from '@trpc/server'
-import { createFolderInput, deleteByIdInput, updateFolderInput } from '@pmf/schemas'
+import {
+  createFolderInput,
+  deleteByIdInput,
+  folderIdInput,
+  updateFolderInput,
+} from '@pmf/schemas'
 import { router, protectedProcedure } from '../trpc'
 import * as service from '../../services/folders'
 
@@ -7,6 +12,10 @@ const notFound = () => new TRPCError({ code: 'NOT_FOUND', message: 'Pasta não e
 
 export const foldersRouter = router({
   list: protectedProcedure.query(({ ctx }) => service.listFolders(ctx.db, ctx.userId)),
+
+  categoryBreakdown: protectedProcedure
+    .input(folderIdInput)
+    .query(({ ctx, input }) => service.folderCategoryBreakdown(ctx.db, ctx.userId, input.id)),
 
   create: protectedProcedure
     .input(createFolderInput)

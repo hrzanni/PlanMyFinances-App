@@ -1,173 +1,68 @@
 'use client'
 
-import { useState } from 'react'
-import { formatDate } from '@pmf/core'
-import {
-  Badge,
-  Button,
-  Card,
-  Dialog,
-  DialogContent,
-  EmptyState,
-  Field,
-  Input,
-  Label,
-  LoadingState,
-  Table,
-  Td,
-  Th,
-} from '@pmf/ui-web'
-import { trpc, type RouterOutputs } from '@/lib/trpc'
-import { money } from '@/lib/format'
+import { useMemo, useState } from 'react'
+import { Button, LoadingState } from '@pmf/ui-web'
+import { trpc } from '@/lib/trpc'
 import { PageHeader } from '@/components/page-header'
+import { FolderKpis } from '@/components/folders/folder-kpis'
+import { FolderStatusPills, type FolderStatusFilter } from '@/components/folders/folder-status-pills'
+import { FolderGrid } from '@/components/folders/folder-grid'
+import { FolderFormDialog } from '@/components/folders/folder-form-dialog'
+import { FolderDetailDrawer } from '@/components/folders/folder-detail-drawer'
+import type { FolderRow } from '@/components/folders/folder-card'
 
-type FolderRow = RouterOutputs['folders']['list'][number]
-
-/** Card de pasta: total gasto + transações dentro do próprio card (FR-112). */
-function FolderCard({ folder }: { folder: FolderRow }) {
-  const [expanded, setExpanded] = useState(false)
-  const utils = trpc.useUtils()
-  const txs = trpc.transactions.list.useQuery(
-    { folderId: folder.id, limit: 10 },
-    { enabled: expanded },
-  )
-  const archive = trpc.folders.update.useMutation({ onSuccess: () => utils.folders.invalidate() })
-  const del = trpc.folders.delete.useMutation({
-    onSuccess: () => {
-      utils.folders.invalidate()
-      utils.transactions.invalidate()
-    },
-  })
-  const archived = folder.status === 'archived'
-
-  return (
-    <Card>
-      <div className="flex items-center gap-2">
-        <h3 className="flex-1 text-sm font-bold text-foreground">
-          {folder.icon ? `${folder.icon} ` : ''}
-          {folder.name}
-        </h3>
-        <Badge tone={archived ? 'neutral' : 'info'}>{archived ? 'arquivada' : 'ativa'}</Badge>
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="text-xs text-muted hover:text-foreground"
-        >
-          {expanded ? 'recolher ▴' : 'expandir ▾'}
-        </button>
-      </div>
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="text-xl font-black tabular-nums text-foreground">
-          {money(folder.totalSpent)}
-        </span>
-        <span className="text-xs text-muted">
-          total gasto · {folder.txCount} transaç{folder.txCount === 1 ? 'ão' : 'ões'}
-        </span>
-      </div>
-
-      {expanded ? (
-        <div className="mt-3 border-t border-line pt-3">
-          {txs.isLoading ? (
-            <LoadingState />
-          ) : txs.data && txs.data.items.length > 0 ? (
-            <>
-              <Table>
-                <thead>
-                  <tr>
-                    <Th>Data</Th>
-                    <Th>Descrição</Th>
-                    <Th numeric>Valor</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {txs.data.items.map((tx) => (
-                    <tr key={tx.id}>
-                      <Td className="whitespace-nowrap">{formatDate(tx.date)}</Td>
-                      <Td className="font-bold text-foreground">{tx.description ?? '—'}</Td>
-                      <Td numeric>
-                        <span
-                          className={
-                            tx.type === 'receita'
-                              ? 'font-bold text-positive'
-                              : 'font-bold text-negative'
-                          }
-                        >
-                          {tx.type === 'receita' ? '+ ' : '− '}
-                          {money(tx.value)}
-                        </span>
-                      </Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-              {txs.data.nextCursor ? (
-                <a
-                  href={`/historico?pasta=${folder.id}`}
-                  className="mt-2 inline-block text-xs font-bold text-info hover:underline"
-                >
-                  ver todas no Histórico →
-                </a>
-              ) : null}
-            </>
-          ) : (
-            <EmptyState
-              title="Nenhuma transação nesta pasta"
-              hint="Associe transações pelo formulário de nova transação."
-            />
-          )}
-          <div className="mt-3 flex gap-3 text-xs">
-            <button
-              type="button"
-              className="font-bold text-muted hover:text-foreground"
-              onClick={() =>
-                archive.mutate({ id: folder.id, status: archived ? 'active' : 'archived' })
-              }
-            >
-              {archived ? 'Reativar' : 'Arquivar'}
-            </button>
-            <button
-              type="button"
-              className="font-bold text-muted hover:text-negative"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    `Excluir a pasta "${folder.name}"? As transações continuam existindo, apenas sem pasta.`,
-                  )
-                ) {
-                  del.mutate({ id: folder.id })
-                }
-              }}
-            >
-              Excluir
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </Card>
-  )
-}
+type FormState = { mode: 'create' } | { mode: 'edit'; folder: FolderRow } | null
 
 export default function FoldersPage() {
   const { data: folders, isLoading } = trpc.folders.list.useQuery()
   const utils = trpc.useUtils()
-  const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [error, setError] = useState<string | null>(null)
+
+  const [statusFilter, setStatusFilter] = useState<FolderStatusFilter>('todas')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [form, setForm] = useState<FormState>(null)
+
+  const invalidateFolders = () => utils.folders.invalidate()
 
   const create = trpc.folders.create.useMutation({
     onSuccess: () => {
-      utils.folders.invalidate()
-      setOpen(false)
-      setName('')
+      invalidateFolders()
+      setForm(null)
     },
-    onError: () => setError('Erro ao salvar. Tente novamente.'),
+  })
+  const update = trpc.folders.update.useMutation({ onSuccess: invalidateFolders })
+  const del = trpc.folders.delete.useMutation({
+    onSuccess: () => {
+      invalidateFolders()
+      utils.transactions.invalidate()
+      setSelectedId(null)
+    },
   })
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    if (!name.trim()) return setError('Informe o nome')
-    create.mutate({ name: name.trim() })
+  const active = useMemo(() => (folders ?? []).filter((f) => f.status === 'active'), [folders])
+  const archived = useMemo(() => (folders ?? []).filter((f) => f.status === 'archived'), [folders])
+
+  const visible =
+    statusFilter === 'ativas' ? active : statusFilter === 'arquivadas' ? archived : (folders ?? [])
+
+  const selectedFolder = folders?.find((f) => f.id === selectedId) ?? null
+
+  function handleFormSubmit(name: string) {
+    if (form?.mode === 'edit') {
+      update.mutate({ id: form.folder.id, name })
+      setForm(null)
+    } else {
+      create.mutate({ name })
+    }
+  }
+
+  function handleDelete(folder: FolderRow) {
+    if (
+      window.confirm(
+        `Excluir a pasta "${folder.name}"? As transações continuam existindo, apenas sem pasta.`,
+      )
+    ) {
+      del.mutate({ id: folder.id })
+    }
   }
 
   return (
@@ -176,44 +71,65 @@ export default function FoldersPage() {
         title="Pastas"
         subtitle="Agrupe despesas de um objetivo (viagem, reforma, evento) e acompanhe o custo total."
       >
-        <Button onClick={() => setOpen(true)}>+ Nova pasta</Button>
+        <Button onClick={() => setForm({ mode: 'create' })}>+ Nova pasta</Button>
       </PageHeader>
 
       {isLoading ? (
         <LoadingState />
-      ) : folders && folders.length > 0 ? (
-        <div className="space-y-4">
-          {folders.map((f) => (
-            <FolderCard key={f.id} folder={f} />
-          ))}
-        </div>
       ) : (
-        <EmptyState
-          title="Nenhuma pasta ainda"
-          hint='Crie uma pasta como "Viagem Chile" e associe despesas a ela.'
-        />
+        <>
+          <FolderKpis
+            total={(folders ?? []).length}
+            active={active.length}
+            archived={archived.length}
+          />
+          <FolderStatusPills
+            value={statusFilter}
+            onChange={setStatusFilter}
+            counts={{
+              todas: (folders ?? []).length,
+              ativas: active.length,
+              arquivadas: archived.length,
+            }}
+          />
+          <FolderGrid
+            folders={visible}
+            emptyTitle={
+              statusFilter === 'arquivadas' ? 'Nenhuma pasta arquivada' : 'Nenhuma pasta ainda'
+            }
+            emptyHint={
+              statusFilter === 'arquivadas'
+                ? undefined
+                : 'Crie uma pasta como "Viagem Chile" e associe despesas a ela.'
+            }
+            onOpen={(folder) => setSelectedId(folder.id)}
+          />
+        </>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent title="Nova pasta">
-          <form onSubmit={handleSubmit}>
-            <Field>
-              <Label htmlFor="folder-name">Nome</Label>
-              <Input
-                id="folder-name"
-                required
-                placeholder="Viagem Chile"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </Field>
-            {error ? <p className="mb-3 text-xs font-bold text-negative">{error}</p> : null}
-            <Button type="submit" disabled={create.isPending} className="w-full">
-              {create.isPending ? 'Salvando…' : 'Criar pasta'}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <FolderFormDialog
+        open={form !== null}
+        onOpenChange={(open) => !open && setForm(null)}
+        initialName={form?.mode === 'edit' ? form.folder.name : ''}
+        saving={create.isPending || update.isPending}
+        onSubmit={handleFormSubmit}
+      />
+
+      <FolderDetailDrawer
+        folder={selectedFolder}
+        onClose={() => setSelectedId(null)}
+        onEdit={(folder) => {
+          setSelectedId(null)
+          setForm({ mode: 'edit', folder })
+        }}
+        onArchiveToggle={(folder) =>
+          update.mutate({
+            id: folder.id,
+            status: folder.status === 'archived' ? 'active' : 'archived',
+          })
+        }
+        onDelete={handleDelete}
+      />
     </>
   )
 }

@@ -177,7 +177,7 @@ export function TxFilterSheet({ open, onClose, filters, onApply }: Props) {
                     <Chip
                       key={f.id}
                       active={folderId === f.id}
-                      label={`${f.icon ? `${f.icon} ` : ''}${f.name}`}
+                      label={f.name}
                       onPress={() => setFolderId(f.id)}
                     />
                   ))}

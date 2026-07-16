@@ -8,7 +8,6 @@ export const folders = pgTable('folders', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
-  icon: text('icon'),
   status: activeStatus('status').notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
