@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { applyChargePayment, formatDate, installmentTotals, toNumber } from '@pmf/core'
+import { useEffect, useState } from 'react'
+import { applyChargePayment, installmentTotals, toNumber } from '@pmf/core'
 import { Button, Dialog, DialogContent, Field, Input, Label } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
 import { money } from '@/lib/format'
@@ -14,20 +14,20 @@ export interface ChargePaymentTarget {
   amountPaid: string
 }
 
-/** Registrar recebimento parcial de cobrança + histórico com desfazer (fase 8.1). */
+/** Registrar recebimento (parcial ou de uma parcela específica) de uma cobrança. */
 export function ChargePaymentDialog({
   charge,
+  initialAmount,
+  installmentLabel,
   onClose,
 }: {
   charge: ChargePaymentTarget | null
+  initialAmount?: number
+  installmentLabel?: string
   onClose: () => void
 }) {
   const utils = trpc.useUtils()
   const open = charge !== null
-  const payments = trpc.charges.payments.useQuery(
-    { id: charge?.id ?? '' },
-    { enabled: open },
-  )
   const invalidate = () => {
     utils.charges.invalidate()
     utils.transactions.invalidate()
@@ -41,10 +41,16 @@ export function ChargePaymentDialog({
     },
     onError: (err) => setError(err.message),
   })
-  const unregister = trpc.charges.unregisterPayment.useMutation({ onSuccess: invalidate })
 
   const [amount, setAmount] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setAmount(initialAmount ? initialAmount.toFixed(2).replace('.', ',') : '')
+      setError(null)
+    }
+  }, [open, charge?.id, initialAmount])
 
   if (!charge) return null
 
@@ -70,9 +76,13 @@ export function ChargePaymentDialog({
     register.mutate({ id: charge.id, amount: value })
   }
 
+  const title = installmentLabel
+    ? `Recebimento de ${charge.debtorName} · ${installmentLabel}`
+    : `Recebimento de ${charge.debtorName}`
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent title={`Recebimento de ${charge.debtorName}`}>
+      <DialogContent title={title}>
         <p className="mb-3 text-xs text-muted">
           Recebido {money(charge.amountPaid)} de {money(totals.total)} · resta{' '}
           <span className="font-bold text-foreground">{money(totals.remaining)}</span>
@@ -98,30 +108,6 @@ export function ChargePaymentDialog({
             Registrar recebimento
           </Button>
         </form>
-
-        {payments.data && payments.data.length > 0 ? (
-          <div className="mt-4 border-t border-line pt-3">
-            <p className="mb-2 text-xs font-bold text-muted">Histórico de recebimentos</p>
-            <ul className="space-y-1">
-              {payments.data.map((p) => (
-                <li key={p.id} className="flex items-center justify-between text-xs">
-                  <span>
-                    {formatDate(String(p.createdAt).slice(0, 10))} ·{' '}
-                    <span className="font-bold text-positive">{money(p.amount)}</span>
-                  </span>
-                  <button
-                    type="button"
-                    className="text-muted underline hover:text-negative"
-                    disabled={unregister.isPending}
-                    onClick={() => unregister.mutate({ paymentId: p.id })}
-                  >
-                    desfazer
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
       </DialogContent>
     </Dialog>
   )

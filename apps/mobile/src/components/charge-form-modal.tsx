@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Modal, ScrollView, Text, View } from 'react-native'
 import {
   emptyInstallmentDraft,
@@ -8,21 +8,48 @@ import {
 } from '@pmf/core'
 import { Button, Input } from './ui'
 import { trpc } from '@/lib/trpc'
+import type { ChargeRow } from './charges/charge-card'
 
-/** Formulário de nova cobrança como modal nativo (paridade com a web). */
-export function ChargeFormModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function draftFromRow(row: ChargeRow): InstallmentDraft {
+  return {
+    name: row.debtorName,
+    description: row.description ?? '',
+    amountPerInstallment: row.amountPerInstallment,
+    totalInstallments: String(row.totalInstallments),
+    amountPaid: row.amountPaid,
+    dueDate: row.dueDate ?? '',
+  }
+}
+
+/** Criar/editar cobrança como modal nativo (paridade com a web); status muda só pelas pills do sheet. */
+export function ChargeFormModal({
+  open,
+  editing,
+  onClose,
+}: {
+  open: boolean
+  editing?: ChargeRow | null
+  onClose: () => void
+}) {
   const utils = trpc.useUtils()
   const [draft, setDraft] = useState<InstallmentDraft>(emptyInstallmentDraft)
   const [error, setError] = useState<string | null>(null)
 
-  const create = trpc.charges.create.useMutation({
-    onSuccess: () => {
-      utils.charges.invalidate()
-      setDraft(emptyInstallmentDraft)
-      onClose()
-    },
-    onError: () => setError('Erro ao salvar. Tente novamente.'),
-  })
+  useEffect(() => {
+    if (open) {
+      setDraft(editing ? draftFromRow(editing) : emptyInstallmentDraft)
+      setError(null)
+    }
+  }, [open, editing])
+
+  const onSuccess = () => {
+    utils.charges.invalidate()
+    onClose()
+  }
+  const onError = () => setError('Erro ao salvar. Tente novamente.')
+  const create = trpc.charges.create.useMutation({ onSuccess, onError })
+  const update = trpc.charges.update.useMutation({ onSuccess, onError })
+  const isPending = create.isPending || update.isPending
 
   const set = (patch: Partial<InstallmentDraft>) => setDraft((d) => ({ ...d, ...patch }))
 
@@ -31,11 +58,20 @@ export function ChargeFormModal({ open, onClose }: { open: boolean; onClose: () 
     if (!draft.name.trim()) return setError('Informe o campo devedor')
     const err = validateInstallmentDraft(draft)
     if (err) return setError(err)
-    create.mutate({
-      debtorName: draft.name.trim(),
-      status: 'pendente',
-      ...parseInstallmentDraft(draft),
-    })
+    if (editing) {
+      update.mutate({
+        id: editing.id,
+        debtorName: draft.name.trim(),
+        status: editing.status as 'pendente' | 'cobrado' | 'pago',
+        ...parseInstallmentDraft(draft),
+      })
+    } else {
+      create.mutate({
+        debtorName: draft.name.trim(),
+        status: 'pendente',
+        ...parseInstallmentDraft(draft),
+      })
+    }
   }
 
   return (
@@ -44,7 +80,7 @@ export function ChargeFormModal({ open, onClose }: { open: boolean; onClose: () 
         <View className="max-h-[88%] rounded-t-2xl bg-background p-5 dark:bg-background-dark">
           <ScrollView keyboardShouldPersistTaps="handled">
             <Text className="mb-4 text-base font-black text-foreground dark:text-foreground-dark">
-              Nova cobrança
+              {editing ? 'Editar cobrança' : 'Nova cobrança'}
             </Text>
             <Input label="Devedor" value={draft.name} onChangeText={(name) => set({ name })} />
             <Input
@@ -81,9 +117,9 @@ export function ChargeFormModal({ open, onClose }: { open: boolean; onClose: () 
               </Text>
             ) : null}
             <Button
-              title={create.isPending ? 'Salvando…' : 'Salvar cobrança'}
+              title={isPending ? 'Salvando…' : 'Salvar cobrança'}
               onPress={submit}
-              disabled={create.isPending}
+              disabled={isPending}
             />
             <View className="h-2" />
             <Button title="Cancelar" variant="ghost" onPress={onClose} />

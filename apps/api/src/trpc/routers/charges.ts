@@ -17,8 +17,6 @@ const notFound = () => new TRPCError({ code: 'NOT_FOUND', message: 'CobranÃ§a nÃ
 export const chargesRouter = router({
   list: protectedProcedure.query(({ ctx }) => service.listCharges(ctx.db, ctx.userId)),
 
-  summary: protectedProcedure.query(({ ctx }) => service.chargesSummary(ctx.db, ctx.userId)),
-
   create: protectedProcedure
     .input(createChargeInput)
     .mutation(({ ctx, input }) => service.createCharge(ctx.db, ctx.userId, input)),

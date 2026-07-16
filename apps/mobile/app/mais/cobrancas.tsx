@@ -1,58 +1,67 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ScrollView, View } from 'react-native'
+import { chargeEffectiveState, chargesKpis } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
-import { money } from '@/lib/format'
-import { confirmDelete } from '@/lib/confirm'
-import { Button, EmptyState, Kpi } from '@/components/ui'
-import { ChargeCard } from '@/components/charge-card'
-import { ChargeFormModal } from '@/components/charge-form-modal'
+import { Button, EmptyState } from '@/components/ui'
+import { ChargeKpis } from '@/components/charges/charge-kpis'
 import {
-  ChargePaymentModal,
-  type ChargePaymentTarget,
-} from '@/components/charge-payment-modal'
+  ChargeStatusPills,
+  type ChargeStatusFilter,
+} from '@/components/charges/charge-status-pills'
+import { ChargeCard } from '@/components/charges/charge-card'
+import { toChargeState, type ChargeRow } from '@/components/charges/charge-adapt'
+import { ChargeDetailSheet } from '@/components/charges/charge-detail-sheet'
+import { ChargeFormModal } from '@/components/charge-form-modal'
+
+type FormState = { mode: 'create' } | { mode: 'edit'; charge: ChargeRow } | null
 
 export default function ChargesScreen() {
-  const utils = trpc.useUtils()
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
   const list = trpc.charges.list.useQuery()
-  const summary = trpc.charges.summary.useQuery()
-  const setStatus = trpc.charges.setStatus.useMutation({
-    onSuccess: () => utils.charges.invalidate(),
+  const rows = list.data ?? []
+
+  const [statusFilter, setStatusFilter] = useState<ChargeStatusFilter>('todas')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [form, setForm] = useState<FormState>(null)
+
+  const kpis = useMemo(
+    () => chargesKpis(rows.map(toChargeState), today),
+    [rows, today],
+  )
+
+  const withState = useMemo(
+    () => rows.map((row) => ({ row, state: chargeEffectiveState(toChargeState(row), today) })),
+    [rows, today],
+  )
+
+  const counts: Record<ChargeStatusFilter, number> = {
+    todas: withState.length,
+    pendentes: withState.filter((r) => r.state === 'pendente' || r.state === 'cobrado').length,
+    atrasadas: withState.filter((r) => r.state === 'atrasada').length,
+    pagas: withState.filter((r) => r.state === 'pago').length,
+  }
+
+  const visible = withState.filter(({ state }) => {
+    if (statusFilter === 'todas') return true
+    if (statusFilter === 'pendentes') return state === 'pendente' || state === 'cobrado'
+    if (statusFilter === 'atrasadas') return state === 'atrasada'
+    return state === 'pago'
   })
-  const del = trpc.charges.delete.useMutation({
-    onSuccess: () => utils.charges.invalidate(),
-  })
-  const [formOpen, setFormOpen] = useState(false)
-  // guarda só o id: o alvo é derivado da lista para o modal refletir o cache atualizado
-  const [payingId, setPayingId] = useState<string | null>(null)
-  const paying: ChargePaymentTarget | null =
-    list.data?.find((r) => r.id === payingId) ?? null
+
+  const selectedCharge = rows.find((r) => r.id === selectedId) ?? null
 
   return (
     <ScrollView className="flex-1 px-4 pt-3">
-      <View className="mb-2 flex-row gap-2">
-        <Kpi label="A receber" value={money(summary.data?.receivable ?? 0)} />
-        <Kpi label="Vence no mês" value={money(summary.data?.dueThisMonth ?? 0)} />
-      </View>
-      <View className="mb-3">
-        <Kpi label="Total recebido" value={money(summary.data?.received ?? 0)} tone="positive" />
-      </View>
+      <ChargeKpis kpis={kpis} />
+      <ChargeStatusPills value={statusFilter} onChange={setStatusFilter} counts={counts} />
+
       <View className="mb-4">
-        <Button title="+ Nova cobrança" onPress={() => setFormOpen(true)} />
+        <Button title="+ Nova cobrança" onPress={() => setForm({ mode: 'create' })} />
       </View>
 
-      {list.data && list.data.length > 0 ? (
-        list.data.map((row) => (
-          <ChargeCard
-            key={row.id}
-            row={row}
-            onSetStatus={(status) => setStatus.mutate({ id: row.id, status })}
-            onRegisterPayment={() => setPayingId(row.id)}
-            onDelete={() =>
-              confirmDelete('Excluir cobrança', `Excluir a cobrança de "${row.debtorName}"?`, () =>
-                del.mutate({ id: row.id }),
-              )
-            }
-          />
+      {visible.length > 0 ? (
+        visible.map(({ row }) => (
+          <ChargeCard key={row.id} row={row} today={today} onOpen={() => setSelectedId(row.id)} />
         ))
       ) : (
         <EmptyState
@@ -62,8 +71,21 @@ export default function ChargesScreen() {
       )}
       <View className="h-8" />
 
-      <ChargeFormModal open={formOpen} onClose={() => setFormOpen(false)} />
-      <ChargePaymentModal charge={paying} onClose={() => setPayingId(null)} />
+      <ChargeFormModal
+        open={form !== null}
+        editing={form?.mode === 'edit' ? form.charge : null}
+        onClose={() => setForm(null)}
+      />
+
+      <ChargeDetailSheet
+        charge={selectedCharge}
+        today={today}
+        onClose={() => setSelectedId(null)}
+        onEdit={(charge) => {
+          setSelectedId(null)
+          setForm({ mode: 'edit', charge })
+        }}
+      />
     </ScrollView>
   )
 }
