@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { trpc } from '@/lib/trpc'
+import { addMonths, monthLabel } from '@/lib/format'
 import { Button, Card, Input } from './ui'
 
 export interface EditableFixedExpense {
@@ -12,12 +13,15 @@ export interface EditableFixedExpense {
   type: 'despesa' | 'receita'
 }
 
-/** Criar/editar fixo (despesa ou receita). Ao editar valor, vale do mês vigente em diante (FR-105). */
+/** Criar/editar fixo (despesa ou receita). Reajuste de valor pede a partir de qual mês vale (FR-105). */
 export function FixedExpenseFormCard({
   editing,
+  month,
   onClose,
 }: {
   editing: EditableFixedExpense | null
+  /** Mês atualmente visualizado na tela; usado como default do reajuste. */
+  month: string
   onClose: () => void
 }) {
   const utils = trpc.useUtils()
@@ -30,6 +34,7 @@ export function FixedExpenseFormCard({
   const [dueDay, setDueDay] = useState(String(editing?.dueDay ?? 5))
   const [type, setType] = useState<'despesa' | 'receita'>(editing?.type ?? 'despesa')
   const [categoryId, setCategoryId] = useState(editing?.categoryId ?? '')
+  const [amountEffectiveFrom, setAmountEffectiveFrom] = useState(month)
   const [error, setError] = useState<string | null>(null)
 
   const filteredCategories = (categories ?? []).filter((c) => c.type === type)
@@ -50,6 +55,8 @@ export function FixedExpenseFormCard({
   const update = trpc.fixedExpenses.update.useMutation({ onSuccess: onDone, onError })
   const isPending = create.isPending || update.isPending
 
+  const amountChanged = editing != null && Number(amount.replace(',', '.')) !== Number(editing.amount)
+
   function submit() {
     setError(null)
     const parsed = Number(amount.replace(',', '.'))
@@ -65,8 +72,13 @@ export function FixedExpenseFormCard({
       type,
       categoryId: categoryId || undefined,
     }
-    if (editing) update.mutate({ id: editing.id, ...payload })
-    else create.mutate(payload)
+    if (editing) {
+      update.mutate({
+        id: editing.id,
+        ...payload,
+        ...(amountChanged ? { amountEffectiveFrom } : {}),
+      })
+    } else create.mutate(payload)
   }
 
   function Chip({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) {
@@ -97,7 +109,8 @@ export function FixedExpenseFormCard({
       </Text>
       {editing ? (
         <Text className="mb-3 text-[11px] leading-4 text-muted dark:text-muted-dark">
-          Mudança de valor vale do mês vigente em diante; meses já pagos guardam o valor da época.
+          Mudar o valor é um reajuste: meses anteriores ao mês escolhido abaixo mantêm o valor
+          atual, mesmo que ainda não estejam pagos.
         </Text>
       ) : null}
       <Input label="Nome" value={name} onChangeText={setName} />
@@ -111,6 +124,30 @@ export function FixedExpenseFormCard({
         value={amount}
         onChangeText={setAmount}
       />
+      {amountChanged ? (
+        <View className="mb-3">
+          <Text className="mb-1 text-xs font-bold text-foreground dark:text-foreground-dark">
+            A partir de qual mês vale esse novo valor?
+          </Text>
+          <View className="flex-row items-center justify-center gap-4 rounded-lg border border-line bg-surface py-2 dark:border-line-dark dark:bg-surface-dark">
+            <Pressable
+              onPress={() => setAmountEffectiveFrom(addMonths(amountEffectiveFrom, -1))}
+              accessibilityLabel="Mês anterior"
+            >
+              <Text className="px-3 text-muted dark:text-muted-dark">◀</Text>
+            </Pressable>
+            <Text className="text-sm font-bold text-foreground dark:text-foreground-dark">
+              {monthLabel(amountEffectiveFrom)}
+            </Text>
+            <Pressable
+              onPress={() => setAmountEffectiveFrom(addMonths(amountEffectiveFrom, 1))}
+              accessibilityLabel="Próximo mês"
+            >
+              <Text className="px-3 text-muted dark:text-muted-dark">▶</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
       <Input
         label="Dia do vencimento"
         keyboardType="number-pad"

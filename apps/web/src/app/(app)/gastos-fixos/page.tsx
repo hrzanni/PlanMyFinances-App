@@ -8,6 +8,7 @@ import { currentMonth, monthLabel } from '@/lib/format'
 import { PageHeader } from '@/components/page-header'
 import { MonthSelector } from '@/components/month-selector'
 import { FixedExpenseForm, type EditableFixedExpense } from '@/components/fixed-expense-form'
+import { RemoveFixedExpenseDialog } from '@/components/remove-fixed-expense-dialog'
 import { FixedKpis } from '@/components/fixed/fixed-kpis'
 import { TypeFilterPills, type FixedTypeFilter } from '@/components/fixed/type-filter-pills'
 import { FixedTimeline, type FixedTimelineItemData } from '@/components/fixed/fixed-timeline'
@@ -16,6 +17,7 @@ export default function FixedExpensesPage() {
   const [month, setMonth] = useState(currentMonth)
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<EditableFixedExpense | null>(null)
+  const [removing, setRemoving] = useState<FixedTimelineItemData | null>(null)
   const [typeFilter, setTypeFilter] = useState<FixedTypeFilter>('todos')
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
 
@@ -29,6 +31,7 @@ export default function FixedExpensesPage() {
   }
   const pay = trpc.fixedExpenses.pay.useMutation({ onSuccess: invalidate })
   const unpay = trpc.fixedExpenses.unpay.useMutation({ onSuccess: invalidate })
+  const end = trpc.fixedExpenses.end.useMutation({ onSuccess: invalidate })
   const del = trpc.fixedExpenses.delete.useMutation({ onSuccess: invalidate })
 
   const items = list.data?.items ?? []
@@ -91,26 +94,27 @@ export default function FixedExpensesPage() {
             setEditing(item as EditableFixedExpense)
             setFormOpen(true)
           }}
-          onDelete={(item) => {
-            if (
-              window.confirm(
-                `Excluir "${item.name}"? O histórico de pagamentos deste item será removido; as transações já criadas permanecem.`,
-              )
-            ) {
-              del.mutate({ id: item.id })
-            }
-          }}
+          onDelete={(item) => setRemoving(item)}
         />
       )}
 
       <div className="mt-4 rounded-r-lg border-l-4 border-info bg-info/5 px-4 py-3 text-xs text-body">
         <b className="text-foreground">Como funciona a virada do mês:</b> no mês novo tudo volta a
         pendente automaticamente; o histórico fica guardado e você navega para trás no seletor
-        acima. Mudou o valor? Vale só do mês vigente em diante — meses pagos guardam o valor da
-        época.
+        acima. Um fixo só aparece a partir do mês em que foi criado; reajustes de valor valem a
+        partir do mês escolhido, sem mudar meses anteriores.
       </div>
 
-      <FixedExpenseForm open={formOpen} onOpenChange={setFormOpen} editing={editing} />
+      <FixedExpenseForm open={formOpen} onOpenChange={setFormOpen} editing={editing} month={month} />
+      {removing ? (
+        <RemoveFixedExpenseDialog
+          open
+          onOpenChange={(open) => !open && setRemoving(null)}
+          name={removing.name}
+          onEnd={() => end.mutate({ id: removing.id, lastActiveMonth: month })}
+          onDelete={() => del.mutate({ id: removing.id })}
+        />
+      ) : null}
     </>
   )
 }

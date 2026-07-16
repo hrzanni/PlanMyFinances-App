@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { fixedPendingSummary } from '@pmf/core'
 import { trpc } from '@/lib/trpc'
 import { addMonths, currentMonth, monthLabel } from '@/lib/format'
-import { confirmDelete } from '@/lib/confirm'
+import { confirmEndOrDelete } from '@/lib/confirm'
 import { Button, EmptyState, ScreenTitle } from '@/components/ui'
 import { FixedExpenseFormCard, type EditableFixedExpense } from '@/components/fixed-expense-form'
 import { FixedKpis } from '@/components/fixed-kpis'
@@ -69,6 +69,7 @@ export default function FixedExpensesScreen() {
   }
   const pay = trpc.fixedExpenses.pay.useMutation({ onSuccess: invalidate })
   const unpay = trpc.fixedExpenses.unpay.useMutation({ onSuccess: invalidate })
+  const end = trpc.fixedExpenses.end.useMutation({ onSuccess: invalidate })
   const del = trpc.fixedExpenses.delete.useMutation({ onSuccess: invalidate })
 
   const items = list.data?.items ?? []
@@ -135,9 +136,9 @@ export default function FixedExpensesScreen() {
                 setFormOpen(true)
               }}
               onDelete={(item) =>
-                confirmDelete(
-                  'Excluir fixo',
-                  `Excluir "${item.name}"? O histórico de pagamentos deste item será removido; as transações já criadas permanecem.`,
+                confirmEndOrDelete(
+                  item.name,
+                  () => end.mutate({ id: item.id, lastActiveMonth: month }),
                   () => del.mutate({ id: item.id }),
                 )
               }
@@ -150,6 +151,7 @@ export default function FixedExpensesScreen() {
             <FixedExpenseFormCard
               key={editing?.id ?? 'new'}
               editing={editing}
+              month={month}
               onClose={closeForm}
             />
           ) : (
@@ -159,8 +161,8 @@ export default function FixedExpensesScreen() {
 
         <Text className="mb-8 text-[11px] leading-4 text-muted dark:text-muted-dark">
           Marcar como pago (ou recebido) cria a transação do mês automaticamente; desmarcar
-          remove. Na virada do mês tudo volta a pendente e o histórico fica preservado — valores
-          editados valem só do mês vigente em diante.
+          remove. Um fixo só aparece a partir do mês em que foi criado; reajustes de valor valem
+          a partir do mês escolhido, sem mudar meses anteriores.
         </Text>
       </ScrollView>
     </SafeAreaView>

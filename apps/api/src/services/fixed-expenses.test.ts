@@ -3,6 +3,8 @@ import { createTestDb, seedTestUsers } from '../test/test-db'
 import type { DrizzleDB } from '../db/client'
 import {
   createFixedExpense,
+  deleteFixedExpense,
+  endFixedExpense,
   listFixedExpenses,
   payFixedExpense,
   unpayFixedExpense,
@@ -80,10 +82,10 @@ describe('fixed expenses — pagar/despagar (FR-103/104, SC-100)', () => {
     expect(list.items[0]?.payment).toBeNull()
   })
 
-  it('editar valor vale só dali em diante; mês pago preserva snapshot (FR-105)', async () => {
+  it('editar valor (reajuste) vale a partir do mês escolhido; mês pago preserva snapshot (FR-105)', async () => {
     const rent = await createRent(userA)
     await payFixedExpense(db, userA, { id: rent.id, month: '2026-07' })
-    await updateFixedExpense(db, userA, { id: rent.id, amount: 1980 })
+    await updateFixedExpense(db, userA, { id: rent.id, amount: 1980, amountEffectiveFrom: '2026-08' })
 
     const july = await listFixedExpenses(db, userA, '2026-07')
     expect(july.items[0]?.payment?.amount).toBe('1850.00')
@@ -155,5 +157,75 @@ describe('fixed expenses — receita fixa', () => {
     expect(julyAfter.totals.income.paid).toBe(5000)
     expect(julyAfter.totals.expense.total).toBe(1850)
     expect(julyAfter.totals.income.total).toBe(5000)
+  })
+})
+
+describe('fixed expenses — vigência (criação nunca é retroativa)', () => {
+  it('fixo criado agora não aparece em mês anterior à criação', async () => {
+    const rent = await createRent(userA)
+    const june = await listFixedExpenses(db, userA, '2026-06')
+    expect(june.items).toHaveLength(0)
+
+    const july = await listFixedExpenses(db, userA, '2026-07')
+    expect(july.items.map((i) => i.id)).toContain(rent.id)
+  })
+})
+
+describe('fixed expenses — reajuste de valor (coerência entre meses)', () => {
+  it('mudança de valor sem informar amountEffectiveFrom é rejeitada', async () => {
+    const rent = await createRent(userA)
+    const result = await updateFixedExpense(db, userA, { id: rent.id, amount: 1980 })
+    expect(result).toBe('amount_effective_from_required')
+  })
+
+  it('amountEffectiveFrom igual ou anterior ao último valor registrado é rejeitado', async () => {
+    const rent = await createRent(userA)
+    const result = await updateFixedExpense(db, userA, {
+      id: rent.id,
+      amount: 1900,
+      amountEffectiveFrom: '2026-07',
+    })
+    expect(result).toBe('invalid_amount_effective_from')
+  })
+
+  it('reajuste futuro mantém o valor antigo nos meses intermediários, mesmo não pagos', async () => {
+    const rent = await createRent(userA)
+    await updateFixedExpense(db, userA, {
+      id: rent.id,
+      amount: 1980,
+      amountEffectiveFrom: '2026-09',
+    })
+
+    const august = await listFixedExpenses(db, userA, '2026-08')
+    expect(august.items[0]?.amount).toBe('1850.00')
+
+    const september = await listFixedExpenses(db, userA, '2026-09')
+    expect(september.items[0]?.amount).toBe('1980.00')
+  })
+})
+
+describe('fixed expenses — encerrar vs excluir definitivamente', () => {
+  it('encerrar preserva meses passados/pagos e some dos meses futuros', async () => {
+    const rent = await createRent(userA)
+    await payFixedExpense(db, userA, { id: rent.id, month: '2026-07' })
+    await endFixedExpense(db, userA, rent.id, '2026-07')
+
+    const july = await listFixedExpenses(db, userA, '2026-07')
+    expect(july.items[0]?.payment?.amount).toBe('1850.00')
+
+    const august = await listFixedExpenses(db, userA, '2026-08')
+    expect(august.items).toHaveLength(0)
+
+    const { items } = await listTransactions(db, userA, { limit: 10 })
+    expect(items).toHaveLength(1)
+  })
+
+  it('excluir definitivamente remove o fixo e o histórico junto', async () => {
+    const rent = await createRent(userA)
+    const result = await deleteFixedExpense(db, userA, rent.id)
+    expect(result?.id).toBe(rent.id)
+
+    const july = await listFixedExpenses(db, userA, '2026-07')
+    expect(july.items).toHaveLength(0)
   })
 })

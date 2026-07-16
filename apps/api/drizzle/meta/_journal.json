@@ -43,6 +43,20 @@
       "when": 1784166240737,
       "tag": "0005_hard_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784180242285,
+      "tag": "0006_fixos_vigencia_e_historico_valor",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784180283163,
+      "tag": "0007_fixos_remove_amount_column",
+      "breakpoints": true
     }
   ]
 }

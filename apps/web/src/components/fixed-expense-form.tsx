@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Dialog, DialogContent, Field, Input, Label, Select } from '@pmf/ui-web'
 import { trpc } from '@/lib/trpc'
+import { MonthSelector } from '@/components/month-selector'
 
 export interface EditableFixedExpense {
   id: string
@@ -17,10 +18,12 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   editing?: EditableFixedExpense | null
+  /** Mês atualmente visualizado na página; usado como default do reajuste. */
+  month: string
 }
 
-/** Criar/editar fixo (despesa ou receita). Ao editar valor, vale do mês vigente em diante (FR-105). */
-export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
+/** Criar/editar fixo (despesa ou receita). Reajuste de valor pede a partir de qual mês vale (FR-105). */
+export function FixedExpenseForm({ open, onOpenChange, editing, month }: Props) {
   const utils = trpc.useUtils()
   const { data: categories } = trpc.categories.list.useQuery(undefined, { enabled: open })
 
@@ -29,6 +32,7 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
   const [dueDay, setDueDay] = useState('5')
   const [type, setType] = useState<'despesa' | 'receita'>('despesa')
   const [categoryId, setCategoryId] = useState('')
+  const [amountEffectiveFrom, setAmountEffectiveFrom] = useState(month)
   const [error, setError] = useState<string | null>(null)
 
   const filteredCategories = useMemo(
@@ -43,9 +47,10 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
       setDueDay(String(editing?.dueDay ?? 5))
       setType(editing?.type ?? 'despesa')
       setCategoryId(editing?.categoryId ?? '')
+      setAmountEffectiveFrom(month)
       setError(null)
     }
-  }, [open, editing])
+  }, [open, editing, month])
 
   function selectType(next: 'despesa' | 'receita') {
     setType(next)
@@ -65,6 +70,8 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
     onError: () => setError('Erro ao salvar. Tente novamente.'),
   })
 
+  const amountChanged = editing != null && Number(amount.replace(',', '.')) !== Number(editing.amount)
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -80,8 +87,13 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
       type,
       categoryId: categoryId || undefined,
     }
-    if (editing) update.mutate({ id: editing.id, ...payload })
-    else create.mutate(payload)
+    if (editing) {
+      update.mutate({
+        id: editing.id,
+        ...payload,
+        ...(amountChanged ? { amountEffectiveFrom } : {}),
+      })
+    } else create.mutate(payload)
   }
 
   return (
@@ -90,7 +102,7 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
         title={editing ? 'Editar fixo' : 'Novo fixo'}
         description={
           editing
-            ? 'Mudança de valor vale do mês vigente em diante; meses já pagos guardam o valor da época.'
+            ? 'Mudar o valor é um reajuste: meses anteriores ao mês escolhido abaixo mantêm o valor atual, mesmo que ainda não estejam pagos.'
             : undefined
         }
       >
@@ -141,6 +153,12 @@ export function FixedExpenseForm({ open, onOpenChange, editing }: Props) {
               />
             </Field>
           </div>
+          {amountChanged ? (
+            <Field>
+              <Label>A partir de qual mês vale esse novo valor?</Label>
+              <MonthSelector month={amountEffectiveFrom} onChange={setAmountEffectiveFrom} />
+            </Field>
+          ) : null}
           <Field>
             <Label htmlFor="fe-cat">
               Categoria (para a {type === 'receita' ? 'receita' : 'despesa'} gerada)

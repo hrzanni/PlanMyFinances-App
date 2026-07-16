@@ -1,5 +1,11 @@
-import { and, asc, eq } from 'drizzle-orm'
-import { effectiveDueDate, fixedExpenseStatus, fixedExpenseTotals } from '@pmf/core'
+import { and, eq, asc } from 'drizzle-orm'
+import {
+  effectiveDueDate,
+  fixedExpenseStatus,
+  fixedExpenseTotals,
+  isFixedExpenseActiveInMonth,
+  resolveAmountForMonth,
+} from '@pmf/core'
 import type {
   CreateFixedExpenseInput,
   PayFixedExpenseInput,
@@ -8,6 +14,12 @@ import type {
 } from '@pmf/schemas'
 import type { DrizzleDB } from '../db/client'
 import { fixedExpensePayments, fixedExpenses, transactions } from '../db/schema'
+import {
+  fetchAmountHistoryByExpense,
+  fetchAmountHistoryByUser,
+  insertAmountReajuste,
+  insertInitialAmountHistory,
+} from './fixed-expense-amount-history'
 
 function refMonth(month: string): string {
   return `${month}-01`
@@ -17,40 +29,58 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-/** Lista os gastos ativos com o pagamento do mês e o status derivado (FR-101/102). */
+function currentMonth(): string {
+  return refMonth(todayIso().slice(0, 7))
+}
+
+/** Lista os fixos vigentes no mês (FR-101/102): valor resolvido pelo histórico de reajustes. */
 export async function listFixedExpenses(db: DrizzleDB, userId: string, month: string) {
   const reference = refMonth(month)
   const today = todayIso()
 
-  const expenses = await db
+  const allExpenses = await db
     .select()
     .from(fixedExpenses)
     .where(and(eq(fixedExpenses.userId, userId), eq(fixedExpenses.status, 'active')))
     .orderBy(asc(fixedExpenses.dueDay), asc(fixedExpenses.name))
+  const expenses = allExpenses.filter((e) =>
+    isFixedExpenseActiveInMonth(e.effectiveFrom, e.effectiveUntil, reference),
+  )
 
-  const payments = await db
-    .select()
-    .from(fixedExpensePayments)
-    .where(
-      and(
-        eq(fixedExpensePayments.userId, userId),
-        eq(fixedExpensePayments.referenceMonth, reference),
+  const [payments, history] = await Promise.all([
+    db
+      .select()
+      .from(fixedExpensePayments)
+      .where(
+        and(
+          eq(fixedExpensePayments.userId, userId),
+          eq(fixedExpensePayments.referenceMonth, reference),
+        ),
       ),
-    )
+    fetchAmountHistoryByUser(db, userId),
+  ])
 
-  const items = expenses.map((expense) => {
-    const payment = payments.find((p) => p.fixedExpenseId === expense.id) ?? null
-    return {
-      ...expense,
-      payment,
-      monthlyStatus: fixedExpenseStatus({
-        dueDay: expense.dueDay,
-        month: reference,
-        today,
-        paidAt: payment?.paidAt ?? null,
-      }),
-    }
-  })
+  const items = expenses
+    .map((expense) => {
+      const amount = resolveAmountForMonth(
+        history.filter((h) => h.fixedExpenseId === expense.id),
+        reference,
+      )
+      if (amount == null) return null
+      const payment = payments.find((p) => p.fixedExpenseId === expense.id) ?? null
+      return {
+        ...expense,
+        amount,
+        payment,
+        monthlyStatus: fixedExpenseStatus({
+          dueDay: expense.dueDay,
+          month: reference,
+          today,
+          paidAt: payment?.paidAt ?? null,
+        }),
+      }
+    })
+    .filter((i): i is NonNullable<typeof i> => i != null)
 
   const toTotalsInput = (rows: typeof items) =>
     rows.map((i) => ({ amount: i.amount, paidAmount: i.payment?.amount ?? null }))
@@ -63,33 +93,99 @@ export async function listFixedExpenses(db: DrizzleDB, userId: string, month: st
   return { items, totals }
 }
 
+/** Cria o fixo a partir do mês corrente (nunca aparece antes disso) e sua 1ª entrada de valor. */
 export async function createFixedExpense(
   db: DrizzleDB,
   userId: string,
   input: CreateFixedExpenseInput,
 ) {
-  const [row] = await db
-    .insert(fixedExpenses)
-    .values({ userId, ...input, amount: input.amount.toFixed(2) })
-    .returning()
-  return row
+  const effectiveFrom = currentMonth()
+  const amount = input.amount.toFixed(2)
+
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(fixedExpenses)
+      .values({
+        userId,
+        name: input.name,
+        type: input.type,
+        dueDay: input.dueDay,
+        categoryId: input.categoryId,
+        effectiveFrom,
+      })
+      .returning()
+    if (!row) return null
+
+    await insertInitialAmountHistory(tx, { userId, fixedExpenseId: row.id, amount, effectiveFrom })
+
+    return { ...row, amount }
+  })
 }
 
-/** Editar valor vale do mês vigente em diante; pagamentos guardam snapshot (FR-105). */
+type FixedExpenseRow = typeof fixedExpenses.$inferSelect
+
+/**
+ * Campos sem valor (nome, categoria, dia, tipo, status) são sobrescritos direto.
+ * Reajuste de valor não sobrescreve nada: insere uma linha nova no histórico,
+ * válida a partir de `amountEffectiveFrom` — meses anteriores (pagos ou não) mantêm
+ * o valor antigo (FR-105 estendido a meses não pagos).
+ */
 export async function updateFixedExpense(
   db: DrizzleDB,
   userId: string,
   input: UpdateFixedExpenseInput,
+): Promise<FixedExpenseRow | null | 'amount_effective_from_required' | 'invalid_amount_effective_from'> {
+  const { id, amount, amountEffectiveFrom, ...rest } = input
+
+  return db.transaction(async (tx) => {
+    let row: FixedExpenseRow | null
+    if (Object.keys(rest).length > 0) {
+      const [updated] = await tx
+        .update(fixedExpenses)
+        .set(rest)
+        .where(and(eq(fixedExpenses.id, id), eq(fixedExpenses.userId, userId)))
+        .returning()
+      row = updated ?? null
+    } else {
+      const [existing] = await tx
+        .select()
+        .from(fixedExpenses)
+        .where(and(eq(fixedExpenses.id, id), eq(fixedExpenses.userId, userId)))
+      row = existing ?? null
+    }
+    if (!row) return null
+
+    if (amount != null) {
+      if (!amountEffectiveFrom) return 'amount_effective_from_required'
+      const result = await insertAmountReajuste(tx, {
+        userId,
+        fixedExpenseId: id,
+        amount: amount.toFixed(2),
+        effectiveFrom: refMonth(amountEffectiveFrom),
+      })
+      if (result === 'invalid_amount_effective_from') return result
+    }
+
+    return row
+  })
+}
+
+/** Encerra o fixo a partir do mês seguinte a lastActiveMonth; preserva todo o histórico. */
+export async function endFixedExpense(
+  db: DrizzleDB,
+  userId: string,
+  id: string,
+  lastActiveMonth: string,
 ) {
-  const { id, amount, ...rest } = input
   const [row] = await db
     .update(fixedExpenses)
-    .set({ ...rest, ...(amount != null ? { amount: amount.toFixed(2) } : {}) })
+    .set({ effectiveUntil: refMonth(lastActiveMonth) })
     .where(and(eq(fixedExpenses.id, id), eq(fixedExpenses.userId, userId)))
     .returning()
   return row ?? null
 }
 
+/** Excluir definitivamente: remove o fixo e todo o histórico (valor e pagamentos) junto. */
 export async function deleteFixedExpense(db: DrizzleDB, userId: string, id: string) {
   const [row] = await db
     .delete(fixedExpenses)
@@ -123,6 +219,10 @@ export async function payFixedExpense(db: DrizzleDB, userId: string, input: PayF
     )
   if (existing) return existing
 
+  const history = await fetchAmountHistoryByExpense(db, expense.id)
+  const amount = resolveAmountForMonth(history, reference)
+  if (amount == null) return null
+
   const today = todayIso()
   const paidAt = input.paidAt ?? (today.slice(0, 7) === input.month ? today : null)
   const paymentDate = paidAt ?? effectiveDueDate(expense.dueDay, reference)
@@ -133,7 +233,7 @@ export async function payFixedExpense(db: DrizzleDB, userId: string, input: PayF
       .values({
         userId,
         type: expense.type,
-        value: expense.amount,
+        value: amount,
         description: expense.name,
         categoryId: expense.categoryId,
         source: 'fixed_expense',
@@ -147,7 +247,7 @@ export async function payFixedExpense(db: DrizzleDB, userId: string, input: PayF
         userId,
         fixedExpenseId: expense.id,
         referenceMonth: reference,
-        amount: expense.amount,
+        amount,
         paidAt: paymentDate,
         transactionId: transaction!.id,
       })

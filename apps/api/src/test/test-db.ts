@@ -88,14 +88,26 @@ export async function createTestDb(): Promise<DrizzleDB> {
       user_id text not null references users(id) on delete cascade,
       name text not null,
       type tx_type not null default 'despesa',
-      amount numeric(12,2) not null,
       due_day integer not null,
       category_id uuid references categories(id) on delete set null,
       status active_status not null default 'active',
+      effective_from date not null,
+      effective_until date,
       created_at timestamptz not null default now(),
-      constraint fe_amount_positive check (amount > 0),
       constraint fe_due_day_range check (due_day >= 1 and due_day <= 31)
     );
+
+    create table fixed_expense_amount_history (
+      id uuid primary key default gen_random_uuid(),
+      user_id text not null references users(id) on delete cascade,
+      fixed_expense_id uuid not null references fixed_expenses(id) on delete cascade,
+      amount numeric(12,2) not null,
+      effective_from date not null,
+      created_at timestamptz not null default now(),
+      constraint feah_amount_positive check (amount > 0)
+    );
+    create unique index feah_expense_month_unique
+      on fixed_expense_amount_history (fixed_expense_id, effective_from);
 
     create table fixed_expense_payments (
       id uuid primary key default gen_random_uuid(),

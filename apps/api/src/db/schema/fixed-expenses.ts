@@ -25,15 +25,38 @@ export const fixedExpenses = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     type: txType('type').notNull().default('despesa'),
-    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     dueDay: integer('due_day').notNull(),
     categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
     status: activeStatus('status').notNull().default('active'),
+    // Mês (dia 01) em que o fixo passa a existir; nunca antes disso (2026-07-16).
+    effectiveFrom: date('effective_from').notNull(),
+    // Último mês (dia 01) em que o fixo ainda deve aparecer; null = ainda ativo.
+    effectiveUntil: date('effective_until'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check('fe_due_day_range', sql`${t.dueDay} >= 1 and ${t.dueDay} <= 31`)],
+)
+
+// Histórico de valor do fixo (reajuste, 2026-07-16): cada linha vale a partir de
+// effective_from até a próxima linha (ou até hoje); substitui a antiga coluna
+// fixed_expenses.amount para nunca reescrever meses já passados.
+export const fixedExpenseAmountHistory = pgTable(
+  'fixed_expense_amount_history',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    fixedExpenseId: uuid('fixed_expense_id')
+      .notNull()
+      .references(() => fixedExpenses.id, { onDelete: 'cascade' }),
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+    effectiveFrom: date('effective_from').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    check('fe_amount_positive', sql`${t.amount} > 0`),
-    check('fe_due_day_range', sql`${t.dueDay} >= 1 and ${t.dueDay} <= 31`),
+    check('feah_amount_positive', sql`${t.amount} > 0`),
+    uniqueIndex('feah_expense_month_unique').on(t.fixedExpenseId, t.effectiveFrom),
   ],
 )
 
