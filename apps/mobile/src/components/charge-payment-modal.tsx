@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native'
-import { applyChargePayment, formatDate, installmentTotals, toNumber } from '@pmf/core'
+import { useEffect, useState } from 'react'
+import { Modal, ScrollView, Text, View } from 'react-native'
+import { applyChargePayment, installmentTotals, toNumber } from '@pmf/core'
 import { Button, Input } from './ui'
 import { trpc } from '@/lib/trpc'
 import { money } from '@/lib/format'
@@ -13,17 +13,20 @@ export interface ChargePaymentTarget {
   amountPaid: string
 }
 
-/** Registrar recebimento parcial de cobrança + histórico com desfazer (fase 8.1). */
+/** Registrar recebimento parcial de cobrança (fase 8.1); histórico vive em ChargePaymentHistory. */
 export function ChargePaymentModal({
   charge,
+  initialAmount,
+  installmentLabel,
   onClose,
 }: {
   charge: ChargePaymentTarget | null
+  initialAmount?: number
+  installmentLabel?: string
   onClose: () => void
 }) {
   const utils = trpc.useUtils()
   const open = charge !== null
-  const payments = trpc.charges.payments.useQuery({ id: charge?.id ?? '' }, { enabled: open })
   const invalidate = () => {
     utils.charges.invalidate()
     utils.transactions.invalidate()
@@ -37,10 +40,16 @@ export function ChargePaymentModal({
     },
     onError: (err) => setError(err.message),
   })
-  const unregister = trpc.charges.unregisterPayment.useMutation({ onSuccess: invalidate })
 
   const [amount, setAmount] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setAmount(initialAmount ? String(initialAmount) : '')
+      setError(null)
+    }
+  }, [open, charge?.id, initialAmount])
 
   if (!charge) return null
 
@@ -73,6 +82,11 @@ export function ChargePaymentModal({
             <Text className="mb-1 text-base font-black text-foreground dark:text-foreground-dark">
               Recebimento de {charge.debtorName}
             </Text>
+            {installmentLabel ? (
+              <Text className="mb-1 text-xs font-bold text-muted dark:text-muted-dark">
+                {installmentLabel}
+              </Text>
+            ) : null}
             <Text className="mb-4 text-xs text-muted dark:text-muted-dark">
               Recebido {money(charge.amountPaid)} de {money(totals.total)} · resta{' '}
               {money(totals.remaining)}
@@ -93,32 +107,6 @@ export function ChargePaymentModal({
               onPress={submit}
               disabled={register.isPending || totals.remaining <= 0}
             />
-            {payments.data && payments.data.length > 0 ? (
-              <View className="mt-4 border-t border-line pt-3 dark:border-line-dark">
-                <Text className="mb-2 text-xs font-bold text-muted dark:text-muted-dark">
-                  Histórico de recebimentos
-                </Text>
-                {payments.data.map((p) => (
-                  <View key={p.id} className="mb-1 flex-row items-center justify-between">
-                    <Text className="text-xs text-body dark:text-body-dark">
-                      {formatDate(String(p.createdAt).slice(0, 10))} ·{' '}
-                      <Text className="font-bold text-positive dark:text-positive-dark">
-                        {money(p.amount)}
-                      </Text>
-                    </Text>
-                    <Pressable
-                      hitSlop={8}
-                      disabled={unregister.isPending}
-                      onPress={() => unregister.mutate({ paymentId: p.id })}
-                    >
-                      <Text className="text-xs text-muted underline dark:text-muted-dark">
-                        desfazer
-                      </Text>
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
-            ) : null}
             <View className="h-2" />
             <Button title="Fechar" variant="ghost" onPress={onClose} />
           </ScrollView>

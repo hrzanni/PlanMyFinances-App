@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { InstallmentState } from '@pmf/core'
 import { money } from '@/lib/format'
 import { Badge } from './ui'
+import { InstallmentChips } from './installment-chips'
 
 /** Chevron via Ionicons com rotação (nunca o glifo ▶). */
 export function Chevron({ open, color }: { open: boolean; color?: string }) {
@@ -35,39 +36,13 @@ export function InstallmentsPanel({
   const paidCount = installments.filter((s) => s.paid).length
   const firstUnpaid = installments.find((s) => !s.paid)?.number ?? -1
 
-  const chipCls = (st: InstallmentState) =>
-    st.paid
-      ? 'border-positive/40 bg-positive/10'
-      : st.overdue
-        ? 'border-negative'
-        : st.number === firstUnpaid
-          ? 'border-attention'
-          : 'border-line dark:border-line-dark'
-  const chipText = (st: InstallmentState) =>
-    st.paid
-      ? 'text-positive dark:text-positive-dark'
-      : st.overdue
-        ? 'text-negative dark:text-negative-dark'
-        : st.number === firstUnpaid
-          ? 'text-attention dark:text-attention-dark'
-          : 'text-muted dark:text-muted-dark'
-
   return (
     <View className="mt-2 rounded-xl bg-background/60 p-3 dark:bg-background-dark/60">
       <Text className="mb-2 text-[10px] font-black uppercase tracking-widest text-muted dark:text-muted-dark">
         Parcelas · {paidCount} de {installments.length} pagas
       </Text>
-      <View className="mb-2 flex-row flex-wrap gap-1.5">
-        {installments.map((st) => (
-          <Pressable
-            key={st.number}
-            onPress={() => onOpenPayment(st.number)}
-            className={`h-8 min-w-8 flex-row items-center justify-center rounded-lg border bg-surface px-1.5 dark:bg-surface-dark ${chipCls(st)}`}
-          >
-            <Text className={`text-[11px] font-black ${chipText(st)}`}>{st.number}</Text>
-            {st.paid ? <Text className={`text-[8px] ${chipText(st)}`}>✓</Text> : null}
-          </Pressable>
-        ))}
+      <View className="mb-2">
+        <InstallmentChips installments={installments} onSelect={onOpenPayment} />
       </View>
       {installments.map((st) => (
         <View
