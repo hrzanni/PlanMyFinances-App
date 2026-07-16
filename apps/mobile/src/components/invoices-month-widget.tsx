@@ -61,7 +61,7 @@ export function InvoicesMonthWidget({ month }: { month: string }) {
         <Text className="text-[10px] font-black uppercase tracking-wider text-muted dark:text-muted-dark">
           Faturas de {monthLabel(month).split(' ')[0]}
         </Text>
-        <Pressable onPress={() => router.push('/mais/faturas')}>
+        <Pressable onPress={() => router.push('/faturas')}>
           <Text className="text-xs font-bold text-foreground dark:text-foreground-dark">
             ver todas →
           </Text>
