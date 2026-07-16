@@ -112,7 +112,7 @@ export default function HomePage() {
 
           <FixedMonthWidget month={month} />
 
-          <InvoicesMonthWidget />
+          <InvoicesMonthWidget month={month} />
         </div>
       </div>
 

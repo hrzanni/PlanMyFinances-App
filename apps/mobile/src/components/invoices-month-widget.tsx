@@ -10,10 +10,9 @@ import { globalOverdue, toPayments, toSchedule } from './invoice-derive'
 const ddmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 
 /** Widget "Faturas do mês" — resumo + alerta de atraso + próximas parcelas a vencer. */
-export function InvoicesMonthWidget() {
+export function InvoicesMonthWidget({ month }: { month: string }) {
   const router = useRouter()
   const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
-  const month = today.slice(0, 7)
   const list = trpc.invoices.list.useQuery()
 
   const rows = list.data ?? []

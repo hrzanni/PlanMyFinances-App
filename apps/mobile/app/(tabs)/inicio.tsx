@@ -53,7 +53,7 @@ export default function HomeScreen() {
 
         <FixedMonthWidget month={month} />
 
-        <InvoicesMonthWidget />
+        <InvoicesMonthWidget month={month} />
 
         <MonthChartsSection month={month} />
       </ScrollView>
