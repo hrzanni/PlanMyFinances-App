@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, beforeAll, afterAll, vi } from 'vitest'
 import { createTestDb, seedTestUsers } from '../test/test-db'
 import type { DrizzleDB } from '../db/client'
 import {
@@ -15,6 +15,18 @@ import { listTransactions } from './transactions'
 let db: DrizzleDB
 let userA: string
 let userB: string
+
+// A vigência de um fixo começa no mês de criação ("hoje"). Os cenários usam meses
+// fixos (2026-07, 2026-08), então o relógio é travado em julho/2026 para o teste não
+// depender da data em que roda. Só `Date` é falsificado: os timers do pglite seguem reais.
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-07-20T12:00:00Z'))
+})
+
+afterAll(() => {
+  vi.useRealTimers()
+})
 
 beforeEach(async () => {
   db = await createTestDb()
