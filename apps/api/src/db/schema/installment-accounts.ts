@@ -7,6 +7,7 @@ import {
   date,
   timestamp,
   check,
+  index,
   unique,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
@@ -34,6 +35,7 @@ export const charges = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    index('charges_user_idx').on(t.userId),
     check(
       'charge_paid_le_total',
       sql`${t.amountPaid} <= ${t.amountPerInstallment} * ${t.totalInstallments}`,
@@ -44,20 +46,28 @@ export const charges = pgTable(
 
 // Recebimento parcial de cobrança: histórico + FK para a receita gerada (fase 8.1),
 // espelhando fixed_expense_payments
-export const chargePayments = pgTable('charge_payments', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  chargeId: uuid('charge_id')
-    .notNull()
-    .references(() => charges.id, { onDelete: 'cascade' }),
-  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
-  transactionId: uuid('transaction_id').references(() => transactions.id, {
-    onDelete: 'set null',
-  }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+export const chargePayments = pgTable(
+  'charge_payments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    chargeId: uuid('charge_id')
+      .notNull()
+      .references(() => charges.id, { onDelete: 'cascade' }),
+    amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+    transactionId: uuid('transaction_id').references(() => transactions.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('charge_payments_user_idx').on(t.userId),
+    index('charge_payments_charge_idx').on(t.chargeId),
+    index('charge_payments_transaction_idx').on(t.transactionId),
+  ],
+)
 
 // Faturas: valores a pagar de cartão (FR-030..032)
 export const invoices = pgTable(
@@ -80,7 +90,11 @@ export const invoices = pgTable(
     status: invoiceStatus('status').notNull().default('pendente'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [check('invoice_installments_min', sql`${t.totalInstallments} >= 1`)],
+  (t) => [
+    index('invoices_user_idx').on(t.userId),
+    index('invoices_card_idx').on(t.cardId),
+    check('invoice_installments_min', sql`${t.totalInstallments} >= 1`),
+  ],
 )
 
 // Pagamento de parcela de fatura: 1 row por parcela paga + FK da despesa gerada (faturas v2),
@@ -104,6 +118,8 @@ export const invoicePayments = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    index('invoice_payments_user_idx').on(t.userId),
+    index('invoice_payments_transaction_idx').on(t.transactionId),
     unique('invoice_payment_installment_unique').on(t.invoiceId, t.installmentNumber),
     check('invoice_payment_installment_min', sql`${t.installmentNumber} >= 1`),
   ],

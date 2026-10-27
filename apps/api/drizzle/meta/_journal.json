@@ -57,6 +57,13 @@
       "when": 1784180283163,
       "tag": "0007_fixos_remove_amount_column",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792775715231,
+      "tag": "0008_indices_user_id",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,26 @@
+CREATE INDEX "accounts_user_idx" ON "accounts" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "sessions_user_idx" ON "sessions" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "categories_user_idx" ON "categories" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "subcategories_user_idx" ON "subcategories" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "subcategories_category_idx" ON "subcategories" USING btree ("category_id");--> statement-breakpoint
+CREATE INDEX "cards_user_idx" ON "cards" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "folders_user_idx" ON "folders" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "tx_user_date_idx" ON "transactions" USING btree ("user_id","date");--> statement-breakpoint
+CREATE INDEX "tx_card_idx" ON "transactions" USING btree ("card_id");--> statement-breakpoint
+CREATE INDEX "tx_category_idx" ON "transactions" USING btree ("category_id");--> statement-breakpoint
+CREATE INDEX "tx_subcategory_idx" ON "transactions" USING btree ("subcategory_id");--> statement-breakpoint
+CREATE INDEX "tx_folder_idx" ON "transactions" USING btree ("folder_id");--> statement-breakpoint
+CREATE INDEX "charge_payments_user_idx" ON "charge_payments" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "charge_payments_charge_idx" ON "charge_payments" USING btree ("charge_id");--> statement-breakpoint
+CREATE INDEX "charge_payments_transaction_idx" ON "charge_payments" USING btree ("transaction_id");--> statement-breakpoint
+CREATE INDEX "charges_user_idx" ON "charges" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "invoice_payments_user_idx" ON "invoice_payments" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "invoice_payments_transaction_idx" ON "invoice_payments" USING btree ("transaction_id");--> statement-breakpoint
+CREATE INDEX "invoices_user_idx" ON "invoices" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "invoices_card_idx" ON "invoices" USING btree ("card_id");--> statement-breakpoint
+CREATE INDEX "feah_user_idx" ON "fixed_expense_amount_history" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "fep_user_month_idx" ON "fixed_expense_payments" USING btree ("user_id","reference_month");--> statement-breakpoint
+CREATE INDEX "fep_transaction_idx" ON "fixed_expense_payments" USING btree ("transaction_id");--> statement-breakpoint
+CREATE INDEX "fe_user_idx" ON "fixed_expenses" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "fe_category_idx" ON "fixed_expenses" USING btree ("category_id");--> statement-breakpoint
+CREATE INDEX "bank_connections_user_idx" ON "bank_connections" USING btree ("user_id");

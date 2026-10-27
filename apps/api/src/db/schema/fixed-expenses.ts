@@ -7,6 +7,7 @@ import {
   date,
   timestamp,
   check,
+  index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
@@ -34,7 +35,11 @@ export const fixedExpenses = pgTable(
     effectiveUntil: date('effective_until'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [check('fe_due_day_range', sql`${t.dueDay} >= 1 and ${t.dueDay} <= 31`)],
+  (t) => [
+    index('fe_user_idx').on(t.userId),
+    index('fe_category_idx').on(t.categoryId),
+    check('fe_due_day_range', sql`${t.dueDay} >= 1 and ${t.dueDay} <= 31`),
+  ],
 )
 
 // Histórico de valor do fixo (reajuste, 2026-07-16): cada linha vale a partir de
@@ -55,6 +60,7 @@ export const fixedExpenseAmountHistory = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    index('feah_user_idx').on(t.userId),
     check('feah_amount_positive', sql`${t.amount} > 0`),
     uniqueIndex('feah_expense_month_unique').on(t.fixedExpenseId, t.effectiveFrom),
   ],
@@ -79,5 +85,9 @@ export const fixedExpensePayments = pgTable(
     }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [uniqueIndex('fep_expense_month_unique').on(t.fixedExpenseId, t.referenceMonth)],
+  (t) => [
+    uniqueIndex('fep_expense_month_unique').on(t.fixedExpenseId, t.referenceMonth),
+    index('fep_user_month_idx').on(t.userId, t.referenceMonth),
+    index('fep_transaction_idx').on(t.transactionId),
+  ],
 )

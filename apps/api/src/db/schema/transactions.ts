@@ -1,4 +1,14 @@
-import { pgTable, uuid, text, numeric, date, timestamp, check, uniqueIndex } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  uuid,
+  text,
+  numeric,
+  date,
+  timestamp,
+  check,
+  index,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { users } from './auth'
 import { cards } from './cards'
@@ -28,6 +38,13 @@ export const transactions = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    // Listagens e dashboard filtram por usuário + intervalo de data. As FKs opcionais são
+    // indexadas pelos filtros e para o ON DELETE SET NULL não varrer a tabela inteira.
+    index('tx_user_date_idx').on(t.userId, t.date),
+    index('tx_card_idx').on(t.cardId),
+    index('tx_category_idx').on(t.categoryId),
+    index('tx_subcategory_idx').on(t.subcategoryId),
+    index('tx_folder_idx').on(t.folderId),
     check('tx_value_positive', sql`${t.value} > 0`),
     uniqueIndex('tx_user_external_unique')
       .on(t.userId, t.externalId)
